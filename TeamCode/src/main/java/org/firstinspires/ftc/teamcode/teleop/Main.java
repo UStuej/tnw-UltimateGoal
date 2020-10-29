@@ -1,14 +1,10 @@
-package org.firstinspires.ftc.teamcode.TeleOp.DriverControl;
+package org.firstinspires.ftc.teamcode.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.CRServo;
 
-import org.firstinspires.ftc.teamcode.TeleOp.DcMotorControl;
+import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 
 public class Main extends OpMode{
 
