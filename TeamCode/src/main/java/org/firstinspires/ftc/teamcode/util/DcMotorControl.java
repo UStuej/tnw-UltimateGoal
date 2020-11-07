@@ -11,9 +11,9 @@ public class DcMotorControl {
     public static double motorIncrControl(double analogStick, double currentPower) {
 
         return (analogStick > MIN_STICK_THRESHOLD)
-                ? Range.clip(currentPower + POWER_INCR, MIN_POWER_THRESHOLD, 1.0)
+                ? Range.clip(currentPower + POWER_INCR, MIN_POWER_THRESHOLD, analogStick)
                 : ((analogStick < -MIN_STICK_THRESHOLD)
-                ? Range.clip(currentPower - POWER_INCR, -1.0, -MIN_POWER_THRESHOLD)
+                ? Range.clip(currentPower - POWER_INCR, analogStick, -MIN_POWER_THRESHOLD)
                 : 0.0);
 
     }
