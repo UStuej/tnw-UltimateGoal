@@ -1,12 +1,16 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 
-public class Main extends OpMode {
+@TeleOp(name = "TeleOp0")
+@Disabled
+public class TeleOp0 extends OpMode {
 
     // Declare drive motors
     private DcMotor frontLeftDrive;
