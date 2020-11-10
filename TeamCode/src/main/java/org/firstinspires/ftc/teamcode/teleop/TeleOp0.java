@@ -87,9 +87,9 @@ public class TeleOp0 extends OpMode {
                         : 0.75;                                                 // Normal mode
 
         // Map vertical, horizontal, and rotational values to controller inputs
-        vertical = DcMotorControl.motorIncrControl(-gamepad1.left_stick_y, 0.5);  // FIXME (multi-line) Input the actual current power of the respectful motor for each call of this method into currentPower
-        horizontal = DcMotorControl.motorIncrControl(gamepad1.left_stick_x, 0.5);
-        rotation = DcMotorControl.motorIncrControl(gamepad1.right_stick_x, 0.5);
+        vertical = DcMotorControl.motorIncrControl(-gamepad1.left_stick_y, vertical);
+        horizontal = DcMotorControl.motorIncrControl(gamepad1.left_stick_x, horizontal);
+        rotation = DcMotorControl.motorIncrControl(gamepad1.right_stick_x, rotation);
 
         // Set drive motor power
         frontLeftDrive.setPower((vertical + horizontal + rotation) * powerLimiter);                               // Reverse in INIT if needed
