@@ -100,14 +100,14 @@ public class TeleOp0 extends OpMode {
 // INTAKE CODE
 
         // Set intake power and mapping to controller input
-        intakeDrive.setPower(DcMotorControl.motorIncrControl(gamepad2.right_trigger - gamepad2.left_trigger, 0.5));      // Reverse in INIT if needed
+        intakeDrive.setPower(DcMotorControl.motorIncrControl(gamepad2.right_trigger - gamepad2.left_trigger, intakeDrive.getPower()));      // Reverse in INIT if needed
 
 // WOBBLE GOAL LIFT CODE
 
         // Restrict lift to only operate when Wobble Goal shoulder is rotated outside robot frame
         wgLift.setPower(wgShoulder.getPosition() < 1.0                                                                  // Change < 1 to restrict lift to only operate when shoulder is rotated out.
-                        ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, 0.5)                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
-                        : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, 0.5)));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
+                        ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
+                        : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
 
 
 
