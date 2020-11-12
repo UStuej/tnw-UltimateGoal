@@ -122,7 +122,7 @@ public class TeleOp0 extends OpMode {
         if (!gamepad2.a) { g2AReleased = true; }
 
         // Map Wobble Goal shoulder state switch to controller input
-        if (gamepad2.a && g2AReleased){
+        if (gamepad2.a && g2AReleased) {
             g2AReleased = false;
             wgShoulderState = !wgShoulderState;
         }
