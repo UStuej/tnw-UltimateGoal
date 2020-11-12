@@ -28,28 +28,28 @@ public class TeleOp0 extends OpMode {
     private Servo wgClaw;
 
     // Declare drive power
-    double frontLeftDrivePower;
-    double frontRightDrivePower;
-    double backLeftDrivePower;
-    double backRightDrivePower;
+    private double frontLeftDrivePower;
+    private double frontRightDrivePower;
+    private double backLeftDrivePower;
+    private double backRightDrivePower;
 
     // Declare chassis motion variables
-    double currentPower;
-    double vertical;
-    double horizontal;
-    double rotation;
+    private double currentPower;
+    private double vertical;
+    private double horizontal;
+    private double rotation;
 
     // Declare Drive Power Limiting Variables
-    double powerLimiter;
+    private double powerLimiter;
 
     // Declare toggleable states
-    boolean g2AReleased;    // Used to determine if gamepad2.a has been released after pressing
-    boolean g2BReleased;    // Used to determine if gamepad2.a has been released after pressing
-    boolean wgShoulderState = false;  // IN
-    boolean wgClawState = true; // CLOSED
+    private boolean g2AReleased;    // Used to determine if gamepad2.a has been released after pressing
+    private boolean g2BReleased;    // Used to determine if gamepad2.a has been released after pressing
+    private boolean wgShoulderState = false;  // IN
+    private boolean wgClawState = true; // CLOSED
 
     @Override
-    public void init(){
+    public void init() {
 
         // Initialize drive motors
         frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
@@ -77,7 +77,7 @@ public class TeleOp0 extends OpMode {
     }
 
     @Override
-    public void loop(){
+    public void loop() {
 
 // DRIVE CODE
 
