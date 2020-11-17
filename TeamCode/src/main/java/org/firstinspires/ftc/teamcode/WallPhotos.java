@@ -4,6 +4,7 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -63,6 +64,15 @@ public class WallPhotos {
                     contourHulls.add(contourHull);
             }
             
+        }
+
+        {
+            List<? extends Object> candidates = new ArrayList<>();
+
+            for (MatOfInt contour : contourHulls) {
+                MatOfPoint2f approxCurve = new MatOfPoint2f();
+                Imgproc.approxPolyDP(contour, approxCurve, Imgproc.arcLength(contour, true) * 0.015, true);
+            }
         }
 
     }
