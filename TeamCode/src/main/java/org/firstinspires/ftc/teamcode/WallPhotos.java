@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import org.jetbrains.annotations.NotNull;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
@@ -21,7 +22,7 @@ public class WallPhotos {
 
     /** Takes an image of a wall photo from the robot camera and returns either the estimated orientation of the robot given the difference in slopes between the sides of the contour enclosing the wall photo, or {@code null} if no such positive match was made.
      */
-    public static void getOrientationFromWallPhoto(final Mat img) {
+    public static void getOrientationFromWallPhoto(final @NotNull Mat img) {
 
         Mat edges = new Mat();
 
@@ -44,7 +45,7 @@ public class WallPhotos {
 
         }
 
-        List<MatOfInt> contourHulls = new ArrayList<>();
+        List<MatOfPoint> contourHulls = new ArrayList<>();
 
         {
             List<MatOfPoint> contours = new ArrayList<>();
@@ -58,8 +59,9 @@ public class WallPhotos {
             contours = contours.subList(0, 10);
 
             for (MatOfPoint contour : contours) {
-                MatOfInt contourHull = new MatOfInt();
-                Imgproc.convexHull(contour, contourHull);
+                MatOfInt contourHullIdx = new MatOfInt();
+                Imgproc.convexHull(contour, contourHullIdx, true);
+                MatOfPoint contourHull = pointsFromIdx(contour, contourHullIdx);
                 if (Imgproc.contourArea(contourHull) > 9000.0)
                     contourHulls.add(contourHull);
             }
@@ -67,13 +69,30 @@ public class WallPhotos {
         }
 
         {
-            List<? extends Object> candidates = new ArrayList<>();
+            List<MatOfPoint2f> candidates0 = new ArrayList<>();
 
-            for (MatOfInt contour : contourHulls) {
+            for (MatOfPoint contour : contourHulls) {
+                MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
                 MatOfPoint2f approxCurve = new MatOfPoint2f();
-                Imgproc.approxPolyDP(contour, approxCurve, Imgproc.arcLength(contour, true) * 0.015, true);
+                Imgproc.approxPolyDP(contour2f, approxCurve, Imgproc.arcLength(contour2f, true) * 0.015, true);
+                if (approxCurve.total() == 4L)
+                    candidates0.add(approxCurve);
             }
         }
+
+    }
+
+    private static MatOfPoint pointsFromIdx(@NotNull MatOfPoint src, @NotNull MatOfInt idx) {
+
+        Point[] srcArr = src.toArray();
+        int[] idxArr = idx.toArray();
+        Point[] dstArr = new Point[idxArr.length];
+
+        for (int i = 0; i < idxArr.length; i++) {
+            dstArr[i] = srcArr[idxArr[i]];
+        }
+
+        return new MatOfPoint(dstArr);
 
     }
 
