@@ -41,7 +41,7 @@ public class WallPhotos {
             Imgproc.cvtColor(blurred, hsv, Imgproc.COLOR_RGB2HSV);
 
             Mat thresholded = new Mat();
-            Core.inRange(hsv, new Scalar(0.0, 0.0, 100.0), new Scalar(180.0, 60.0, 255.0), thresholded);  // FIXME This method doesn't have a thresholding type parameter, unlike its Python equivalent
+            Core.inRange(hsv, new Scalar(0.0, 0.0, 100.0), new Scalar(180.0, 60.0, 255.0), thresholded);
             Imgproc.dilate(thresholded, thresholded, new Mat(), new Point(-1.0, -1.0), 1);
 
             Mat bf = new Mat();
@@ -97,16 +97,44 @@ public class WallPhotos {
                 Imgproc.drawContours(imgMod, candidates0Int, -1, new Scalar(0.0, 0.0, 0.0), 3);
             }
 
-            if (candidates0.size() == 0)
-                // FIXME Send a warning to telemetry with the message "No 4-point contours were detected. Returning null" (or some other action)
-                return;
-
             for (MatOfPoint2f contour : candidates0) {
                 if (Math.abs(Imgproc.contourArea(contour) - AVG_WALL_IMAGE_AREA) > WALL_IMAGE_AREA_THRESH)
                     candidates1.add(contour);
             }
 
+            if (candidates1.size() == 0)
+                // FIXME Send a warning to telemetry with the message "No 4-point contours were detected." (or some other action)
+                return;
+
         }
+
+        // Rectangle-ish tie break
+        Collections.sort(candidates1, new Comparator<MatOfPoint2f>() {
+            @Override
+            public int compare(MatOfPoint2f c0, MatOfPoint2f c1) {
+                return (int) (operation(c1) - operation(c0));
+            }
+            public long operation(MatOfPoint2f c) {
+                Mat boxPoints = new Mat();
+                Imgproc.boxPoints(Imgproc.minAreaRect(c), boxPoints);
+                return Math.round(Math.abs(Imgproc.contourArea(c) / Imgproc.contourArea(boxPoints)));
+            }
+        });
+        for (MatOfPoint2f contour : candidates1) {
+            Point[] points = new Point[4];
+            Imgproc.minAreaRect(contour).points(points);
+            Imgproc.rectangle(imgMod, points[0], points[2], new Scalar(0.0, 255.0, 0.0));
+        }
+
+        // Area tie break
+        Collections.sort(candidates1, new Comparator<MatOfPoint2f>() {
+            @Override
+            public int compare(MatOfPoint2f c0, MatOfPoint2f c1) {
+                return 0;  // FIXME Return a value based on the difference found on line 119 in the original code.py
+            }
+        });
+
+        MatOfPoint2f contour = candidates1.get(0);
 
     }
 
