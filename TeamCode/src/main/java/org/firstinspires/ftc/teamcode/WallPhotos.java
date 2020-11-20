@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import org.jetbrains.annotations.NotNull;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
@@ -20,10 +21,14 @@ import java.util.function.Consumer;
 
 public class WallPhotos {
 
+    private static final double AVG_WALL_IMAGE_AREA = 100.0;
+    private static final double WALL_IMAGE_AREA_THRESH = 10.0;
+
     /** Takes an image of a wall photo from the robot camera and returns either the estimated orientation of the robot given the difference in slopes between the sides of the contour enclosing the wall photo, or {@code null} if no such positive match was made.
      */
     public static void getOrientationFromWallPhoto(final @NotNull Mat img) {
 
+        Mat imgMod = img.clone();
         Mat edges = new Mat();
 
         {
@@ -68,16 +73,39 @@ public class WallPhotos {
             
         }
 
+        List<MatOfPoint2f> candidates1 = new ArrayList<>();
+
         {
             List<MatOfPoint2f> candidates0 = new ArrayList<>();
 
             for (MatOfPoint contour : contourHulls) {
-                MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+                MatOfPoint2f contour2f = new MatOfPoint2f();
+                contour.convertTo(contour2f, CvType.CV_32F);
                 MatOfPoint2f approxCurve = new MatOfPoint2f();
                 Imgproc.approxPolyDP(contour2f, approxCurve, Imgproc.arcLength(contour2f, true) * 0.015, true);
                 if (approxCurve.total() == 4L)
                     candidates0.add(approxCurve);
             }
+
+            {
+                List<MatOfPoint> candidates0Int = new ArrayList<>(candidates0.size());
+                for (int i = 0; i < candidates0.size(); i++) {
+                    MatOfPoint candidate = new MatOfPoint();
+                    candidates0.get(i).convertTo(candidate, CvType.CV_32S);
+                    candidates0Int.add(candidate);
+                }
+                Imgproc.drawContours(imgMod, candidates0Int, -1, new Scalar(0.0, 0.0, 0.0), 3);
+            }
+
+            if (candidates0.size() == 0)
+                // FIXME Send a warning to telemetry with the message "No 4-point contours were detected. Returning null" (or some other action)
+                return;
+
+            for (MatOfPoint2f contour : candidates0) {
+                if (Math.abs(Imgproc.contourArea(contour) - AVG_WALL_IMAGE_AREA) > WALL_IMAGE_AREA_THRESH)
+                    candidates1.add(contour);
+            }
+
         }
 
     }
