@@ -13,11 +13,9 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class WallPhotos {
 
@@ -89,10 +87,10 @@ public class WallPhotos {
 
             {
                 List<MatOfPoint> candidates0Int = new ArrayList<>(candidates0.size());
-                for (int i = 0; i < candidates0.size(); i++) {
-                    MatOfPoint candidate = new MatOfPoint();
-                    candidates0.get(i).convertTo(candidate, CvType.CV_32S);
-                    candidates0Int.add(candidate);
+                for (MatOfPoint2f contour : candidates0) {
+                    MatOfPoint contourInt = new MatOfPoint();
+                    contour.convertTo(contourInt, CvType.CV_32S);
+                    candidates0Int.add(contourInt);
                 }
                 Imgproc.drawContours(imgMod, candidates0Int, -1, new Scalar(0.0, 0.0, 0.0), 3);
             }
@@ -120,21 +118,41 @@ public class WallPhotos {
                 return Math.round(Math.abs(Imgproc.contourArea(c) / Imgproc.contourArea(boxPoints)));
             }
         });
+
+        // Area tie break
+//        Collections.sort(candidates1, new Comparator<MatOfPoint2f>() {
+//            @Override
+//            public int compare(MatOfPoint2f c0, MatOfPoint2f c1) {
+//                return 0;  // FIXME Return a value based on the difference found on line 119 in the original code.py
+//            }
+//        });
+
         for (MatOfPoint2f contour : candidates1) {
             Point[] points = new Point[4];
             Imgproc.minAreaRect(contour).points(points);
             Imgproc.rectangle(imgMod, points[0], points[2], new Scalar(0.0, 255.0, 0.0));
         }
 
-        // Area tie break
-        Collections.sort(candidates1, new Comparator<MatOfPoint2f>() {
-            @Override
-            public int compare(MatOfPoint2f c0, MatOfPoint2f c1) {
-                return 0;  // FIXME Return a value based on the difference found on line 119 in the original code.py
-            }
-        });
+        MatOfPoint2f decidedContour = candidates1.get(0);
 
-        MatOfPoint2f contour = candidates1.get(0);
+        {
+            List<MatOfPoint> candidates1Int = new ArrayList<>(candidates1.size());
+            for (MatOfPoint2f contour : candidates1) {
+                MatOfPoint contourInt = new MatOfPoint();
+                contour.convertTo(contourInt, CvType.CV_32S);
+                candidates1Int.add(contourInt);
+            }
+            Imgproc.drawContours(imgMod, candidates1Int, -1, new Scalar(255.0, 0.0, 0.0), 3);
+        }
+        {
+            List<MatOfPoint> contourIntList = new ArrayList<>(1);
+            MatOfPoint contourInt = new MatOfPoint();
+            decidedContour.convertTo(contourInt, CvType.CV_32S);
+            contourIntList.add(contourInt);
+            Imgproc.drawContours(imgMod, contourIntList, -1, new Scalar(0.0, 255.0, 0.0), 3);
+        }
+
+        // TODO Line 148 of source code.py (logging)
 
     }
 
