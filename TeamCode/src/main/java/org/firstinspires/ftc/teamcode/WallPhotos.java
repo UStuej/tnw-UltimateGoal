@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import org.firstinspires.ftc.teamcode.tnwutil.collections.Pair;
+import org.firstinspires.ftc.teamcode.tnwutil.collections.Triplet;
 import org.jetbrains.annotations.NotNull;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -15,7 +17,9 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class WallPhotos {
 
@@ -133,7 +137,7 @@ public class WallPhotos {
             Imgproc.rectangle(imgMod, points[0], points[2], new Scalar(0.0, 255.0, 0.0));
         }
 
-        MatOfPoint2f decidedContour = candidates1.get(0);
+        Point[] decidedContourArr = candidates1.get(0).toArray();
 
         {
             List<MatOfPoint> candidates1Int = new ArrayList<>(candidates1.size());
@@ -147,12 +151,25 @@ public class WallPhotos {
         {
             List<MatOfPoint> contourIntList = new ArrayList<>(1);
             MatOfPoint contourInt = new MatOfPoint();
-            decidedContour.convertTo(contourInt, CvType.CV_32S);
+            candidates1.get(0).convertTo(contourInt, CvType.CV_32S);
             contourIntList.add(contourInt);
             Imgproc.drawContours(imgMod, contourIntList, -1, new Scalar(0.0, 255.0, 0.0), 3);
         }
 
         // TODO Line 148 of source code.py (logging)
+
+        ArrayList<Triplet<Pair<Point, Point>, Double, Double>> segSlpLens = new ArrayList<>();
+
+        {
+            Set<Pair<Point, Point>> segments = new HashSet<>(decidedContourArr.length);
+
+            for (Point point0 : decidedContourArr) {
+                for (Point point1 : decidedContourArr) {
+                    if (!(point0.x == point1.x && point0.y == point1.y))
+                        segments.add(new Pair<>(point0, point1));
+                }
+            }
+        }
 
     }
 
