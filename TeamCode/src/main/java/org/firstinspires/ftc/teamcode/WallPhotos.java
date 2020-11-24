@@ -158,7 +158,7 @@ public class WallPhotos {
 
         // TODO Line 148 of source code.py (logging)
 
-        ArrayList<Triplet<Pair<Point, Point>, Double, Double>> segSlpLens = new ArrayList<>();
+        List<Triplet<Pair<Point, Point>, Double, Double>> segSlpLens = new ArrayList<>();
 
         {
             Set<Pair<Point, Point>> segments = new HashSet<>(decidedContourArr.length);
@@ -166,9 +166,62 @@ public class WallPhotos {
             for (Point point0 : decidedContourArr) {
                 for (Point point1 : decidedContourArr) {
                     if (!(point0.x == point1.x && point0.y == point1.y))
-                        segments.add(new Pair<>(point0, point1));
+                        segments.add(
+                                (point0.x != point1.x)
+                                ? ((point0.x > point1.x)
+                                        ? new Pair<>(point1, point0)
+                                        : new Pair<>(point0, point1))
+                                : ((point0.y > point1.y)
+                                        ? new Pair<>(point1, point0)
+                                        : new Pair<>(point0, point1))
+                        );
                 }
             }
+
+            for (Pair<Point, Point> segment : segments) {
+                if (segment.first != segment.second) {
+                    segSlpLens.add(new Triplet<>(
+                            segment,
+                            (segment.second.y - segment.first.y) / (segment.second.x - segment.first.x),
+                            Math.sqrt(Math.pow(segment.second.x - segment.first.x, 2.0) + Math.pow(segment.second.y - segment.first.y, 2.0)))
+                    );
+                }
+            }
+        }
+
+        Collections.sort(segSlpLens, new Comparator<Triplet<Pair<Point, Point>, Double, Double>>() {
+            @Override
+            public int compare(Triplet<Pair<Point, Point>, Double, Double> ssl0, Triplet<Pair<Point, Point>, Double, Double> ssl1) {
+                return (int) Math.round(ssl0.third - ssl1.third);
+            }
+        });
+        segSlpLens.remove(segSlpLens.size() - 1);
+        segSlpLens.remove(segSlpLens.size() - 1);
+
+        if (segSlpLens.size() != 4) {
+            // FIXME Send a warning to telemetry with an error message (or some other action)
+            return;
+        }
+
+        int[][] sidesIdx = new int[][] {
+                {0, 2},
+                {1, 3}
+        };
+
+        for (int[] sideIdx : sidesIdx) {
+            Pair<Point, Point> line0 = segSlpLens.get(sideIdx[0]).first;
+            Pair<Point, Point> line1 = segSlpLens.get(sideIdx[1]).first;
+
+            Imgproc.line(imgMod, line0.first, line0.second, new Scalar(0.0, 0.0, 255.0), 5);
+            Imgproc.line(imgMod, line1.first, line1.second, new Scalar(255.0, 0.0, 0.0), 5);
+        }
+
+        // TODO Write (likely Imgcodecs.imwrite) imgMod to a file (or output it somehow)
+        // TODO Log/Output sides.length
+
+        double lengthRatio;
+        for (int[] sideIdx : sidesIdx) {                                                            // FIXME Not really sure what this is for, but I transcribed it anyway
+            lengthRatio = segSlpLens.get(sideIdx[0]).third / segSlpLens.get(sideIdx[1]).third;
         }
 
     }
