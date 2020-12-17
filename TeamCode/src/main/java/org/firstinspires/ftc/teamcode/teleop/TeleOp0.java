@@ -48,6 +48,11 @@ public class TeleOp0 extends OpMode {
     private boolean wgShoulderState = false;  // IN
     private boolean wgClawState = true; // CLOSED
 
+    private boolean wobbleGoalDeploying = false;
+    private boolean wobbleGoalUndeploying = false;
+    private int wobbleGoalDeployState; // Integer from 0 to 3 representing the stage of deployment (lift, shoulder, claw, or done)
+    private int wobbleGoalUndeployState; // Integer from 0 to 3 representing the sate of undeployment (claw, shoulder, lift, or done)
+
     @Override
     public void init() {
 
@@ -144,6 +149,111 @@ public class TeleOp0 extends OpMode {
         // Ternary operator to set Wobble Goal claw position
         wgClaw.setPosition(wgClawState ? 0.0 : 1.0);                                                    // Tune to Wobble Goal claw OPEN / CLOSED position
 
+        if (gamepad2.x) {
+            // Set deploying
+            wobbleGoalDeploying = true;
+            wobbleGoalUndeploying = false;
+        }
+
+        if (gamepad2.y) {
+            // Set undeploying
+            wobbleGoalDeploying = false;
+            wobbleGoalUndeploying = true;
+        }
+
+        if (wobbleGoalDeploying) {
+            wobbleGoalDeploy();
+            wobbleGoalDeployState = getWobbleGoalDeployedState();
+
+            if (wobbleGoalDeployState == 3) { // We finished deploying; no need to keep running this block
+                wobbleGoalDeploying = false;
+            }
+        }
+
+        if (wobbleGoalUndeploying) {
+            wobbleGoalUndeploy();
+            wobbleGoalUndeployState = getWobbleGoalUndeployedState();
+
+            if (wobbleGoalUndeployState == 3) { // We finished undeploying; no need to keep running this block
+                wobbleGoalUndeploying = false;
+            }
+        }
+    }
+
+    private void wobbleGoalDeploy() { // FIXME: This is a dumb function name
+        switch (wobbleGoalDeployState) {
+            case 0:
+                wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);
+            break;
+
+            case 1:
+                wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
+            break;
+
+            case 2:
+                wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
+            break;
+        }
+    }
+
+    private void wobbleGoalUndeploy() { // FIXME: Another bad name
+        //wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
+        //wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
+        //wgClaw.setPosition(0.0); // Also guessing that this is closing
+
+        switch (wobbleGoalDeployState) {
+            case 0:
+                wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
+            break;
+
+            case 1:
+                wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
+            break;
+
+            case 2:
+                wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
+            break;
+        }
+    }
+
+    private int getWobbleGoalDeployedState() {
+        //return (wgLift.getPosition() == WOBBLE_GOAL_DEPLOYED_LIFT_POSITION &&
+        //wgShoulder.getPosition() == WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION &&
+        //wgClaw.getPosition() == WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);
+
+        if (wbClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION) {
+            if (wbShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION) {
+                if (wbLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
+                    return 3;
+                }
+
+                return 2;
+            }
+
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private int getWobbleGoalUndeployedState() {
+        //return (wgLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION &&
+        //wgShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION &&
+        //wgClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
+
+        if (wbLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
+            if (wbShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION) {
+                if (wbClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION) {
+                    return 3;
+                }
+
+                return 2;
+            }
+
+            return 1;
+        }
+
+        return 0;
     }
 
 }
