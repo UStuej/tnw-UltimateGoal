@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 
 @TeleOp(name = "TeleOp0")
-@Disabled
+
 public class TeleOp0 extends OpMode {
 
     // Declare drive motors
@@ -71,7 +71,7 @@ public class TeleOp0 extends OpMode {
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         // Initialize servo positions
-        wgPickup.setPosition(1.0);                                                                                // Tune to Wobble Goal pickup UP position
+        wgPickup.setPosition(.32);
         wgShoulder.setPosition(0.0);                                                                              // Tune to Wobble Goal shoulder IN position
         wgClaw.setPosition(1.0);                                                                                  // Tune to Wobble Goal claw CLOSED position
     }
@@ -114,7 +114,7 @@ public class TeleOp0 extends OpMode {
 // WOBBLE GOAL PICKUP CODE
 
         // Map Wobble Goal pickup to controller inputs
-        wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? 1.0 : 0.0);                                       // Tune to Wobble Goal pickup UP / DOWN position
+        wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? .7 : .32);
 
 // WOBBLE GOAL SHOULDER CODE
 
