@@ -51,7 +51,9 @@ public class TeleOp0 extends OpMode {
     private boolean wobbleGoalDeploying = false;
     private boolean wobbleGoalUndeploying = false;
     private int wobbleGoalDeployState; // Integer from 0 to 3 representing the stage of deployment (lift, shoulder, claw, or done)
-    private int wobbleGoalUndeployState; // Integer from 0 to 3 representing the sate of undeployment (claw, shoulder, lift, or done)
+    private int wobbleGoalUndeployState; // Integer from 0 to 3 representing the stage of undeployment (claw, shoulder, lift, or done)
+
+    private const boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
     @Override
     public void init() {
@@ -83,71 +85,74 @@ public class TeleOp0 extends OpMode {
 
     @Override
     public void loop() {
-
+        if (!DEPLOY_BLOCKS_INPUT || !(wobbleGoalDeploying || wobbleGoalUndeploying)) { // If deployment doesn't block the input, or nothing is being deployed/undeployed, run the normal input-handling code
 // DRIVE CODE
 
-        // Toggleable drive speed limiter
-        powerLimiter = gamepad1.left_bumper && !gamepad1.right_bumper ? 0.3     // Slow mode
-                        : !gamepad1.left_bumper && gamepad1.right_bumper ? 1.0  // Fast mode
-                        : 0.75;                                                 // Normal mode
+            // Toggleable drive speed limiter
+            powerLimiter = gamepad1.left_bumper && !gamepad1.right_bumper ? 0.3     // Slow mode
+                            : !gamepad1.left_bumper && gamepad1.right_bumper ? 1.0  // Fast mode
+                            : 0.75;                                                 // Normal mode
 
-        // Map vertical, horizontal, and rotational values to controller inputs
-        vertical = DcMotorControl.motorIncrControl(-gamepad1.left_stick_y, vertical);
-        horizontal = DcMotorControl.motorIncrControl(gamepad1.left_stick_x, horizontal);
-        rotation = DcMotorControl.motorIncrControl(gamepad1.right_stick_x, rotation);
+            // Map vertical, horizontal, and rotational values to controller inputs
+            vertical = DcMotorControl.motorIncrControl(-gamepad1.left_stick_y, vertical);
+            horizontal = DcMotorControl.motorIncrControl(gamepad1.left_stick_x, horizontal);
+            rotation = DcMotorControl.motorIncrControl(gamepad1.right_stick_x, rotation);
 
-        // Set drive motor power
-        frontLeftDrive.setPower((vertical + horizontal + rotation) * powerLimiter);                               // Reverse in INIT if needed
-        frontRightDrive.setPower((vertical - horizontal - rotation) * powerLimiter);                              // Reverse in INIT if needed
-        backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse in INIT if needed
-        backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse in INIT if needed
+            // Set drive motor power
+            frontLeftDrive.setPower((vertical + horizontal + rotation) * powerLimiter);                               // Reverse in INIT if needed
+            frontRightDrive.setPower((vertical - horizontal - rotation) * powerLimiter);                              // Reverse in INIT if needed
+            backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse in INIT if needed
+            backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse in INIT if needed
 
 // INTAKE CODE
 
-        // Set intake power and mapping to controller input
-        intakeDrive.setPower(DcMotorControl.motorIncrControl(gamepad2.right_trigger - gamepad2.left_trigger, intakeDrive.getPower()));      // Reverse in INIT if needed
+            // Set intake power and mapping to controller input
+            intakeDrive.setPower(DcMotorControl.motorIncrControl(gamepad2.right_trigger - gamepad2.left_trigger, intakeDrive.getPower()));      // Reverse in INIT if needed
 
 // WOBBLE GOAL LIFT CODE
 
-        // Restrict lift to only operate when Wobble Goal shoulder is rotated outside robot frame
-        wgLift.setPower(wgShoulder.getPosition() < 1.0                                                                  // Change < 1 to restrict lift to only operate when shoulder is rotated out.
-                        ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
-                        : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
+            // Restrict lift to only operate when Wobble Goal shoulder is rotated outside robot frame
+            wgLift.setPower(wgShoulder.getPosition() < 1.0                                                                  // Change < 1 to restrict lift to only operate when shoulder is rotated out.
+                            ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
+                            : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
 
 
 
 // WOBBLE GOAL PICKUP CODE
 
-        // Map Wobble Goal pickup to controller inputs
-        wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? .7 : .32);
+            // Map Wobble Goal pickup to controller inputs
+            wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? .7 : .32);
 
 // WOBBLE GOAL SHOULDER CODE
 
-        // Test for release of mapped button
-        if (!gamepad2.a) { g2AReleased = true; }
+            // Test for release of mapped button
+            if (!gamepad2.a) { g2AReleased = true; }
 
-        // Map Wobble Goal shoulder state switch to controller input
-        if (gamepad2.a && g2AReleased) {
-            g2AReleased = false;
-            wgShoulderState = !wgShoulderState;
-        }
+            // Map Wobble Goal shoulder state switch to controller input
+            if (gamepad2.a && g2AReleased) {
+                g2AReleased = false;
+                wgShoulderState = !wgShoulderState;
+            }
 
-        // Ternary operator to set Wobble Goal shoulder position
-        wgShoulder.setPosition(wgShoulderState ? 0.0 : 1.0);                                                    // Tune to Wobble Goal shoulder IN / OUT position
+            // Ternary operator to set Wobble Goal shoulder position
+            wgShoulder.setPosition(wgShoulderState ? 0.0 : 1.0);                                                    // Tune to Wobble Goal shoulder IN / OUT position
 
 // WOBBLE GOAL CLAW CODE
 
-        // Test for release of mapped button
-        if (!gamepad2.b) { g2BReleased = true; }
+            // Test for release of mapped button
+            if (!gamepad2.b) { g2BReleased = true; }
 
-        // Map Wobble Goal claw state switch to controller input
-        if (gamepad2.b && g2BReleased) {
-            g2BReleased = false;
-            wgClawState = !wgClawState;
+            // Map Wobble Goal claw state switch to controller input
+            if (gamepad2.b && g2BReleased) {
+                g2BReleased = false;
+                wgClawState = !wgClawState;
+            }
+
+            // Ternary operator to set Wobble Goal claw position
+            wgClaw.setPosition(wgClawState ? 0.0 : 1.0);                                                    // Tune to Wobble Goal claw OPEN / CLOSED position
         }
 
-        // Ternary operator to set Wobble Goal claw position
-        wgClaw.setPosition(wgClawState ? 0.0 : 1.0);                                                    // Tune to Wobble Goal claw OPEN / CLOSED position
+// WOBBLE GOAL DEPLOYENT/UNDEPLOYMENT CODE
 
         if (gamepad2.x) {
             // Set deploying
@@ -159,6 +164,12 @@ public class TeleOp0 extends OpMode {
             // Set undeploying
             wobbleGoalDeploying = false;
             wobbleGoalUndeploying = true;
+        }
+
+        if (gamepad2.right_stick_button) {
+            // Failsafe to disable all deploying/undeploying, ensuring manual input is resumed
+            wobbleGoalDeploying = false;
+            wobbleGoalUndeploying = false;
         }
 
         if (wobbleGoalDeploying) {
@@ -180,7 +191,7 @@ public class TeleOp0 extends OpMode {
         }
     }
 
-    private void wobbleGoalDeploy() { // FIXME: This is a dumb function name
+    private void wobbleGoalDeploy() {
         switch (wobbleGoalDeployState) {
             case 0:
                 wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);
@@ -196,11 +207,7 @@ public class TeleOp0 extends OpMode {
         }
     }
 
-    private void wobbleGoalUndeploy() { // FIXME: Another bad name
-        //wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
-        //wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
-        //wgClaw.setPosition(0.0); // Also guessing that this is closing
-
+    private void wobbleGoalUndeploy() {
         switch (wobbleGoalDeployState) {
             case 0:
                 wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
@@ -217,23 +224,19 @@ public class TeleOp0 extends OpMode {
     }
 
     private int getWobbleGoalDeployedState() {
-        //return (wgLift.getPosition() == WOBBLE_GOAL_DEPLOYED_LIFT_POSITION &&
-        //wgShoulder.getPosition() == WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION &&
-        //wgClaw.getPosition() == WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);
-
         if (wbClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION) {
             if (wbShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION) {
                 if (wbLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
-                    return 3;
+                    return 3; // We're done
                 }
 
-                return 2;
+                return 2; // The first two are complete; one more to go
             }
 
-            return 1;
+            return 1; // The first task is complete; two more to go
         }
 
-        return 0;
+        return 0; // The first task isn't complete
     }
 
     private int getWobbleGoalUndeployedState() {
@@ -244,16 +247,16 @@ public class TeleOp0 extends OpMode {
         if (wbLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
             if (wbShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION) {
                 if (wbClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION) {
-                    return 3;
+                    return 3; // We're done
                 }
 
-                return 2;
+                return 2; // The first two are complete; one more to go
             }
 
-            return 1;
+            return 1; // THe first task is complete; two more to go
         }
 
-        return 0;
+        return 0; // The first task isn't complete
     }
 
 }
