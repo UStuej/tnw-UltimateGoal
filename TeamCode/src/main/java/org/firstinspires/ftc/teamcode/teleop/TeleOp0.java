@@ -50,8 +50,29 @@ public class TeleOp0 extends OpMode {
 
     private boolean wobbleGoalDeploying = false;
     private boolean wobbleGoalUndeploying = false;
-    private int wobbleGoalDeployState; // Integer from 0 to 3 representing the stage of deployment (lift, shoulder, claw, or done)
-    private int wobbleGoalUndeployState; // Integer from 0 to 3 representing the stage of undeployment (claw, shoulder, lift, or done)
+    private float wobbleGoalDeployStartTime; // Float representing the starting time of deployment, used to determine the elapsed time
+    private float wobbleGoalUndeployStartTime; // Float representing the starting time of undeployment, used to determine the elapsed time
+
+    private float wobbleGoalDeployCurrentTime; // Float representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
+    private float wobbleGoalUndeployCurrentTime; // Float representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
+
+    private const float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
+    private const float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
+    private const float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
+    private const float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
+
+    private const float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
+    private const float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
+    private const float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
+
+    private const float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
+    private const float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
+    private const float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
+    private const float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
+
+    private const float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
+    private const float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
+    private const float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
 
     private const boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
@@ -156,14 +177,22 @@ public class TeleOp0 extends OpMode {
 
         if (gamepad2.x) {
             // Set deploying
-            wobbleGoalDeploying = true;
+            if (!wobbleGoalDeploying) {
+                wobbleGoalDeploying = true;
+                wobbleGoalDeployStartTime = getTime();
+            }
+
             wobbleGoalUndeploying = false;
         }
 
         if (gamepad2.y) {
             // Set undeploying
+            if (!wobbleGoalUndeploying) {
+                wobbleGoalUndeploying = true;
+                wobbleGoalUndeployStartTime = getTime();
+            }
+
             wobbleGoalDeploying = false;
-            wobbleGoalUndeploying = true;
         }
 
         if (gamepad2.right_stick_button) {
@@ -174,89 +203,57 @@ public class TeleOp0 extends OpMode {
 
         if (wobbleGoalDeploying) {
             wobbleGoalDeploy();
-            wobbleGoalDeployState = getWobbleGoalDeployedState();
+            wobbleGoalDeployTime = getWobbleGoalDeployedTime();
 
-            if (wobbleGoalDeployState == 3) { // We finished deploying; no need to keep running this block
+            if (wobbleGoalDeployTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
                 wobbleGoalDeploying = false;
             }
         }
 
         if (wobbleGoalUndeploying) {
             wobbleGoalUndeploy();
-            wobbleGoalUndeployState = getWobbleGoalUndeployedState();
+            wobbleGoalUndeployTime = getWobbleGoalUndeployedTime();
 
-            if (wobbleGoalUndeployState == 3) { // We finished undeploying; no need to keep running this block
+            if (wobbleGoalUndeployTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
                 wobbleGoalUndeploying = false;
             }
         }
     }
 
     private void wobbleGoalDeploy() {
-        switch (wobbleGoalDeployState) {
-            case 0:
-                wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);
-            break;
+        if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
+            wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION); // FIXME: Maybe this shouldn't be set every iteration
+        }
+        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
+            wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
+        }
+        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
+            wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
+        }
 
-            case 1:
-                wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
-            break;
-
-            case 2:
-                wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
-            break;
         }
     }
 
     private void wobbleGoalUndeploy() {
-        switch (wobbleGoalDeployState) {
-            case 0:
-                wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
-            break;
+        if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
+            wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
+        }
+        else if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
+            wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
+        }
+        else if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
+            wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
+        }
 
-            case 1:
-                wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
-            break;
-
-            case 2:
-                wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
-            break;
         }
     }
 
-    private int getWobbleGoalDeployedState() {
-        if (wbClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION) {
-            if (wbShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION) {
-                if (wbLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
-                    return 3; // We're done
-                }
-
-                return 2; // The first two are complete; one more to go
-            }
-
-            return 1; // The first task is complete; two more to go
-        }
-
-        return 0; // The first task isn't complete
+    private float getWobbleGoalDeployedTime() {
+        return System.currentTimeMillis();
     }
 
-    private int getWobbleGoalUndeployedState() {
-        //return (wgLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION &&
-        //wgShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION &&
-        //wgClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
-
-        if (wbLift.getPosition() == WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
-            if (wbShoulder.getPosition() == WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION) {
-                if (wbClaw.getPosition() == WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION) {
-                    return 3; // We're done
-                }
-
-                return 2; // The first two are complete; one more to go
-            }
-
-            return 1; // THe first task is complete; two more to go
-        }
-
-        return 0; // The first task isn't complete
+    private float getWobbleGoalUndeployedTime() {
+        return System.currentTimeMillis();
     }
 
 }
