@@ -131,7 +131,7 @@ public class TeleOp1 extends OpMode {
             //backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse in INIT if needed
             //backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse in INIT if needed
             setDirection(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x);
-            deltaTime += System.currentTimeMillis - deltaTime;
+            deltaTime += System.currentTimeMillis() - deltaTime;
             angleOffset += gamepad1.right_stick_y * angleOffsetFactor / deltaTime; // First offset will likely be incredibly small
 
 // INTAKE CODE
