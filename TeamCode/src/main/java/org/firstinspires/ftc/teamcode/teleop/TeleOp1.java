@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -56,29 +55,29 @@ public class TeleOp1 extends OpMode {
     private double wobbleGoalDeployCurrentTime; // double representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
     private double wobbleGoalUndeployCurrentTime; // double representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
 
-    private double WOBBLE_GOAL_DEPLOYED_CLAW_TIME; // TODO: Define these
-    private double WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME;
-    private double WOBBLE_GOAL_DEPLOYED_LIFT_TIME;
-    private double WOBBLE_GOAL_DEPLOYED_FINISH_TIME;
+    private final double WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 0.0; // TODO: Define these
+    private final double WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 0.0;
+    private final double WOBBLE_GOAL_DEPLOYED_LIFT_TIME = 0.0;
+    private final double WOBBLE_GOAL_DEPLOYED_FINISH_TIME = 0.0;
 
-    private double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
-    private double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
-    private double WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
+    private final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
+    private final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
+    private final double WOBBLE_GOAL_DEPLOYED_LIFT_POSITION = 0.0;
 
-    private double WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
-    private double WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
-    private double WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
-    private double WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
+    private final double WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME = 0.0;
+    private final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 0.0;
+    private final double WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 0.0;
+    private final double WOBBLE_GOAL_UNDEPLOYED_FINISH_TIME = 0.0;
 
-    private double WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
-    private double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
-    private double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
+    private final double WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION = 0.0;
+    private final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.0;
+    private final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.0;
 
-    private double angleOffset = 0.0;
-    private double angleOffsetFactor = 1.0;
-    private double deltaTime = 0.0;
+    private final double ANGLE_OFFSET = 0.0;
+    private final double ANGLE_OFFSET_FACTOR = 1.0;
+    private final double DELTA_TIME = 0.0;
 
-    private boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
+    private final  boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
     @Override
     public void init() {
@@ -131,8 +130,8 @@ public class TeleOp1 extends OpMode {
             //backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse in INIT if needed
             //backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse in INIT if needed
             setDirection(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x);
-            deltaTime += System.currentTimeMillis() - deltaTime;
-            angleOffset += gamepad1.right_stick_y * angleOffsetFactor / deltaTime; // First offset will likely be incredibly small
+            DELTA_TIME += System.currentTimeMillis() - DELTA_TIME;
+            ANGLE_OFFSET += gamepad1.right_stick_y * ANGLE_OFFSET_FACTOR / DELTA_TIME; // First offset will likely be incredibly small
 
 // INTAKE CODE
 
@@ -218,16 +217,16 @@ public class TeleOp1 extends OpMode {
             wobbleGoalDeploy();
             wobbleGoalDeployStartTime = getWobbleGoalDeployedTime();
 
-            if (wobbleGoalDeployStartTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
+            if (wobbleGoalDeployStartTime >= WOBBLE_GOAL_DEPLOYED_FINISH_TIME) { // We finished deploying; no need to keep running this block
                 wobbleGoalDeploying = false;
             }
         }
 
         if (wobbleGoalUndeploying) {
             wobbleGoalUndeploy();
-            wobbleGoalUndeployTime = getWobbleGoalUndeployedTime();
+            wobbleGoalUndeployStartTime = getWobbleGoalUndeployedTime();
 
-            if (wobbleGoalUndeployTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
+            if (wobbleGoalUndeployStartTime >= WOBBLE_GOAL_UNDEPLOYED_FINISH_TIME) { // We finished undeploying; no need to keep running this block
                 wobbleGoalUndeploying = false;
             }
         }
@@ -241,19 +240,19 @@ public class TeleOp1 extends OpMode {
             wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
         }
         else if (wobbleGoalDeployStartTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
-            wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
+            wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);  // FIXME wgLift is a DcMotor, not a Servo
         }
 
     }
 
     private void wobbleGoalUndeploy() {
-        if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
-            wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
+        if (wobbleGoalUndeployStartTime < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
+            wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);  // FIXME wgLift is a DcMotor, not a Servo
         }
-        else if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
+        else if (wobbleGoalUndeployStartTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
+        else if (wobbleGoalUndeployStartTime < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
         }
 
@@ -269,18 +268,18 @@ public class TeleOp1 extends OpMode {
 
     private void setDirection(double x, double y, double angle) {
         // Compute the initial magnitude of the joystick
-        double joystickMagnitude = Math.sqrt(x**2 + y**2);
+        double joystickMagnitude = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
 
         // Compute the angle of the joystick vector
-        double joystickAngle = Math.atan2(y, x) + angleOffset;
+        double joystickAngle = Math.atan2(y, x) + ANGLE_OFFSET;
 
         // Compute the resulting motor values
-        double frontLeftDrivePower = Math.sin(joystickAngle+(1/4*Math.PI)) * easeFunction(joystickMagnitude) + angle;
-        double frontRightDrivePower = Math.sin(joystickAngle-(1/4*Math.PI)) * easeFunction(joystickMagnitude) + angle;
+        double frontLeftDrivePower = Math.sin(joystickAngle+(0.25*Math.PI)) * easeFunction(joystickMagnitude) + angle;
+        double frontRightDrivePower = Math.sin(joystickAngle-(0.25*Math.PI)) * easeFunction(joystickMagnitude) + angle;
         double backLeftDrivePower = frontRightDrivePower;
         double backRightDrivePower = frontLeftDrivePower;
 
-        double maxDrivePower = (Math.abs(frontLeftDrivePower) > Math.abs(frontRightDrivePower) ? Math.abs(frontLeftDrivePower) : Math.abs(frontRightDrivePower));
+        double maxDrivePower = Math.max(Math.abs(frontLeftDrivePower), Math.abs(frontRightDrivePower));
 
         frontLeftDrivePower /= maxDrivePower;
         frontRightDrivePower /= maxDrivePower;
@@ -303,23 +302,23 @@ public class TeleOp1 extends OpMode {
     }
 
     private double easeInOutSine(double value) {
-        return -(Math.cos(Math.PI * x) - 1) / 2;
+        return -(Math.cos(Math.PI * value) - 1) / 2;
     }
 
     private double easeInQuad(double value) {
-        return value**2;
+        return Math.pow(value, 2);
     }
 
     private double easeOutQuad(double value) {
-        1 - (1 - value)**2
+        return 1 - Math.pow(1 - value, 2);
     }
 
     private double easeInOutQuad(double value) {
-        return value < 0.5 ? 2 * value**2 : 1 - Math.pow(-2 * value + 2, 2) / 2;
+        return value < 0.5 ? 2 * Math.pow(value, 2) : 1 - Math.pow(-2 * value + 2, 2) / 2;
     }
 
     private double easeInCubic(double value) {
-        return value**3;
+        return Math.pow(value, 3);
     }
 
     private double easeOutCubic(double value) {
@@ -327,11 +326,11 @@ public class TeleOp1 extends OpMode {
     }
 
     private double easeInOutCubic(double value) {
-        return value < 0.5 ? 4 * value**3 : 1 - Math.pow(-2 * value + 2, 3) / 2;
+        return value < 0.5 ? 4 * Math.pow(value, 3) : 1 - Math.pow(-2 * value + 2, 3) / 2;
     }
 
     private double easeInQuart(double value) {
-        return value**4;
+        return Math.pow(value, 4);
     }
 
     private double easeOutQuart(double value) {
@@ -339,11 +338,11 @@ public class TeleOp1 extends OpMode {
     }
 
     private double easeInOutQuart(double value) {
-        return value < 0.5 ? 8 * value**4 : 1 - Math.pow(-2 * value + 2, 4) / 2;
+        return value < 0.5 ? 8 * Math.pow(value, 4) : 1 - Math.pow(-2 * value + 2, 4) / 2;
     }
 
     private double easeInQuint(double value) {
-        return value**5;
+        return Math.pow(value, 5);
     }
 
     private double easeOutQuint(double value) {
@@ -351,7 +350,7 @@ public class TeleOp1 extends OpMode {
     }
 
     private double easeInOutQuint(double value) {
-        return value < 0.5 ? 16 * value**5 : 1 - Math.pow(-2 * value + 2, 5) / 2;
+        return value < 0.5 ? 16 * Math.pow(value, 5) : 1 - Math.pow(-2 * value + 2, 5) / 2;
     }
 
     private double easeInExpo(double value) {
