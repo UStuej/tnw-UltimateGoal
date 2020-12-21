@@ -105,18 +105,6 @@ public class TeleOp1 extends OpMode {
                             : !gamepad1.left_bumper && gamepad1.right_bumper ? 1.0  // Fast mode
                             : 0.75;                                                 // Normal mode
 
-            // Map vertical, horizontal, and rotational values to controller inputs
-            //vertical = DcMotorControl.motorIncrControl(-gamepad1.left_stick_y, vertical);
-            //horizontal = DcMotorControl.motorIncrControl(gamepad1.left_stick_x, horizontal);
-            //rotation = DcMotorControl.motorIncrControl(gamepad1.right_stick_x, rotation);
-
-
-
-            // Set drive motor power
-            //frontLeftDrive.setPower((vertical + horizontal + rotation) * powerLimiter);                               // Reverse in INIT if needed
-            //frontRightDrive.setPower((vertical - horizontal - rotation) * powerLimiter);                              // Reverse in INIT if needed
-            //backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse in INIT if needed
-            //backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse in INIT if needed
             setDirection(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x);
             deltaTime += System.currentTimeMillis() - deltaTime;
             angleOffset += gamepad1.right_stick_y * angleOffsetFactor / deltaTime; // First offset will likely be incredibly small
@@ -132,8 +120,6 @@ public class TeleOp1 extends OpMode {
             wgLift.setPower(wgShoulder.getPosition() < 1.0                                                                  // Change < 1 to restrict lift to only operate when shoulder is rotated out.
                             ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
                             : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
-
-
 
 // WOBBLE GOAL PICKUP CODE
 
