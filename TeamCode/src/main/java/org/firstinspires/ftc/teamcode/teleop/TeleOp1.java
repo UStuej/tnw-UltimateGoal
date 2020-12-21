@@ -192,7 +192,7 @@ public class TeleOp1 extends OpMode {
             // Set deploying
             if (!wobbleGoalDeploying) {
                 wobbleGoalDeploying = true;
-                wobbleGoalDeployStartTime = getTime();
+                wobbleGoalDeployStartTime = System.currentTimeMillis();
             }
 
             wobbleGoalUndeploying = false;
@@ -202,7 +202,7 @@ public class TeleOp1 extends OpMode {
             // Set undeploying
             if (!wobbleGoalUndeploying) {
                 wobbleGoalUndeploying = true;
-                wobbleGoalUndeployStartTime = getTime();
+                wobbleGoalUndeployStartTime = System.currentTimeMillis();
             }
 
             wobbleGoalDeploying = false;
