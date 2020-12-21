@@ -93,6 +93,8 @@ public class TeleOp1 extends OpMode {
         wgPickup.setPosition(.32);
         wgShoulder.setPosition(0.0); // Tune to Wobble Goal shoulder IN position
         wgClaw.setPosition(1.0); // Tune to Wobble Goal claw CLOSED position
+
+        wgLift.setMode(DcMotor.RUN_TO_POSITION);
     }
 
     @Override
@@ -213,15 +215,15 @@ public class TeleOp1 extends OpMode {
         else if (wobbleGoalDeployStartTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalDeployStartTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
-            wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);  // FIXME wgLift is a DcMotor, not a Servo
+        else if (wgLift.getCurrentPosition() < WOBBLE_GOAL_DEPLOYED_LIFT_POSITION) {
+            wgLift.setTargetPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
         }
 
     }
 
     private void wobbleGoalUndeploy() {
-        if (wobbleGoalUndeployStartTime < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
-            wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);  // FIXME wgLift is a DcMotor, not a Servo
+        if (wgLift.getCurrentPosition() < WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
+            wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
         }
         else if (wobbleGoalUndeployStartTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
