@@ -50,33 +50,33 @@ public class TeleOp1 extends OpMode {
 
     private boolean wobbleGoalDeploying = false;
     private boolean wobbleGoalUndeploying = false;
-    private float wobbleGoalDeployStartTime; // Float representing the starting time of deployment, used to determine the elapsed time
-    private float wobbleGoalUndeployStartTime; // Float representing the starting time of undeployment, used to determine the elapsed time
+    private double wobbleGoalDeployStartTime; // double representing the starting time of deployment, used to determine the elapsed time
+    private double wobbleGoalUndeployStartTime; // double representing the starting time of undeployment, used to determine the elapsed time
 
-    private float wobbleGoalDeployCurrentTime; // Float representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
-    private float wobbleGoalUndeployCurrentTime; // Float representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
+    private double wobbleGoalDeployCurrentTime; // double representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
+    private double wobbleGoalUndeployCurrentTime; // double representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
 
-    private float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
-    private float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
-    private float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
-    private float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
+    private double WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
+    private double WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
+    private double WOBBLE_GOAL_DEPLOY_LIFT_TIME;
+    private double WOBBLE_GOAL_DEPLOY_FINISH_TIME;
 
-    private float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
-    private float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
-    private float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
+    private double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
+    private double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
+    private double WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
 
-    private float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
-    private float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
-    private float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
-    private float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
+    private double WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
+    private double WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
+    private double WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
+    private double WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
 
-    private float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
-    private float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
-    private float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
+    private double WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
+    private double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
+    private double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
 
-    private float angleOffset = 0.0;
-    private float angleOffsetFactor = 1.0;
-    private float deltaTime = 0.0;
+    private double angleOffset = 0.0;
+    private double angleOffsetFactor = 1.0;
+    private double deltaTime = 0.0;
 
     private boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
@@ -258,31 +258,30 @@ public class TeleOp1 extends OpMode {
             wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
         }
 
-        }
     }
 
-    private float getWobbleGoalDeployedTime() {
+    private double getWobbleGoalDeployedTime() {
         return System.currentTimeMillis();
     }
 
-    private float getWobbleGoalUndeployedTime() {
+    private double getWobbleGoalUndeployedTime() {
         return System.currentTimeMillis();
     }
 
-    private void setDirection(float x, float y, float angle) {
+    private void setDirection(double x, double y, double angle) {
         // Compute the initial magnitude of the joystick
-        float joystickMagnitude = Math.sqrt(x**2 + y**2);
+        double joystickMagnitude = Math.sqrt(x**2 + y**2);
 
         // Compute the angle of the joystick vector
-        float joystickAngle = Math.atan2(y, x) + angleOffset;
+        double joystickAngle = Math.atan2(y, x) + angleOffset;
 
         // Compute the resulting motor values
-        float frontLeftDrivePower = Math.sin(joystickAngle+(1/4*Math.PI)) * easeFunction(joystickMagnitude) + angle;
-        float frontRightDrivePower = Math.sin(joystickAngle-(1/4*Math.PI)) * easeFunction(joystickMagnitude) + angle;
-        float backLeftDrivePower = frontRightDrivePower;
-        float backRightDrivePower = frontLeftDrivePower;
+        double frontLeftDrivePower = Math.sin(joystickAngle+(1/4*Math.PI)) * easeFunction(joystickMagnitude) + angle;
+        double frontRightDrivePower = Math.sin(joystickAngle-(1/4*Math.PI)) * easeFunction(joystickMagnitude) + angle;
+        double backLeftDrivePower = frontRightDrivePower;
+        double backRightDrivePower = frontLeftDrivePower;
 
-        float maxDrivePower = (Math.abs(frontLeftDrivePower) > Math.abs(frontRightDrivePower) ? Math.abs(frontLeftDrivePower) : Math.abs(frontRightDrivePower));
+        double maxDrivePower = (Math.abs(frontLeftDrivePower) > Math.abs(frontRightDrivePower) ? Math.abs(frontLeftDrivePower) : Math.abs(frontRightDrivePower));
 
         frontLeftDrivePower /= maxDrivePower;
         frontRightDrivePower /= maxDrivePower;
@@ -296,91 +295,91 @@ public class TeleOp1 extends OpMode {
         backRightDrive.setPower(backRightDrivePower);
     }
 
-    private float easeInSine(float value) {
+    private double easeInSine(double value) {
         return 1 - Math.cos((value * Math.PI) / 2);
     }
 
-    private float easeOutSine(float value) {
+    private double easeOutSine(double value) {
         return Math.sin((value * Math.PI) / 2);
     }
 
-    private float easeInOutSine(float value) {
+    private double easeInOutSine(double value) {
         return -(Math.cos(Math.PI * x) - 1) / 2;
     }
 
-    private float easeInQuad(float value) {
+    private double easeInQuad(double value) {
         return value**2;
     }
 
-    private float easeOutQuad(float value) {
+    private double easeOutQuad(double value) {
         1 - (1 - value)**2
     }
 
-    private float easeInOutQuad(float value) {
+    private double easeInOutQuad(double value) {
         return value < 0.5 ? 2 * value**2 : 1 - Math.pow(-2 * value + 2, 2) / 2;
     }
 
-    private float easeInCubic(float value) {
+    private double easeInCubic(double value) {
         return value**3;
     }
 
-    private float easeOutCubic(float value) {
+    private double easeOutCubic(double value) {
         return 1 - Math.pow(1 - value, 3);
     }
 
-    private float easeInOutCubic(float value) {
+    private double easeInOutCubic(double value) {
         return value < 0.5 ? 4 * value**3 : 1 - Math.pow(-2 * value + 2, 3) / 2;
     }
 
-    private float easeInQuart(float value) {
+    private double easeInQuart(double value) {
         return value**4;
     }
 
-    private float easeOutQuart(float value) {
+    private double easeOutQuart(double value) {
         return 1 - Math.pow(1 - value, 4);
     }
 
-    private float easeInOutQuart(float value) {
+    private double easeInOutQuart(double value) {
         return value < 0.5 ? 8 * value**4 : 1 - Math.pow(-2 * value + 2, 4) / 2;
     }
 
-    private float easeInQuint(float value) {
+    private double easeInQuint(double value) {
         return value**5;
     }
 
-    private float easeOutQuint(float value) {
+    private double easeOutQuint(double value) {
         return 1 - Math.pow(1 - value, 5);
     }
 
-    private float easeInOutQuint(float value) {
+    private double easeInOutQuint(double value) {
         return value < 0.5 ? 16 * value**5 : 1 - Math.pow(-2 * value + 2, 5) / 2;
     }
 
-    private float easeInExpo(float value) {
+    private double easeInExpo(double value) {
         return value == 0 ? 0 : Math.pow(2, 10 * value - 10);
     }
 
-    private float easeOutExpo(float value) {
+    private double easeOutExpo(double value) {
         return value == 1 ? 1 : 1 - Math.pow(2, -10 * value);
     }
 
-    private float easeInOutExpo(float value) {
+    private double easeInOutExpo(double value) {
         return value == 0 ? 0 : value == 1 ? 1 : value < 0.5 ? Math.pow(2, 20 * value - 10) / 2 : (2 - Math.pow(2, -20 * value + 10)) / 2;
     }
 
-    private float easeInCirc(float value) {
+    private double easeInCirc(double value) {
         return 1 - Math.sqrt(1 - Math.pow(value, 2));
     }
 
-    private float easeOutCirc(float value) {
+    private double easeOutCirc(double value) {
         return Math.sqrt(1 - Math.pow(value - 1, 2));
     }
 
-    private float easeInOutCirc(float value) {
+    private double easeInOutCirc(double value) {
         return value < 0.5 ? (1 - Math.sqrt(1 - Math.pow(2 * value, 2))) / 2 : (Math.sqrt(1 - Math.pow(-2 * value + 2, 2)) + 1) / 2;
     }
 
-    private float easeFunction(float value) {
+    private double easeFunction(double value) {
         return value;  // Placeholder for any easing function we might use (if any)
     }
 
