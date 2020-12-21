@@ -56,10 +56,10 @@ public class TeleOp1 extends OpMode {
     private double wobbleGoalDeployCurrentTime; // double representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
     private double wobbleGoalUndeployCurrentTime; // double representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
 
-    private double WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
-    private double WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
-    private double WOBBLE_GOAL_DEPLOY_LIFT_TIME;
-    private double WOBBLE_GOAL_DEPLOY_FINISH_TIME;
+    private double WOBBLE_GOAL_DEPLOYED_CLAW_TIME; // TODO: Define these
+    private double WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME;
+    private double WOBBLE_GOAL_DEPLOYED_LIFT_TIME;
+    private double WOBBLE_GOAL_DEPLOYED_FINISH_TIME;
 
     private double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
     private double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
@@ -216,9 +216,9 @@ public class TeleOp1 extends OpMode {
 
         if (wobbleGoalDeploying) {
             wobbleGoalDeploy();
-            wobbleGoalDeployTime = getWobbleGoalDeployedTime();
+            wobbleGoalDeployStartTime = getWobbleGoalDeployedTime();
 
-            if (wobbleGoalDeployTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
+            if (wobbleGoalDeployStartTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
                 wobbleGoalDeploying = false;
             }
         }
@@ -234,13 +234,13 @@ public class TeleOp1 extends OpMode {
     }
 
     private void wobbleGoalDeploy() {
-        if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
+        if (wobbleGoalDeployStartTime < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION); // FIXME: Maybe this shouldn't be set every iteration
         }
-        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
+        else if (wobbleGoalDeployStartTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
+        else if (wobbleGoalDeployStartTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
             wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
         }
 
