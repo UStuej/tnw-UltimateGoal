@@ -19,14 +19,14 @@ public class TeleOp1 extends OpMode {
 
     private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
     private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
-    private static final double WOBBLE_GOAL_DEPLOYED_LIFT_POSITION = 0.0;
+    private static final int WOBBLE_GOAL_DEPLOYED_LIFT_POSITION = 0;
 
     private static final double WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME = 0.0;
     private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 0.0;
     private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 0.0;
     private static final double WOBBLE_GOAL_UNDEPLOYED_FINISH_TIME = 0.0;
 
-    private static final double WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION = 0.0;
+    private static final int WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION = 0;
     private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.0;
     private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.0;
 
@@ -94,7 +94,7 @@ public class TeleOp1 extends OpMode {
         wgShoulder.setPosition(0.0); // Tune to Wobble Goal shoulder IN position
         wgClaw.setPosition(1.0); // Tune to Wobble Goal claw CLOSED position
 
-        wgLift.setMode(DcMotor.RUN_TO_POSITION);
+        wgLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     @Override
@@ -223,7 +223,7 @@ public class TeleOp1 extends OpMode {
 
     private void wobbleGoalUndeploy() {
         if (wgLift.getCurrentPosition() < WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION) {
-            wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
+            wgLift.setTargetPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
         }
         else if (wobbleGoalUndeployStartTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
