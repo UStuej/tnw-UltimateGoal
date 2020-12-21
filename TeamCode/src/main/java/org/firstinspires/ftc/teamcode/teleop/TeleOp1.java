@@ -11,6 +11,28 @@ import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 
 public class TeleOp1 extends OpMode {
 
+    // USER-DEFINED CONSTANTS
+    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 0.0; // TODO: Define these
+    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOYED_LIFT_TIME = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOYED_FINISH_TIME = 0.0;
+
+    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOYED_LIFT_POSITION = 0.0;
+
+    private static final double WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_FINISH_TIME = 0.0;
+
+    private static final double WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.0;
+
+    private static final boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
+
+
     // Declare drive motors
     private DcMotor frontLeftDrive;
     private DcMotor frontRightDrive;
@@ -26,18 +48,6 @@ public class TeleOp1 extends OpMode {
     private Servo wgShoulder;
     private Servo wgClaw;
 
-    // Declare drive power
-    private double frontLeftDrivePower;
-    private double frontRightDrivePower;
-    private double backLeftDrivePower;
-    private double backRightDrivePower;
-
-    // Declare chassis motion variables
-    private double currentPower;
-    private double vertical;
-    private double horizontal;
-    private double rotation;
-
     // Declare Drive Power Limiting Variables
     private double powerLimiter;
 
@@ -52,32 +62,10 @@ public class TeleOp1 extends OpMode {
     private double wobbleGoalDeployStartTime; // double representing the starting time of deployment, used to determine the elapsed time
     private double wobbleGoalUndeployStartTime; // double representing the starting time of undeployment, used to determine the elapsed time
 
-    private double wobbleGoalDeployCurrentTime; // double representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
-    private double wobbleGoalUndeployCurrentTime; // double representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
+    private double angleOffset = 0.0;
+    private double angleOffsetFactor = 1.0;
+    private double deltaTime = 0.0;
 
-    private final double WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 0.0; // TODO: Define these
-    private final double WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 0.0;
-    private final double WOBBLE_GOAL_DEPLOYED_LIFT_TIME = 0.0;
-    private final double WOBBLE_GOAL_DEPLOYED_FINISH_TIME = 0.0;
-
-    private final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
-    private final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
-    private final double WOBBLE_GOAL_DEPLOYED_LIFT_POSITION = 0.0;
-
-    private final double WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME = 0.0;
-    private final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 0.0;
-    private final double WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 0.0;
-    private final double WOBBLE_GOAL_UNDEPLOYED_FINISH_TIME = 0.0;
-
-    private final double WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION = 0.0;
-    private final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.0;
-    private final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.0;
-
-    private final double ANGLE_OFFSET = 0.0;
-    private final double ANGLE_OFFSET_FACTOR = 1.0;
-    private final double DELTA_TIME = 0.0;
-
-    private final  boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
     @Override
     public void init() {
@@ -130,8 +118,8 @@ public class TeleOp1 extends OpMode {
             //backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse in INIT if needed
             //backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse in INIT if needed
             setDirection(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x);
-            DELTA_TIME += System.currentTimeMillis() - DELTA_TIME;
-            ANGLE_OFFSET += gamepad1.right_stick_y * ANGLE_OFFSET_FACTOR / DELTA_TIME; // First offset will likely be incredibly small
+            deltaTime += System.currentTimeMillis() - deltaTime;
+            angleOffset += gamepad1.right_stick_y * angleOffsetFactor / deltaTime; // First offset will likely be incredibly small
 
 // INTAKE CODE
 
@@ -271,7 +259,7 @@ public class TeleOp1 extends OpMode {
         double joystickMagnitude = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
 
         // Compute the angle of the joystick vector
-        double joystickAngle = Math.atan2(y, x) + ANGLE_OFFSET;
+        double joystickAngle = Math.atan2(y, x) + angleOffset;
 
         // Compute the resulting motor values
         double frontLeftDrivePower = Math.sin(joystickAngle+(0.25*Math.PI)) * easeFunction(joystickMagnitude) + angle;
