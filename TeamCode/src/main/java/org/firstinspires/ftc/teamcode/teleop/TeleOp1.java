@@ -244,7 +244,6 @@ public class TeleOp1 extends OpMode {
             wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
         }
 
-        }
     }
 
     private void wobbleGoalUndeploy() {
