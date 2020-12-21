@@ -56,29 +56,29 @@ public class TeleOp1 extends OpMode {
     private float wobbleGoalDeployCurrentTime; // Float representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
     private float wobbleGoalUndeployCurrentTime; // Float representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
 
-    private const float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
-    private const float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
-    private const float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
-    private const float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
+    private float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
+    private float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
+    private float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
+    private float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
 
-    private const float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
-    private const float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
-    private const float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
+    private float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
+    private float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
+    private float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
 
-    private const float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
+    private float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
+    private float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
+    private float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
+    private float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
 
-    private const float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
-    private const float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
-    private const float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
+    private float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
+    private float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
+    private float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
 
     private float angleOffset = 0.0;
     private float angleOffsetFactor = 1.0;
     private float deltaTime = 0.0;
 
-    private const boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
+    private boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
     @Override
     public void init() {
