@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,6 +10,28 @@ import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 @TeleOp(name = "TeleOp0")
 
 public class TeleOp0 extends OpMode {
+
+    // USER-DEFINED CONSTANTS
+    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 0.0; // TODO: Define these
+    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOYED_LIFT_TIME = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOY_FINISH_TIME = 0.0;
+
+    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
+    private static final int WOBBLE_GOAL_DEPLOYED_LIFT_POSITION = 0;
+
+    private static final double WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOY_FINISH_TIME = 0.0;
+
+    private static final int WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION = 0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.0;
+
+    private static final boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
+
 
     // Declare drive motors
     private DcMotor frontLeftDrive;
@@ -27,14 +48,7 @@ public class TeleOp0 extends OpMode {
     private Servo wgShoulder;
     private Servo wgClaw;
 
-    // Declare drive power
-    private double frontLeftDrivePower;
-    private double frontRightDrivePower;
-    private double backLeftDrivePower;
-    private double backRightDrivePower;
-
     // Declare chassis motion variables
-    private double currentPower;
     private double vertical;
     private double horizontal;
     private double rotation;
@@ -50,31 +64,12 @@ public class TeleOp0 extends OpMode {
 
     private boolean wobbleGoalDeploying = false;
     private boolean wobbleGoalUndeploying = false;
-    private float wobbleGoalDeployStartTime; // Float representing the starting time of deployment, used to determine the elapsed time
-    private float wobbleGoalUndeployStartTime; // Float representing the starting time of undeployment, used to determine the elapsed time
+    private double wobbleGoalDeployStartTime; // Double representing the starting time of deployment, used to determine the elapsed time
+    private double wobbleGoalUndeployStartTime; // Double representing the starting time of undeployment, used to determine the elapsed time
 
-    private float wobbleGoalDeployCurrentTime; // Float representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
-    private float wobbleGoalUndeployCurrentTime; // Float representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
+    private double wobbleGoalDeployCurrentTime; // Double representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
+    private double wobbleGoalUndeployCurrentTime; // Double representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
 
-    private const float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
-    private const float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
-    private const float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
-    private const float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
-
-    private const float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
-    private const float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
-    private const float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
-
-    private const float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
-
-    private const float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
-    private const float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
-    private const float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
-
-    private const boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
     @Override
     public void init() {
@@ -99,9 +94,11 @@ public class TeleOp0 extends OpMode {
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         // Initialize servo positions
-        wgPickup.setPosition(.32);
+        wgPickup.setPosition(0.32);
         wgShoulder.setPosition(0.0);                                                                              // Tune to Wobble Goal shoulder IN position
         wgClaw.setPosition(1.0);                                                                                  // Tune to Wobble Goal claw CLOSED position
+
+        wgLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     @Override
@@ -137,12 +134,10 @@ public class TeleOp0 extends OpMode {
                             ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
                             : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
 
-
-
 // WOBBLE GOAL PICKUP CODE
 
             // Map Wobble Goal pickup to controller inputs
-            wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? .7 : .32);
+            wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? 0.7 : 0.32);
 
 // WOBBLE GOAL SHOULDER CODE
 
@@ -179,7 +174,7 @@ public class TeleOp0 extends OpMode {
             // Set deploying
             if (!wobbleGoalDeploying) {
                 wobbleGoalDeploying = true;
-                wobbleGoalDeployStartTime = getTime();
+                wobbleGoalDeployStartTime = System.currentTimeMillis();
             }
 
             wobbleGoalUndeploying = false;
@@ -189,7 +184,7 @@ public class TeleOp0 extends OpMode {
             // Set undeploying
             if (!wobbleGoalUndeploying) {
                 wobbleGoalUndeploying = true;
-                wobbleGoalUndeployStartTime = getTime();
+                wobbleGoalUndeployStartTime = System.currentTimeMillis();
             }
 
             wobbleGoalDeploying = false;
@@ -203,57 +198,47 @@ public class TeleOp0 extends OpMode {
 
         if (wobbleGoalDeploying) {
             wobbleGoalDeploy();
-            wobbleGoalDeployTime = getWobbleGoalDeployedTime();
+            wobbleGoalDeployCurrentTime = System.currentTimeMillis();
 
-            if (wobbleGoalDeployTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
+            if (wobbleGoalDeployCurrentTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
                 wobbleGoalDeploying = false;
             }
         }
 
         if (wobbleGoalUndeploying) {
             wobbleGoalUndeploy();
-            wobbleGoalUndeployTime = getWobbleGoalUndeployedTime();
+            wobbleGoalUndeployCurrentTime = System.currentTimeMillis();
 
-            if (wobbleGoalUndeployTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
+            if (wobbleGoalUndeployCurrentTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
                 wobbleGoalUndeploying = false;
             }
         }
     }
 
     private void wobbleGoalDeploy() {
-        if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
+        if (wobbleGoalDeployCurrentTime < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION); // FIXME: Maybe this shouldn't be set every iteration
         }
-        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
+        else if (wobbleGoalDeployCurrentTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
-            wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
+        else if (wobbleGoalDeployCurrentTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
+            wgLift.setTargetPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
         }
 
-        }
     }
 
     private void wobbleGoalUndeploy() {
-        if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
-            wgLift.setPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
+        if (wobbleGoalUndeployCurrentTime < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
+            wgLift.setTargetPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
         }
-        else if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
+        else if (wobbleGoalUndeployCurrentTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalUndeployTime < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
+        else if (wobbleGoalUndeployCurrentTime < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
         }
 
-        }
-    }
-
-    private float getWobbleGoalDeployedTime() {
-        return System.currentTimeMillis();
-    }
-
-    private float getWobbleGoalUndeployedTime() {
-        return System.currentTimeMillis();
     }
 
 }
