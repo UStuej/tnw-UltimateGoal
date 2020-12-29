@@ -198,7 +198,7 @@ public class TeleOp0 extends OpMode {
 
         if (wobbleGoalDeploying) {
             wobbleGoalDeploy();
-            wobbleGoalDeployCurrentTime = System.currentTimeMillis();
+            wobbleGoalDeployCurrentTime = wobbleGoalDeployStartTime;
 
             if (wobbleGoalDeployCurrentTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
                 wobbleGoalDeploying = false;
@@ -207,7 +207,7 @@ public class TeleOp0 extends OpMode {
 
         if (wobbleGoalUndeploying) {
             wobbleGoalUndeploy();
-            wobbleGoalUndeployCurrentTime = System.currentTimeMillis();
+            wobbleGoalUndeployCurrentTime = wobbleGoalUndeployStartTime;
 
             if (wobbleGoalUndeployCurrentTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
                 wobbleGoalUndeploying = false;
