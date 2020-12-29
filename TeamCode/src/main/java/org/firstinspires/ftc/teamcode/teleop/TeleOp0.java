@@ -56,25 +56,25 @@ public class TeleOp0 extends OpMode {
     private float wobbleGoalDeployCurrentTime; // Float representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
     private float wobbleGoalUndeployCurrentTime; // Float representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
 
-    private const float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
-    private const float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
-    private const float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
-    private const float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
+    private final float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
+    private final float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
+    private final float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
+    private final float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
 
-    private const float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
-    private const float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
-    private const float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
+    private final float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
+    private final float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
+    private final float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
 
-    private const float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
-    private const float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
+    private final float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
+    private final float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
+    private final float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
+    private final float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
 
-    private const float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
-    private const float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
-    private const float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
+    private final float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
+    private final float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
+    private final float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
 
-    private const boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
+    private final boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
     @Override
     public void init() {
@@ -179,7 +179,7 @@ public class TeleOp0 extends OpMode {
             // Set deploying
             if (!wobbleGoalDeploying) {
                 wobbleGoalDeploying = true;
-                wobbleGoalDeployStartTime = getTime();
+                wobbleGoalDeployStartTime = System.currentTimeMillis();
             }
 
             wobbleGoalUndeploying = false;
@@ -189,7 +189,7 @@ public class TeleOp0 extends OpMode {
             // Set undeploying
             if (!wobbleGoalUndeploying) {
                 wobbleGoalUndeploying = true;
-                wobbleGoalUndeployStartTime = getTime();
+                wobbleGoalUndeployStartTime = System.currentTimeMillis();
             }
 
             wobbleGoalDeploying = false;
@@ -203,7 +203,7 @@ public class TeleOp0 extends OpMode {
 
         if (wobbleGoalDeploying) {
             wobbleGoalDeploy();
-            wobbleGoalDeployTime = getWobbleGoalDeployedTime();
+            wobbleGoalDeployTime = wobbleGoalDeployStartTime;
 
             if (wobbleGoalDeployTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
                 wobbleGoalDeploying = false;
@@ -212,7 +212,7 @@ public class TeleOp0 extends OpMode {
 
         if (wobbleGoalUndeploying) {
             wobbleGoalUndeploy();
-            wobbleGoalUndeployTime = getWobbleGoalUndeployedTime();
+            wobbleGoalUndeployTime = wobbleGoalUndeployStartTime;
 
             if (wobbleGoalUndeployTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
                 wobbleGoalUndeploying = false;
@@ -221,13 +221,13 @@ public class TeleOp0 extends OpMode {
     }
 
     private void wobbleGoalDeploy() {
-        if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
+        if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOY_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION); // FIXME: Maybe this shouldn't be set every iteration
         }
-        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
+        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOY_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
+        else if (wobbleGoalDeployTime < WOBBLE_GOAL_DEPLOY_LIFT_TIME) {
             wgLift.setPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
         }
 
