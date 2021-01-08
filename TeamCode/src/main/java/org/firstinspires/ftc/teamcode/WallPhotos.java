@@ -64,7 +64,7 @@ public class WallPhotos {
             Collections.sort(contours, new Comparator<Mat>() {
                 @Override
                 public int compare(Mat c0, Mat c1) {
-                    return (int) Math.round(Imgproc.contourArea(c1) - Imgproc.contourArea(c0));
+                    return Double.compare(Imgproc.contourArea(c1), Imgproc.contourArea(c0));
                 }
             });
             contours = contours.subList(0, 10); // FIXME Maybe add this integer value as an argument?
@@ -123,12 +123,12 @@ public class WallPhotos {
         Collections.sort(candidates1, new Comparator<MatOfPoint2f>() {
             @Override
             public int compare(MatOfPoint2f c0, MatOfPoint2f c1) {
-                return (int) (operation(c1) - operation(c0));
+                return Double.compare(operation(c1), operation(c0));
             }
-            public long operation(MatOfPoint2f c) {
+            public double operation(MatOfPoint2f c) {
                 Mat boxPoints = new Mat();
                 Imgproc.boxPoints(Imgproc.minAreaRect(c), boxPoints);
-                return Math.round(Math.abs(Imgproc.contourArea(c) / Imgproc.contourArea(boxPoints)));
+                return Math.abs(Imgproc.contourArea(c) / Imgproc.contourArea(boxPoints));
             }
         });
 
@@ -204,7 +204,7 @@ public class WallPhotos {
         Collections.sort(segSlpLens, new Comparator<Triplet<Pair<Point, Point>, Double, Double>>() {
             @Override
             public int compare(Triplet<Pair<Point, Point>, Double, Double> ssl0, Triplet<Pair<Point, Point>, Double, Double> ssl1) {
-                return (int) Math.round(ssl0.third - ssl1.third);
+                return Double.compare(ssl0.third, ssl1.third);
             }
         });  // Sort the segments by largest length.
         segSlpLens.remove(segSlpLens.size() - 1);  // Remove the longest two segments, which are likely the diagonals.
