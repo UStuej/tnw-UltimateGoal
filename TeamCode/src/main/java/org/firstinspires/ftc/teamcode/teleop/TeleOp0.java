@@ -69,27 +69,7 @@ public class TeleOp0 extends OpMode {
 
     private float wobbleGoalDeployCurrentTime; // Float representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
     private float wobbleGoalUndeployCurrentTime; // Float representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
-
-    private final float WOBBLE_GOAL_DEPLOY_CLAW_TIME; // TODO: Define these
-    private final float WOBBLE_GOAL_DEPLOY_SHOULDER_TIME;
-    private final float WOBBLE_GOAL_DEPLOY_LIFT_TIME;
-    private final float WOBBLE_GOAL_DEPLOY_FINISH_TIME;
-
-    private final float WOBBLE_GOAL_DEPLOYED_CLAW_POSITION;
-    private final float WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION;
-    private final float WOBBLE_GOAL_DEPLOYED_LIFT_POSITION;
-
-    private final float WOBBLE_GOAL_UNDEPLOY_LIFT_TIME;
-    private final float WOBBLE_GOAL_UNDEPLOY_SHOULDER_TIME;
-    private final float WOBBLE_GOAL_UNDEPLOY_CLAW_TIME;
-    private final float WOBBLE_GOAL_UNDEPLOY_FINISH_TIME;
-
-    private final float WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION;
-    private final float WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION;
-    private final float WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION;
-
-    private final boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
-
+    
     @Override
     public void init() {
 
