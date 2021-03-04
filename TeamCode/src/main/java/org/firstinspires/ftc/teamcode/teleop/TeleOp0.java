@@ -12,23 +12,23 @@ import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 public class TeleOp0 extends OpMode {
 
     // USER-DEFINED CONSTANTS
-    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 0.0; // TODO: Define these
-    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 0.0;
-    private static final double WOBBLE_GOAL_DEPLOYED_LIFT_TIME = 0.0;
-    private static final double WOBBLE_GOAL_DEPLOY_FINISH_TIME = 0.0;
+    private static final long WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 0L; // TODO: Define these
+    private static final long WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 0L;
+    private static final long WOBBLE_GOAL_DEPLOYED_LIFT_TIME = 0L;
+    private static final long WOBBLE_GOAL_DEPLOY_FINISH_TIME = 0L;
 
-    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
-    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
+    private static final long WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0L;
+    private static final long WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0L;
     private static final int WOBBLE_GOAL_DEPLOYED_LIFT_POSITION = 0;
 
-    private static final double WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME = 0.0;
-    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 0.0;
-    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 0.0;
-    private static final double WOBBLE_GOAL_UNDEPLOY_FINISH_TIME = 0.0;
+    private static final long WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME = 0L;
+    private static final long WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 0L;
+    private static final long WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 0L;
+    private static final long WOBBLE_GOAL_UNDEPLOY_FINISH_TIME = 0L;
 
     private static final int WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION = 0;
-    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.0;
-    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.0;
+    private static final long WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0L;
+    private static final long WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0L;
 
     private static final boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
@@ -64,12 +64,9 @@ public class TeleOp0 extends OpMode {
 
     private boolean wobbleGoalDeploying = false;
     private boolean wobbleGoalUndeploying = false;
-    private float wobbleGoalDeployStartTime; // Float representing the starting time of deployment, used to determine the elapsed time
-    private float wobbleGoalUndeployStartTime; // Float representing the starting time of undeployment, used to determine the elapsed time
+    private long wobbleGoalDeployStartTime; // Float representing the starting time of deployment, used to determine the elapsed time
+    private long wobbleGoalUndeployStartTime; // Float representing the starting time of undeployment, used to determine the elapsed time
 
-    private float wobbleGoalDeployCurrentTime; // Float representing the current elapsed time of deployment for all stages, used to determine which servos to setPosition
-    private float wobbleGoalUndeployCurrentTime; // Float representing the current elapsed time of undeployment for all stages, used to determine which servos to setPosition
-    
     @Override
     public void init() {
 
@@ -196,45 +193,49 @@ public class TeleOp0 extends OpMode {
         }
 
         if (wobbleGoalDeploying) {
-            wobbleGoalDeploy();
-            wobbleGoalDeployCurrentTime = System.currentTimeMillis();
+            long currentTime = System.currentTimeMillis();
+            wobbleGoalDeploy(currentTime);
 
-            if (wobbleGoalDeployCurrentTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
+            if (currentTime >= WOBBLE_GOAL_DEPLOY_FINISH_TIME) { // We finished deploying; no need to keep running this block
                 wobbleGoalDeploying = false;
             }
         }
 
         if (wobbleGoalUndeploying) {
-            wobbleGoalUndeploy();
-            wobbleGoalUndeployCurrentTime = System.currentTimeMillis();
+            long currentTime = System.currentTimeMillis();
+            wobbleGoalUndeploy(currentTime);
 
-            if (wobbleGoalUndeployCurrentTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
+            if (currentTime >= WOBBLE_GOAL_UNDEPLOY_FINISH_TIME) { // We finished undeploying; no need to keep running this block
                 wobbleGoalUndeploying = false;
             }
         }
     }
 
-    private void wobbleGoalDeploy() {
-        if (wobbleGoalDeployCurrentTime < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
+    private void wobbleGoalDeploy(long currentTime) {
+        long timeDelta = currentTime - wobbleGoalDeployStartTime;
+
+        if (timeDelta < WOBBLE_GOAL_DEPLOYED_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION); // FIXME: Maybe this shouldn't be set every iteration
         }
-        else if (wobbleGoalDeployCurrentTime < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
+        else if (timeDelta < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalDeployCurrentTime < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
+        else if (timeDelta < WOBBLE_GOAL_DEPLOYED_LIFT_TIME) {
             wgLift.setTargetPosition(WOBBLE_GOAL_DEPLOYED_LIFT_POSITION);
         }
 
     }
 
-    private void wobbleGoalUndeploy() {
-        if (wobbleGoalUndeployCurrentTime < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
+    private void wobbleGoalUndeploy(long currentTime) {
+        long timeDelta = currentTime - wobbleGoalUndeployStartTime;
+
+        if (timeDelta < WOBBLE_GOAL_UNDEPLOYED_LIFT_TIME) {
             wgLift.setTargetPosition(WOBBLE_GOAL_UNDEPLOYED_LIFT_POSITION);
         }
-        else if (wobbleGoalUndeployCurrentTime < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
+        else if (timeDelta < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
         }
-        else if (wobbleGoalUndeployCurrentTime < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
+        else if (timeDelta < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
         }
 
