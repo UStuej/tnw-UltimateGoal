@@ -18,6 +18,9 @@ public class TeleOp0 extends OpMode {
     private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
     private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
 
+    private static final double WOBBLE_GOAL_PICKUP_UP_POSITION = 0.32;
+    private static final double WOBBLE_GOAL_PICKUP_DOWN_POSITION = 0.7;
+
     private static final long WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 500L;
     private static final long WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 1000L;
 
@@ -84,11 +87,10 @@ public class TeleOp0 extends OpMode {
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         // Initialize servo positions
-        wgPickup.setPosition(0.32);
-        wgShoulder.setPosition(0.0);                                                                              // Tune to Wobble Goal shoulder IN position
-        wgClaw.setPosition(1.0);                                                                                  // Tune to Wobble Goal claw CLOSED position
+        wgPickup.setPosition(WOBBLE_GOAL_PICKUP_UP_POSITION);
+        wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
+        wgClaw.setPosition(WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);
 
-        wgLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     @Override
@@ -107,10 +109,10 @@ public class TeleOp0 extends OpMode {
             rotation = DcMotorControl.motorIncrControl(gamepad1.right_stick_x, rotation);
 
             // Set drive motor power
-            frontLeftDrive.setPower((vertical + horizontal + rotation) * powerLimiter);                               // Reverse in INIT if needed
-            frontRightDrive.setPower((vertical - horizontal - rotation) * powerLimiter);                              // Reverse in INIT if needed
-            backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse in INIT if needed
-            backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse in INIT if needed
+            frontLeftDrive.setPower((vertical + horizontal + rotation) * powerLimiter);                               // Reverse motor direction in INIT if needed
+            frontRightDrive.setPower((vertical - horizontal - rotation) * powerLimiter);                              // Reverse motor direction in INIT if needed
+            backLeftDrive.setPower((vertical - horizontal + rotation) * powerLimiter);                                // Reverse motor direction in INIT if needed
+            backRightDrive.setPower((vertical + horizontal - rotation) * powerLimiter);                               // Reverse motor direction in INIT if needed
 
 // INTAKE CODE
 
@@ -120,14 +122,16 @@ public class TeleOp0 extends OpMode {
 // WOBBLE GOAL LIFT CODE
 
             // Restrict lift to only operate when Wobble Goal shoulder is rotated outside robot frame
-            wgLift.setPower(wgShoulder.getPosition() < 1.0                                                                  // Change < 1 to restrict lift to only operate when shoulder is rotated out.
+            wgLift.setPower(wgShoulder.getPosition() > WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION - .01                          // Change < 1 to restrict lift to only operate when shoulder is rotated out.
                             ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
                             : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
 
 // WOBBLE GOAL PICKUP CODE
 
             // Map Wobble Goal pickup to controller inputs
-            wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? 0.7 : 0.32);
+            if (!(wobbleGoalDeploying || wobbleGoalUndeploying)) {
+                wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? WOBBLE_GOAL_PICKUP_DOWN_POSITION : WOBBLE_GOAL_PICKUP_UP_POSITION);
+            }
 
 // WOBBLE GOAL SHOULDER CODE
 
@@ -141,7 +145,7 @@ public class TeleOp0 extends OpMode {
             }
 
             // Ternary operator to set Wobble Goal shoulder position
-            wgShoulder.setPosition(wgShoulderState ? 0.0 : 1.0);                                                    // Tune to Wobble Goal shoulder IN / OUT position
+            wgShoulder.setPosition(wgShoulderState ? WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION : WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);                                                    // Tune to Wobble Goal shoulder IN / OUT position
 
 // WOBBLE GOAL CLAW CODE
 
@@ -155,7 +159,7 @@ public class TeleOp0 extends OpMode {
             }
 
             // Ternary operator to set Wobble Goal claw position
-            wgClaw.setPosition(wgClawState ? 0.0 : 1.0);                                                    // Tune to Wobble Goal claw OPEN / CLOSED position
+            wgClaw.setPosition(wgClawState ? WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION : WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);                                                    // Tune to Wobble Goal claw OPEN / CLOSED position
         }
 
 // WOBBLE GOAL DEPLOYENT/UNDEPLOYMENT CODE
@@ -205,6 +209,7 @@ public class TeleOp0 extends OpMode {
         }
         else if (timeDelta < WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);
+            wgPickup.setPosition(WOBBLE_GOAL_PICKUP_DOWN_POSITION);
             wobbleGoalDeploying = false;
         }
 
@@ -215,6 +220,7 @@ public class TeleOp0 extends OpMode {
 
         if (timeDelta < WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME) {
             wgShoulder.setPosition(WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION);
+            wgPickup.setPosition(WOBBLE_GOAL_PICKUP_UP_POSITION);
         }
         else if (timeDelta < WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME) {
             wgClaw.setPosition(WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION);
