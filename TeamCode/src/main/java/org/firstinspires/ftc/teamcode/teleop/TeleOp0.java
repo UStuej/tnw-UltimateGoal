@@ -12,11 +12,11 @@ import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 public class TeleOp0 extends OpMode {
 
     // USER-DEFINED CONSTANTS
-    private static final long WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 500L; // TODO: Define these
+    private static final long WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 500L;
     private static final long WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 1000L;
 
-    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.0;
-    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.31;
+    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.27;
 
     private static final double WOBBLE_GOAL_PICKUP_UP_POSITION = 0.32;
     private static final double WOBBLE_GOAL_PICKUP_DOWN_POSITION = 0.7;
@@ -24,8 +24,8 @@ public class TeleOp0 extends OpMode {
     private static final long WOBBLE_GOAL_UNDEPLOYED_SHOULDER_TIME = 500L;
     private static final long WOBBLE_GOAL_UNDEPLOYED_CLAW_TIME = 1000L;
 
-    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.0;
-    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.0;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION = 0.68;
+    private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.89;
 
     private static final boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
 
