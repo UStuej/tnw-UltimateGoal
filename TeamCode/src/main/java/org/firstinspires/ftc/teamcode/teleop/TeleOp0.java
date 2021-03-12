@@ -31,7 +31,6 @@ public class TeleOp0 extends OpMode {
 
     private static final float TRIGGER_ZERO_THRESHOLD = 0.15f;
 
-
     // Declare drive motors
     private DcMotor frontLeftDrive;
     private DcMotor frontRightDrive;
