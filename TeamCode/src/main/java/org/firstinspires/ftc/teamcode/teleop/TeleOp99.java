@@ -65,6 +65,9 @@ public class TeleOp99 extends OpMode {
     private static final long CLAW_OPEN_TIME = 500L;  // The time (in milliseconds) it takes for the claw to be opened
     private static final long CLAW_CLOSE_TIME = 1000L;  // The time (in milliseconds) it takes for the claw to close
 
+    private static final double RING_DUMP_DUMP_POSITION = 0.0;  // The position of the ring dump when it's dumping. FIXME: I just assumed zero for this value as I didn't know what to put
+    private static final double RING_DUMP_COLLECT_POSITION = 1.0;  // The position of the ring dump when it's collecting. FIXME: I just assumed one for this value as I didn't know what to put
+
     private long time;  // The current time, used to measure delta time. Set at init and every loop iteration
     private long lastTime;  // The time of the LAST tick, used to measure delta time. Set at init and every loop iteration
     private long deltaTime;  // The delta time between ticks in milliseconds. Set at init and every loop iteration
@@ -73,6 +76,7 @@ public class TeleOp99 extends OpMode {
     private double clawPosition;  // The current target position of the claw. setPosition is called using this value at the very end of the loop, only once
     private double pickupPosition;  // The current target position of the pickup. setPosition is called using this value at the very end of the loop, only once
     private double liftPosition;  // The current target position of the lift. setPosition is called using this value at the very end of the loop, only once
+    private double ringDumpPosition;  // The current target position of the ring dump. setPosition is called using this value at the very end of the loop, only once
 
     private boolean shoulderState;  // Whether the shoulder is out (true) or in (false). Used as a toggle for user control of the shoulder
     private boolean clawState;  // Whether the claw is closed (true) or open (false). Used as a toggle for user control of the claw
@@ -108,11 +112,14 @@ public class TeleOp99 extends OpMode {
     // Intake motor power
     private double intakeDrivePower;
 
-    // Wobble Goal manipulation motors
+    // Wobble Goal manipulation motors and servos
     private DcMotor wobbleLift;
     private Servo wobblePickup;
     private Servo wobbleShoulder;
     private Servo wobbleClaw;
+
+    // Ring manipulation servo
+    private Servo ringDump;
 
     // Variables relating to wobble goal manipulation
     private boolean currentlyDeploying = false;  // Whether or not we're deploying the full wobble goal mechanism (claw, pickup, and shoulder)
@@ -207,6 +214,9 @@ public class TeleOp99 extends OpMode {
 
         // Initialize intake motors
         intakeDrive = hardwareMap.get(DcMotor.class, "intakeDrive");
+
+        // Initialize ring dump servo
+        ringDump = hardwareMap.get(Servo.class, "ringDump");
 
         // Initialize Wobble Goal manipulation motors
         wobbleLift = hardwareMap.get(DcMotor.class, "WGLift");
@@ -325,6 +335,7 @@ public class TeleOp99 extends OpMode {
         pickupPosition = Math.max(0, Math.min(1, pickupPosition));
         shoulderPosition = Math.max(0, Math.min(1, shoulderPosition));
         clawPosition = Math.max(0, Math.min(1, clawPosition));
+        ringDumpPosition = Math.max(0, Math.min(1, ringDumpPosition));
     }
 
     private void autoServoControl() {
@@ -495,6 +506,9 @@ public class TeleOp99 extends OpMode {
 
         // Claw movement
         clawPosition = clawState ? CLAW_CLOSED_POSITION : CLAW_OPENED_POSITION;
+
+        // Ring dump movement
+        ringDumpPosition = gamepad2LeftShoulderHeld ? RING_DUMP_DUMP_POSITION : RING_DUMP_COLLECT_POSITION;
     }
 
     private void estimateServoPositions() {
