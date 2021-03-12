@@ -210,7 +210,7 @@ public class TeleOp99 extends OpMode {
 
         // Initialize Wobble Goal manipulation motors
         wobbleLift = hardwareMap.get(DcMotor.class, "WGLift");
-        wobbleLift = hardwareMap.get(Servo.class, "WGPickup");
+        wobblePickup = hardwareMap.get(Servo.class, "WGPickup");
         wobbleShoulder = hardwareMap.get(Servo.class, "WGShoulder");
         wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
 
@@ -267,6 +267,7 @@ public class TeleOp99 extends OpMode {
             limitAcceleration();  // If we're limiting the acceleration of movement-related motors, check all motor powers against their previous values and correct for acceleation if needed
         }
 
+        sanityCheckMotorValues();  // Do basic sanity checks on all motor and servo values (make sure they're within range) and clip them if they aren't
         applyMotorValues();  // Finally, apply the fully-processed, non-conflicing, acceleration-limited, safe motor values to the motors and servos themselves
     }
 
@@ -310,6 +311,20 @@ public class TeleOp99 extends OpMode {
 
     private void impossiblePositionCheck() {
         // TODO: This currently does nothing. It should check for any number of impossible mechanical positions reachable by manually or automatically set servo positions, especially those that would potentially result in damage to servos or components of the robot
+    }
+
+    private void sanityCheckMotorValues() {  // Make sure no motor or servo values are outside their limits
+        frontLeftDrivePower = Math.max(-1, Math.min(1, frontLeftDrivePower));
+        frontRightDrivePower = Math.max(-1, Math.min(1, frontRightDrivePower));
+        backLeftDrivePower = Math.max(-1, Math.min(1, backLeftDrivePower));
+        backRightDrivePower = Math.max(-1, Math.min(1, backRightDrivePower));
+
+        intakeDrivePower = Math.max(-1, Math.min(1, intakeDrivePower));
+
+        liftPosition = Math.max(0, Math.min(1, liftPosition));
+        pickupPosition = Math.max(0, Math.min(1, pickupPosition));
+        shoulderPosition = Math.max(0, Math.min(1, shoulderPosition));
+        clawPosition = Math.max(0, Math.min(1, clawPosition));
     }
 
     private void autoServoControl() {
