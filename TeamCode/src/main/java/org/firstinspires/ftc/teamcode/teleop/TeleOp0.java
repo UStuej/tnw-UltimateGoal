@@ -12,11 +12,11 @@ import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 public class TeleOp0 extends OpMode {
 
     // USER-DEFINED CONSTANTS
-    private static final long WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 500L;
-    private static final long WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 1000L;
+    private static final long WOBBLE_GOAL_DEPLOYED_CLAW_TIME = 500L;  // The amount of time it takes for the claw to be deployed
+    private static final long WOBBLE_GOAL_DEPLOYED_SHOULDER_TIME = 1000L;  // The amount of time it takes for the shoulder to be deployed
 
-    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.31;
-    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.27;
+    private static final double WOBBLE_GOAL_DEPLOYED_CLAW_POSITION = 0.31;  // The position that the claw is deployed to
+    private static final double WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION = 0.27;  // The position that the shoulder is deployed to
 
     private static final double WOBBLE_GOAL_PICKUP_UP_POSITION = 0.32;
     private static final double WOBBLE_GOAL_PICKUP_DOWN_POSITION = 0.7;
@@ -28,6 +28,8 @@ public class TeleOp0 extends OpMode {
     private static final double WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION = 0.89;
 
     private static final boolean DEPLOY_BLOCKS_INPUT = false;  // Whether or not deployment and undeployment should block basic input
+
+    private static final float TRIGGER_ZERO_THRESHOLD = 0.15f;
 
 
     // Declare drive motors
@@ -63,6 +65,9 @@ public class TeleOp0 extends OpMode {
     private boolean wobbleGoalUndeploying = false;
     private long wobbleGoalDeployStartTime; // Float representing the starting time of deployment, used to determine the elapsed time
     private long wobbleGoalUndeployStartTime; // Float representing the starting time of undeployment, used to determine the elapsed time
+
+    private boolean justDeployed = false;
+    private boolean justUndeployed = false;
 
     @Override
     public void init() {
@@ -125,12 +130,10 @@ public class TeleOp0 extends OpMode {
             wgLift.setPower(wgShoulder.getPosition() > WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION - .01                          // Change < 1 to restrict lift to only operate when shoulder is rotated out.
                             ? DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())                      // Set Wobble Goal lift power and mapping to controller input  // Reverse in INIT if needed
                             : -Math.abs(DcMotorControl.motorIncrControl(gamepad2.left_stick_y, wgLift.getPower())));         // Only allow downward Wobble Goal lift movement if Wobble Goal shoulder is in chassis
-
 // WOBBLE GOAL PICKUP CODE
-
             // Map Wobble Goal pickup to controller inputs
             if (!(wobbleGoalDeploying || wobbleGoalUndeploying)) {
-                wgPickup.setPosition(gamepad1.right_trigger >= 0.15 ? WOBBLE_GOAL_PICKUP_DOWN_POSITION : WOBBLE_GOAL_PICKUP_UP_POSITION);
+                wgPickup.setPosition(gamepad1.right_trigger >= TRIGGER_ZERO_THRESHOLD ? WOBBLE_GOAL_PICKUP_DOWN_POSITION : WOBBLE_GOAL_PICKUP_UP_POSITION);
             }
 
 // WOBBLE GOAL SHOULDER CODE
@@ -145,7 +148,7 @@ public class TeleOp0 extends OpMode {
             }
 
             // Ternary operator to set Wobble Goal shoulder position
-            wgShoulder.setPosition(wgShoulderState ? WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION : WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);                                                    // Tune to Wobble Goal shoulder IN / OUT position
+            wgShoulder.setPosition(wgShoulderState ? WOBBLE_GOAL_UNDEPLOYED_SHOULDER_POSITION : WOBBLE_GOAL_DEPLOYED_SHOULDER_POSITION);  // Tune to Wobble Goal shoulder IN / OUT position
 
 // WOBBLE GOAL CLAW CODE
 
@@ -159,7 +162,29 @@ public class TeleOp0 extends OpMode {
             }
 
             // Ternary operator to set Wobble Goal claw position
-            wgClaw.setPosition(wgClawState ? WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION : WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);                                                    // Tune to Wobble Goal claw OPEN / CLOSED position
+            wgClaw.setPosition(wgClawState ? WOBBLE_GOAL_UNDEPLOYED_CLAW_POSITION : WOBBLE_GOAL_DEPLOYED_CLAW_POSITION);  // Tune to Wobble Goal claw OPEN / CLOSED position
+        } if (noUserInput() || DEPLOY_BLOCKS_INPUT) {  // If we're not using the normal user input code (deployment blocks user input AND we are deploying/undeploying something)
+
+            if (justDeployed && wobbleGoalDeploying)
+            {
+              wobbleGoalDeployStartTime = System.currentTimeMillis();
+              justDeployed = false;
+            }
+            if (justUndeployed && wobbleGoalUndeploying)
+            {
+              wobbleGoalUndeployStartTime = System.currentTimeMillis();
+              justUndeployed = false;
+            }
+
+            if (wobbleGoalDeploying) {
+                long currentTime = System.currentTimeMillis();
+                wobbleGoalDeploy(currentTime);
+            }
+
+            if (wobbleGoalUndeploying) {
+                long currentTime = System.currentTimeMillis();
+                wobbleGoalUndeploy(currentTime);
+            }
         }
 
 // WOBBLE GOAL DEPLOYENT/UNDEPLOYMENT CODE
@@ -168,6 +193,7 @@ public class TeleOp0 extends OpMode {
             // Set deploying
             if (!wobbleGoalDeploying) {
                 wobbleGoalDeploying = true;
+                justDeployed = true;
                 wobbleGoalDeployStartTime = System.currentTimeMillis();
             }
 
@@ -178,6 +204,7 @@ public class TeleOp0 extends OpMode {
             // Set undeploying
             if (!wobbleGoalUndeploying) {
                 wobbleGoalUndeploying = true;
+                justUndeployed = true;
                 wobbleGoalUndeployStartTime = System.currentTimeMillis();
             }
 
@@ -188,16 +215,6 @@ public class TeleOp0 extends OpMode {
             // Failsafe to disable all deploying/undeploying, ensuring manual input is resumed
             wobbleGoalDeploying = false;
             wobbleGoalUndeploying = false;
-        }
-
-        if (wobbleGoalDeploying) {
-            long currentTime = System.currentTimeMillis();
-            wobbleGoalDeploy(currentTime);
-        }
-
-        if (wobbleGoalUndeploying) {
-            long currentTime = System.currentTimeMillis();
-            wobbleGoalUndeploy(currentTime);
         }
     }
 
@@ -227,6 +244,15 @@ public class TeleOp0 extends OpMode {
             wobbleGoalUndeploying = false;
         }
 
+    }
+
+    /**
+     * If there is currently no user input (you might need some variables to keep track of this but I don't know how it would work personally)
+     */
+    private boolean noUserInput() {
+        // Check for all gamepad inputs that map to an action that would be overriden by wobble goal deploying and make sure they're within a reasonable deadzone. Return false otherwise.
+        // Use the deadzone for axes. Buttons shouldn't need it.
+        return !gamepad2.a && !gamepad2.b && (Math.abs(gamepad1.right_trigger) < TRIGGER_ZERO_THRESHOLD);
     }
 
 }
