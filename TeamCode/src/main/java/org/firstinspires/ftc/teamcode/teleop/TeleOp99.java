@@ -10,63 +10,66 @@ import org.firstinspires.ftc.teamcode.util.DcMotorControl;
 @TeleOp(name = "TeleOp99")
 
 public class TeleOp99 extends OpMode {
-    private static final boolean AXIS_MOVEMENT = true;  // Whether or not rotation, horizontal, and vertical movement across the field should be controlled by joystick axes rather than dpad buttons
+    private static boolean AXIS_MOVEMENT = true;  // Whether or not rotation, horizontal, and vertical movement across the field should be controlled by joystick axes rather than dpad buttons
 
-    private static final double MOVEMENT_FACTOR = 1.0;  // Floating-point number from 0 to 1 multiplied by all movement motor powers directly before application. Use this to limit the maximum power for ALL movement-related motors evenly
+    private static double MOVEMENT_FACTOR = 1.0;  // Floating-point number from 0 to 1 multiplied by all movement motor powers directly before application. Use this to limit the maximum power for ALL movement-related motors evenly
 
-    private static final boolean AUTO_PRIORITY = false;  // Whether or not automatic motor and server controls take priority over manual ones instead of the other way around
+    private static boolean AUTO_PRIORITY = false;  // Whether or not automatic motor and server controls take priority over manual ones instead of the other way around
 
-    private static final boolean CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = true;  // Whether the wobble goal deployment sequence should try to conntinue setting servo positions even if one of the dependency positions is manually set to something different TODO: This
+    private static boolean CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = true;  // Whether the wobble goal deployment sequence should try to continue setting servo positions even if one of the dependency positions is manually set to something different TODO: This
 
-    private static final double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
+    private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
-    private static final boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
-    private static final boolean BUMPERS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad bumpers will be able to cycle through custom speed curves. The left bumper toggles between in, out, and in-out easings and the right bumper selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
-    private static final boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
-    private static final int DEFAULT_SPEED_CURVE = 0;  // Only applies if using variable speed curves. The index of the speed curve to use by default (from 0-7 inclusive), and when reset. See above comments for speed curve list
-    private static final int DEFAULT_SPEED_CURVE_MODE = 0;  // Only applies if using variable speed curves. The index of the speed curve mode to use by default (from 0-2) inclusive. See above comments for mode list
+    private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
+    private static boolean BUMPERS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad bumpers will be able to cycle through custom speed curves. The left bumper toggles between in, out, and in-out easings and the right bumper selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
+    private static boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
+    private static int DEFAULT_SPEED_CURVE = 0;  // Only applies if using variable speed curves. The index of the speed curve to use by default (from 0-7 inclusive), and when reset. See above comments for speed curve list
+    private static int DEFAULT_SPEED_CURVE_MODE = 0;  // Only applies if using variable speed curves. The index of the speed curve mode to use by default (from 0-2) inclusive. See above comments for mode list
 
-    private static final boolean FOOLPROOF_IMPOSSIBLE_POSITIONS = false;  // Whether or not servo position combinations which are impossible to reach physically will be prevented through software rather than servo gear-grinding, fire or accidental destruction of other parts. This only works to the point that such positions are predicted and tweaked accurately, and may be disabled under careful operation. TODO: This
+    private static boolean FOOLPROOF_IMPOSSIBLE_POSITIONS = false;  // Whether or not servo position combinations which are impossible to reach physically will be prevented through software rather than servo gear-grinding, fire or accidental destruction of other parts. This only works to the point that such positions are predicted and tweaked accurately, and may be disabled under careful operation. TODO: This
 
-    private static final double ACCELERATION_CAP = 4.0;  // The max allowed acceleration of any movement motor in units per second per second. This is included because max acceleration might tip the robot, but use with care as very low accelerations will make the robot sluggish. If the cap is reached, velocity will be incremented at this acceleration rather than the alternative. This value should be set to 1 divided by the number of seconds it should take for the motors to increment to maximum velocity. May be set above 1 for accelerations faster than 1 unit per second per second. 4.0 (the default value) means it should take 0.25 seconds to go from 0 to full. Set to 0 to disable
+    private static double ACCELERATION_CAP = 4.0;  // The max allowed acceleration of any movement motor in units per second per second. This is included because max acceleration might tip the robot, but use with care as very low accelerations will make the robot sluggish. If the cap is reached, velocity will be incremented at this acceleration rather than the alternative. This value should be set to 1 divided by the number of seconds it should take for the motors to increment to maximum velocity. May be set above 1 for accelerations faster than 1 unit per second per second. 4.0 (the default value) means it should take 0.25 seconds to go from 0 to full. Set to 0 to disable
 
-    private static final boolean MOVEMENT_ROTATION_CORRECTION = false;  // Whether or not we should attempt to adjust the robot's movement based on an accumulated rotation offset, which, if accurately maintained, would allow for rotating the robot without affecting movement from the driver's perspective. Disable this if steering seems to drift clockwise or counterclockwise after some amounts of rotation TODO: This
+    private static boolean MOVEMENT_ROTATION_CORRECTION = false;  // Whether or not we should attempt to adjust the robot's movement based on an accumulated rotation offset, which, if accurately maintained, would allow for rotating the robot without affecting movement from the driver's perspective. Disable this if steering seems to drift clockwise or counterclockwise after some amounts of rotation TODO: This
 
-    private static final boolean RESTRICT_LIFT_MOVEMENT = true;  // Whether or not the lift's movement should be disabled when the shoulder is in
+    private static boolean RESTRICT_LIFT_MOVEMENT = true;  // Whether or not the lift's movement should be disabled when the shoulder is in
 
-    private static final boolean NATURAL_CLAW_CONTROL = false;  // Whether or not the manual control for the claw should be a toggle. If this is true, holding the claw button will keep the claw closed, and releasing it will open the claw. If this is false, the claw button will toggle the state of the claw opened or closed
-    private static final boolean INVERT_NATURAL_CLAW_CONTROL = false;  // Only applies if NATURAL_CLAW_CONTROL is used. If this is true, holding the claw button with keep the claw open rather than closed. Likewise releasing the button will close the claw instead of opening it
+    private static boolean NATURAL_CLAW_CONTROL = false;  // Whether or not the manual control for the claw should be a toggle. If this is true, holding the claw button will keep the claw closed, and releasing it will open the claw. If this is false, the claw button will toggle the state of the claw opened or closed
+    private static boolean INVERT_NATURAL_CLAW_CONTROL = false;  // Only applies if NATURAL_CLAW_CONTROL is used. If this is true, holding the claw button with keep the claw open rather than closed. Likewise releasing the button will close the claw instead of opening it
 
-    private static final boolean NATURAL_SHOULDER_CONTROL = false;  // Whether or not the manual control for the shoulder should be a toggle. If this is true, holding the shoulder button will keep the shoulder out, and releasing it will swing the shoulder in. If this is false, the shoulder button will toggle the state of the shoulder in or out
-    private static final boolean INVERT_NATURAL_SHOULDER_CONTROL = false;  // Only applies if NATURAL_SHOULDER_CONTROL is used. If this is true, holding the shoulder button with keep the shoulder in rather than out. Likewise releasing the button will swing the shoulder out rather than in
+    private static boolean NATURAL_SHOULDER_CONTROL = false;  // Whether or not the manual control for the shoulder should be a toggle. If this is true, holding the shoulder button will keep the shoulder out, and releasing it will swing the shoulder in. If this is false, the shoulder button will toggle the state of the shoulder in or out
+    private static boolean INVERT_NATURAL_SHOULDER_CONTROL = false;  // Only applies if NATURAL_SHOULDER_CONTROL is used. If this is true, holding the shoulder button with keep the shoulder in rather than out. Likewise releasing the button will swing the shoulder out rather than in
 
     // FIXME: Are these the limits of the actual servo, or are they outside the existing range limit?
-    private static final double SHOULDER_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
-    private static final double SHOULDER_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
+    // TODO: Sanity check should check using these if they're accurate
+    private static double SHOULDER_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
+    private static double SHOULDER_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
 
-    private static final double CLAW_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
-    private static final double CLAW_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
+    private static double CLAW_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
+    private static double CLAW_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
 
-    private static final double PICKUP_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
-    private static final double PICKUP_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
+    private static double PICKUP_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
+    private static double PICKUP_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
 
-    private static final double SHOULDER_OUT_POSITION = 0.27;  // The position of the shoulder when it is out
-    private static final double SHOULDER_IN_POSITION = 0.68;  // The position of the shoulder when it is in
+    private static double SHOULDER_OUT_POSITION = 0.27;  // The position of the shoulder when it is out
+    private static double SHOULDER_IN_POSITION = 0.68;  // The position of the shoulder when it is in
 
-    private static final double CLAW_OPENED_POSITION = 0.31;  // The position of the claw when it is open
-    private static final double CLAW_CLOSED_POSITION = 0.89;  // The position of the claw when it is closed
+    private static double CLAW_OPENED_POSITION = 0.31;  // The position of the claw when it is open
+    private static double CLAW_CLOSED_POSITION = 0.89;  // The position of the claw when it is closed
 
-    private static final double PICKUP_UP_POSITION = 0.32;  // The position of the pickup when it is up
-    private static final double PICKUP_DOWN_POSITION = 0.70;  // The position of the pickup when it is down
+    private static double PICKUP_UP_POSITION = 0.32;  // The position of the pickup when it is up
+    private static double PICKUP_DOWN_POSITION = 0.70;  // The position of the pickup when it is down
 
-    private static final long SHOULDER_EXTEND_TIME = 1000L;  // The time (in milliseconds) it takes for the shoulder to swing out
-    private static final long SHOULDER_RETRACT_TIME = 500L;  // The time (in milliseconds) it takes for the shoulder to retract
+    private static long SHOULDER_EXTEND_TIME = 1000L;  // The time (in milliseconds) it takes for the shoulder to swing out
+    private static long SHOULDER_RETRACT_TIME = 500L;  // The time (in milliseconds) it takes for the shoulder to retract
 
-    private static final long CLAW_OPEN_TIME = 500L;  // The time (in milliseconds) it takes for the claw to be opened
-    private static final long CLAW_CLOSE_TIME = 1000L;  // The time (in milliseconds) it takes for the claw to close
+    private static long CLAW_OPEN_TIME = 500L;  // The time (in milliseconds) it takes for the claw to be opened
+    private static long CLAW_CLOSE_TIME = 1000L;  // The time (in milliseconds) it takes for the claw to close
 
-    private static final double RING_DUMP_DUMP_POSITION = 0.0;  // The position of the ring dump when it's dumping. FIXME: I just assumed zero for this value as I didn't know what to put
-    private static final double RING_DUMP_COLLECT_POSITION = 1.0;  // The position of the ring dump when it's collecting. FIXME: I just assumed one for this value as I didn't know what to put
+    private static double RING_DUMP_DUMP_POSITION = 0.0;  // The position of the ring dump when it's dumping. FIXME: I just assumed zero for this value as I didn't know what to put
+    private static double RING_DUMP_COLLECT_POSITION = 1.0;  // The position of the ring dump when it's collecting. FIXME: I just assumed one for this value as I didn't know what to put
+
+    private static int PMODE = 0;  // PMODE, for problems
 
     private long time;  // The current time, used to measure delta time. Set at init and every loop iteration
     private long lastTime;  // The time of the LAST tick, used to measure delta time. Set at init and every loop iteration
@@ -204,6 +207,9 @@ public class TeleOp99 extends OpMode {
     private double gamepad2LeftTrigger = 0.0;
     private double gamepad2RightTrigger = 0.0;
 
+    private long pModeStart = 0;
+    private int Pmode = 0;
+
     @Override
     public void init() {
         // Initialize drive motors
@@ -237,6 +243,7 @@ public class TeleOp99 extends OpMode {
         lastTime = time;  // Save this time as the LAST time for the NEXT tick
 
         handleInput();  // Handle all basic user input and convert to more useful, unified forms. This only sets user input values; it does nothing else with them. That's the job of the manual control functions.
+        pMode();
 
         if ((currentlyDeploying || currentlyUndeploying) && !AUTO_PRIORITY) {
             checkAutoInterrupts();  // If automatic input doesn't take priority and we're doing a task, make sure user input outside the deadzone takes back control by setting the *UserControl variables (interrupting that part of the auto process).
@@ -277,7 +284,7 @@ public class TeleOp99 extends OpMode {
         }
 
         sanityCheckMotorValues();  // Do basic sanity checks on all motor and servo values (make sure they're within range) and clip them if they aren't
-        applyMotorValues();  // Finally, apply the fully-processed, non-conflicing, acceleration-limited, safe motor values to the motors and servos themselves
+        applyMotorValues();  // Finally, apply the fully-processed, non-conflicting, acceleration-limited, safe motor values to the motors and servos themselves
     }
 
     private void initMotorPositions() {
@@ -361,32 +368,46 @@ public class TeleOp99 extends OpMode {
 
         if (currentlyDeploying) {
             long elapsedTime = time - deploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
+            boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
 
             if (elapsedTime < CLAW_OPEN_TIME && (!clawUserControl || AUTO_PRIORITY)) {  // If the claw hasn't been opened fully and we have control of it
                 clawPosition = CLAW_OPENED_POSITION;  // Open it
             }
-
-            if (elapsedTime < SHOULDER_EXTEND_TIME && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been extended fully and we have control of it
-                shoulderPosition = SHOULDER_OUT_POSITION;  // Extend it
+            else if (elapsedTime < CLAW_OPEN_TIME && (clawUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the claw
+                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
             }
 
-            if (elapsedTime < SHOULDER_EXTEND_TIME && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been extended fully and we have control of the pickup
+            if (elapsedTime < SHOULDER_EXTEND_TIME && (!shoulderUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of it and we're supposed to continue
+                shoulderPosition = SHOULDER_OUT_POSITION;  // Extend it
+            }
+            else if (elapsedTime < SHOULDER_EXTEND_TIME && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
+                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
+            }
+
+            if (elapsedTime < SHOULDER_EXTEND_TIME && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of the pickup and we're supposed to continue
                 pickupPosition = PICKUP_DOWN_POSITION;  // Lower the pickup (its movement is tied into the shoulder movement)
             }
         }
 
         if (currentlyUndeploying) {
             long elapsedTime = time - undeploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
+            boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
 
             if (elapsedTime < SHOULDER_RETRACT_TIME && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been retracted fully and we have control of it
                 shoulderPosition = SHOULDER_IN_POSITION;  // Retract it
             }
-
-            if (elapsedTime < SHOULDER_RETRACT_TIME && (!pickupUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been retracted fully and we have control of the pickup
-                pickupPosition = PICKUP_UP_POSITION;  // Raise the pickup (its movement is tied into the shoulder movement)
+            else if (elapsedTime < SHOULDER_RETRACT_TIME && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
+                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
             }
 
-            if (elapsedTime < CLAW_CLOSE_TIME && (!clawUserControl || AUTO_PRIORITY)) {  // If the claw hasn't been closed fully and we have control of it
+            if (elapsedTime < SHOULDER_RETRACT_TIME && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been retracted fully and we have control of the pickup and we're supposed to continue
+                pickupPosition = PICKUP_UP_POSITION;  // Raise the pickup (its movement is tied into the shoulder movement)
+            }
+            else if (elapsedTime < SHOULDER_RETRACT_TIME && (!pickupUserControl && !AUTO_PRIORITY)) {
+                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
+            }
+
+            if (elapsedTime < CLAW_CLOSE_TIME && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been closed fully and we have control of it and we're supposed to continue
                 clawPosition = CLAW_CLOSED_POSITION;  // Open it
             }
         }
@@ -825,5 +846,100 @@ public class TeleOp99 extends OpMode {
 
     private double easeInOutCirc(double value) {
         return value < 0.5 ? (1 - Math.sqrt(1 - Math.pow(2 * value, 2))) / 2 : (Math.sqrt(1 - Math.pow(-2 * value + 2, 2)) + 1) / 2;
+    }
+
+    private void pMode() {
+        int pmode1;
+        int pmode2;
+        int pmode;
+
+        if (gamepad2DpadUpPressed) {
+            pmode1 = 1;
+        } else if (gamepad2DpadDownPressed) {
+            pmode1 = 2;
+        } else if (gamepad2DpadLeftPressed) {
+            pmode1 = 3;
+        } else if (gamepad2DpadRightPressed) {
+            pmode1 = 4;
+        } else {
+            pmode1 = 0;
+        }
+
+        if (gamepad2RightStickY > 0.8) {
+            pmode2 = 1;
+        }
+        else if (gamepad2RightStickY < -0.8) {
+            pmode2 = 2;
+        }
+        else if (gamepad2RightStickX > 0.8) {
+            pmode2 = 3;
+        }
+        else if (gamepad2RightStickX < -0.8) {
+            pmode2 = 4;
+        }
+        else {
+            pmode2 = 0;
+        }
+
+        pmode = (pmode1 << 8) + pmode2;
+
+        if (pmode == Pmode && pmode != 0) {
+            if (System.currentTimeMillis() - pModeStart > 2000) {
+                Pmode = 0;
+
+                if (pmode == 257) {
+                    AXIS_MOVEMENT = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 258) {
+                    AUTO_PRIORITY = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 259) {
+                    CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 260) {
+                    USE_VARIABLE_SPEED_CURVES = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 513) {
+                    FOOLPROOF_IMPOSSIBLE_POSITIONS = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 514) {
+                    ACCELERATION_CAP += (gamepad2RightShoulderHeld) ? 1 : -1;
+                    ACCELERATION_CAP = Math.max(0, Math.min(1, ACCELERATION_CAP));
+                }
+                else if (pmode == 515) {
+                    RESTRICT_LIFT_MOVEMENT = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 516) {
+                    NATURAL_CLAW_CONTROL = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 769) {
+                    INVERT_NATURAL_CLAW_CONTROL = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 770) {
+                    NATURAL_SHOULDER_CONTROL = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 771) {
+                    INVERT_NATURAL_SHOULDER_CONTROL = gamepad2RightShoulderHeld;
+                }
+                else if (pmode == 772) {
+                    JOYSTICK_INPUT_THRESHOLD += (gamepad2RightShoulderHeld) ? 0.1 : -0.1;
+                    JOYSTICK_INPUT_THRESHOLD = Math.max(0, Math.min(1, JOYSTICK_INPUT_THRESHOLD));
+                }
+                else if (pmode == 1025) {
+                    MOVEMENT_FACTOR += (gamepad2RightShoulderHeld) ? 0.1 : -0.1;
+                    MOVEMENT_FACTOR = Math.max(0, Math.min(1, MOVEMENT_FACTOR));
+                }
+
+                pModeStart = 0;
+            }
+        }
+        else if (pmode != 0) {
+            Pmode = pmode;
+            pModeStart = System.currentTimeMillis();
+        }
+        else {
+            Pmode = 0;
+            pModeStart = 0;
+        }
     }
 }
