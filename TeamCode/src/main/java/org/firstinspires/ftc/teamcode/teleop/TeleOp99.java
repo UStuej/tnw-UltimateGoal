@@ -75,7 +75,7 @@ public class TeleOp99 extends OpMode {
     private double shoulderPosition;  // The current target position of the shoulder. setPosition is called using this value at the very end of the loop, only once
     private double clawPosition;  // The current target position of the claw. setPosition is called using this value at the very end of the loop, only once
     private double pickupPosition;  // The current target position of the pickup. setPosition is called using this value at the very end of the loop, only once
-    private double liftPosition;  // The current target position of the lift. setPosition is called using this value at the very end of the loop, only once
+    private double liftPower;  // The current target power of the lift. setPower is called using this value at the very end of the loop, only once
     private double ringDumpPosition;  // The current target position of the ring dump. setPosition is called using this value at the very end of the loop, only once
 
     private boolean shoulderState;  // Whether the shoulder is out (true) or in (false). Used as a toggle for user control of the shoulder
@@ -83,7 +83,7 @@ public class TeleOp99 extends OpMode {
 
     private double shoulderEstimatedPosition;  // The actual estimated position of the shoulder (as opposed to the target position). Any inaccuracy here should be quickly corrected when the shoulder target is changed, and wouldn't cause major issues anyway (only bugs I can think of are the lift operation being temporarily affected if RESTRICT_LIFT_MOVEMENT is true or impossible positions being inaccurately checked if FOOLPROOF_IMPOSSIBLE_POSITIONS is true). Managed by estimateServoPositions
     private double clawEstimatedPosition;  // The actual estimated position of the claw (as opposed to the target position). Any inaccuracy here should be quickly corrected when the claw target is changed, and wouldn't cause major issues anyway (only bug I can think of is an impossible position check if FOOLPROOF_IMPOSSIBLE_POSITIONS is true). Managed by estimateServoPositions
-    private double liftEstimatedPosition;  // The actual estimated position of the lift (as opposed to the target position). Any inaccuracy here should be quickly corrected when the lift target is changed, and wouldn't cause major issues anyway (only bug I can think of is an impossible position check if FOOLPROOF_IMPOSSIBLE_POSITIONS is true). Managed by estimateServoPositions.
+    private double pickupEstimatedPosition;  // The actual estimated position of the pickup (as opposed to the target position). Any inaccuracy here should be quickly corrected when the lift target is changed, and wouldn't cause major issues anyway (only bug I can think of is an impossible position check if FOOLPROOF_IMPOSSIBLE_POSITIONS is true). Managed by estimateServoPositions.
 
     private int currentSpeedCurve = DEFAULT_SPEED_CURVE;  // The speed curve and speed curve modes we're currently applying to user input, if enabled via USE_VARIABLE_SPEED_CURVES
     private int currentSpeedCurveMode = DEFAULT_SPEED_CURVE_MODE;
@@ -125,8 +125,8 @@ public class TeleOp99 extends OpMode {
     private boolean currentlyDeploying = false;  // Whether or not we're deploying the full wobble goal mechanism (claw, pickup, and shoulder)
     private boolean currentlyUndeploying = false;  // Whether or not we're undeploying the full wobble goal mechanism (claw, pickup, and shoulder)
 
-    private double deploymentStartTime;  // The start time of the wobble goal deployment sequence to determine when to set servo positions
-    private double undeploymentStartTime;  // The start time of the wobble goal undeployment sequence to determine when to set servo positions
+    private long deploymentStartTime;  // The start time of the wobble goal deployment sequence to determine when to set servo positions (in milliseconds)
+    private long undeploymentStartTime;  // The start time of the wobble goal undeployment sequence to determine when to set servo positions (in millseconds)
 
     private boolean clawUserControl = false;  // Whether or not the user has claimed control of the claw during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment.
     private boolean shoulderUserControl = false;  // Whether or not the user has claimed control of the shoulder during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment
@@ -233,15 +233,14 @@ public class TeleOp99 extends OpMode {
     @Override
     public void loop() {
         time = System.currentTimeMillis();
-        deltaTime = time-lastTime;  // Calculate the delta time from the last frame
+        deltaTime = time - lastTime;  // Calculate the delta time from the last frame
         lastTime = time;  // Save this time as the LAST time for the NEXT tick
 
         handleInput();  // Handle all basic user input and convert to more useful, unified forms. This only sets user input values; it does nothing else with them. That's the job of the manual control functions.
 
         if ((currentlyDeploying || currentlyUndeploying) && !AUTO_PRIORITY) {
             checkAutoInterrupts();  // If automatic input doesn't take priority and we're doing a task, make sure user input outside the deadzone takes back control by setting the *UserControl variables (interrupting that part of the auto process).
-        }
-        else {  // If we're not doing a task or automatic overrides this anyway, make sure the relevant variables go back to false so that automatic isn't paused forever
+        } else {  // If we're not doing a task or automatic overrides this anyway, make sure the relevant variables go back to false so that automatic isn't paused forever
             if (clawUserControl) {
                 clawUserControl = false;
             }
@@ -273,7 +272,7 @@ public class TeleOp99 extends OpMode {
             impossiblePositionCheck();  // If we're preventing impossible physical positions through software, check for such occurances and fix them in both manual, automatic, and combinations of the two (it doesn't matter at this point because this function handles the computed motor values outside any such contexts)
         }
 
-        if (ACCELERATION_CAP) {
+        if (ACCELERATION_CAP != 0.0) {
             limitAcceleration();  // If we're limiting the acceleration of movement-related motors, check all motor powers against their previous values and correct for acceleation if needed
         }
 
@@ -303,8 +302,7 @@ public class TeleOp99 extends OpMode {
         if (gamepad1LeftShoulderPressed) {  // Cycle speed curve modes
             if (currentSpeedCurveMode < 2) {
                 currentSpeedCurveMode++;  // Cycle
-            }
-            else {
+            } else {
                 currentSpeedCurveMode = 0;  // Wrap back around to the beginning
             }
         }
@@ -312,8 +310,7 @@ public class TeleOp99 extends OpMode {
         if (gamepad1RightShoulderPressed) {  // Cycle speed curves
             if (currentSpeedCurve < 7) {
                 currentSpeedCurve++;  // Cycle
-            }
-            else {
+            } else {
                 currentSpeedCurve = 0;  // Wrap abck around to the beginning
             }
         }
@@ -329,9 +326,9 @@ public class TeleOp99 extends OpMode {
         backLeftDrivePower = Math.max(-1, Math.min(1, backLeftDrivePower));
         backRightDrivePower = Math.max(-1, Math.min(1, backRightDrivePower));
 
+        liftPower = Math.max(-1, Math.min(1, liftPower));
         intakeDrivePower = Math.max(-1, Math.min(1, intakeDrivePower));
 
-        liftPosition = Math.max(0, Math.min(1, liftPosition));
         pickupPosition = Math.max(0, Math.min(1, pickupPosition));
         shoulderPosition = Math.max(0, Math.min(1, shoulderPosition));
         clawPosition = Math.max(0, Math.min(1, clawPosition));
@@ -405,14 +402,12 @@ public class TeleOp99 extends OpMode {
                 vertical = easeNormalized(gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
                 horizontal = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
                 rotation = easeNormalized(gamepad1RightStickX, currentSpeedCurve, currentSpeedCurveMode);
-            }
-            else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
+            } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
                 vertical = gamepad1LeftStickY;
                 horizontal = gamepad1LeftStickX;
                 rotation = gamepad1RightStickX;
             }
-        }
-        else {  // If we're using dpad movement
+        } else {  // If we're using dpad movement
             if (gamepad1DpadUpHeld && !gamepad1DpadDownHeld) {  // Up
                 vertical = 1.0;
             }
@@ -458,10 +453,9 @@ public class TeleOp99 extends OpMode {
     private void applyManualServoControls() {
         // Lift movement
         if (!RESTRICT_LIFT_MOVEMENT || (shoulderEstimatedPosition == SHOULDER_OUT_POSITION)) {  // Only allow the lift to move when the wobble goal shoulder is rotated out or RESTRICT_LIFT_MOVEMENT is false
-            liftPosition = gamepad2LeftStickY;
-        }
-        else {  // If we've restricted the movement, make sure that the lift is either out of the way or getting there
-            liftPosition = -1.0;  // FIXME: This is the right down lift position, right?
+            liftPower = Math.abs(gamepad2LeftStickY);
+        } else {  // If we've restricted the movement, make sure that the lift is either out of the way or getting there
+            liftPower = 0.0;  // FIXME: This is the right down lift position, right?
         }
 
         // Pickup movement, controlled by a gamepad trigger
@@ -473,13 +467,11 @@ public class TeleOp99 extends OpMode {
             if (gamepad2APressed) {
                 shoulderState = !shoulderState;
             }
-        }
-        else {
+        } else {
             // Shoulder state adjustment based on consistent user input (holding the button)
             if (INVERT_NATURAL_SHOULDER_CONTROL) {  // Holding the button keeps the shoulder in
                 shoulderState = !gamepad2AHeld;
-            }
-            else {  // Holding the button keeps the shoulder out
+            } else {  // Holding the button keeps the shoulder out
                 shoulderState = gamepad2AHeld;
             }
         }
@@ -493,13 +485,11 @@ public class TeleOp99 extends OpMode {
             if (gamepad2BPressed) {
                 clawState = !clawState;
             }
-        }
-        else {
+        } else {
             // Claw state adjustment based on consistent user input (holding the button)
             if (INVERT_NATURAL_CLAW_CONTROL) {  // Holding the button opens the claw
                 clawState = !gamepad2BHeld;
-            }
-            else {  // Holding the button closes the claw
+            } else {  // Holding the button closes the claw
                 clawState = gamepad2BHeld;
             }
         }
@@ -513,46 +503,42 @@ public class TeleOp99 extends OpMode {
 
     private void estimateServoPositions() {
         // Currently a dummy function. Should share timekeeping with the auto control function somehow and try to figure out where the servos really are. This might require VERY precise tweaking of automatic servo start/end times to work well and should probably stay as-is until we do that
-        liftEstimatedPosition = liftPosition;
+        pickupEstimatedPosition = pickupPosition;
         clawEstimatedPosition = clawPosition;
         shoulderEstimatedPosition = shoulderPosition;
     }
 
     private void limitAcceleration() {
         // Limit acceleration of all robot movement-related motor values by checking the motor power variables against their previous values and the delta time from the last tick
-        if (Math.abs(frontLeftDrivePreviousPower - frontLeftDrivePower)/deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one over the delta time exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
+        if (Math.abs(frontLeftDrivePreviousPower - frontLeftDrivePower) / deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one over the delta time exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
             if (frontLeftDrivePower > frontLeftDrivePreviousPower) {  // Try to maintain direction relative to the previous power
-                frontLeftDrivePower = frontLeftDrivePreviousPower + ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
-            }
-            else {
-                frontLeftDrivePower = frontLeftDrivePreviousPower - ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
+                frontLeftDrivePower = frontLeftDrivePreviousPower + ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
+            } else {
+                frontLeftDrivePower = frontLeftDrivePreviousPower - ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
             }
         }
 
-        if (Math.abs(frontRightDrivePreviousPower - frontRightDrivePower)/deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
+        if (Math.abs(frontRightDrivePreviousPower - frontRightDrivePower) / deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
             if (frontRightDrivePower >= frontRightDrivePreviousPower) {  // Try to maintain direction relative to the previous power
-                frontRightDrivePower = frontRightDrivePreviousPower + ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
-            }
-            else {
-                frontRightDrivePower = frontRightDrivePreviousPower - ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
+                frontRightDrivePower = frontRightDrivePreviousPower + ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
+            } else {
+                frontRightDrivePower = frontRightDrivePreviousPower - ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
             }
         }
 
-        if (Math.abs(backLeftDrivePreviousPower - backLeftDrivePower)/deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
+        if (Math.abs(backLeftDrivePreviousPower - backLeftDrivePower) / deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
             if (backLeftDrivePower > backLeftDrivePreviousPower) {  // Try to maintain direction relative to the previous power
-                backLeftDrivePower = backLeftDrivePreviousPower + ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
-            }
-            else {
-                backLeftDrivePower = backLeftDrivePreviousPower - ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
+                backLeftDrivePower = backLeftDrivePreviousPower + ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
+            } else {
+                backLeftDrivePower = backLeftDrivePreviousPower - ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
             }
         }
 
-        if (Math.abs(backRightDrivePreviousPower - backRightDrivePower)/deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
+        if (Math.abs(backRightDrivePreviousPower - backRightDrivePower) / deltaTime > ACCELERATION_CAP) {  // If the absolute difference between the previous motor power and this one exceeds our acceleration cap, clip it to the acceleration cap and recalculate the motor power
             if (backRightDrivePower > backRightDrivePreviousPower) {  // Try to maintain direction relative to the previous power
-                backRightDrivePower = backRightDrivePreviousPower + ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
-            }
-            else {
-                backRightDrivePower = backRightDrivePreviousPower - ACCELERATION_CAP*deltaTime;  // Increment the motor power by the acceleration cap
+                backRightDrivePower = backRightDrivePreviousPower + ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
+            } else {
+                backRightDrivePower = backRightDrivePreviousPower - ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
             }
         }
     }
@@ -565,7 +551,7 @@ public class TeleOp99 extends OpMode {
         backRightDrive.setPower(backRightDrivePower * MOVEMENT_FACTOR);
 
         // Apply all servo values
-        wobbleLift.setPosition(liftPosition);
+        wobbleLift.setPower(liftPower);
         wobbleClaw.setPosition(clawPosition);
         wobblePickup.setPosition(pickupPosition);
         wobbleShoulder.setPosition(shoulderPosition);
@@ -598,13 +584,13 @@ public class TeleOp99 extends OpMode {
         gamepad1XHeld = gamepad1.x;
         gamepad1YHeld = gamepad1.y;
         gamepad1LeftShoulderHeld = gamepad1.left_bumper;
-        gamepad1RightShoulderHeld = gamepad1.right_shoulder;
+        gamepad1RightShoulderHeld = gamepad1.right_bumper;
         gamepad1LeftStickHeld = gamepad1.left_stick_button;
         gamepad1RightStickHeld = gamepad1.right_stick_button;
-        gamepad1DpadUp = gamepad1.dpad_up;
-        gamepad1DpadDown = gamepad1.dpad_down;
-        gamepad1DpadLeft = gamepad1.dpad_left;
-        gamepad1DpadRight = gamepad1.dpad_right;
+        gamepad1DpadUpHeld = gamepad1.dpad_up;
+        gamepad1DpadDownHeld = gamepad1.dpad_down;
+        gamepad1DpadLeftHeld = gamepad1.dpad_left;
+        gamepad1DpadRightHeld = gamepad1.dpad_right;
 
         // Figure out if they were just pressed using our cached inputs and the new ones
         gamepad1APressed = !gamepad1AWasHeld && gamepad1AHeld;  // The button was just pressed if our previous value was false, and this one was true
@@ -636,13 +622,13 @@ public class TeleOp99 extends OpMode {
         gamepad2XHeld = gamepad2.x;
         gamepad2YHeld = gamepad2.y;
         gamepad2LeftShoulderHeld = gamepad2.left_bumper;
-        gamepad2RightShoulderHeld = gamepad2.right_shoulder;
+        gamepad2RightShoulderHeld = gamepad2.right_bumper;
         gamepad2LeftStickHeld = gamepad2.left_stick_button;
         gamepad2RightStickHeld = gamepad2.right_stick_button;
-        gamepad2DpadUp = gamepad2.dpad_up;
-        gamepad2DpadDown = gamepad2.dpad_down;
-        gamepad2DpadLeft = gamepad2.dpad_left;
-        gamepad2DpadRight = gamepad2.dpad_right;
+        gamepad2DpadUpHeld = gamepad2.dpad_up;
+        gamepad2DpadDownHeld = gamepad2.dpad_down;
+        gamepad2DpadLeftHeld = gamepad2.dpad_left;
+        gamepad2DpadRightHeld = gamepad2.dpad_right;
 
         // Figure out if they were just pressed using our cached inputs and the new ones
         gamepad2APressed = !gamepad2AWasHeld && gamepad2AHeld;  // The button was just pressed if our previous value was false, and this one was true
@@ -673,98 +659,78 @@ public class TeleOp99 extends OpMode {
 
     private double easeIndex(double value, int easingIndex, int easingMode) {
         // Takes an index for an easing function and another integer for an easing mode and applies returns the applied easing. This function assumes that the passed value is within the range 0 to 1. For values from -1 to 1, use easeNormalized.
+        // Returns NaN if the easing index or mode couldn't be found
         switch (easingMode) {
             case 0:  // Easing in
                 switch (easingIndex) {
                     case 0:
                         return easeLinear(value);
-                        break;
                     case 1:
                         return easeInSine(value);
-                        break;
                     case 2:
                         return easeInQuad(value);
-                        break;
                     case 3:
                         return easeInCubic(value);
-                        break;
                     case 4:
                         return easeInQuart(value);
-                        break;
                     case 5:
                         return easeInQuint(value);
-                        break;
                     case 6:
                         return easeInExpo(value);
-                        break;
                     case 7:
                         return easeInCirc(value);
-                        break;
                 }
+
                 break;
             case 1:  // Easing out
                 switch (easingIndex) {
                     case 0:
                         return easeLinear(value);
-                        break;
                     case 1:
                         return easeOutSine(value);
-                        break;
                     case 2:
                         return easeOutQuad(value);
-                        break;
                     case 3:
                         return easeOutCubic(value);
-                        break;
                     case 4:
                         return easeOutQuart(value);
-                        break;
                     case 5:
                         return easeOutQuint(value);
-                        break;
                     case 6:
                         return easeOutExpo(value);
-                        break;
                     case 7:
                         return easeOutCirc(value);
-                        break;
                 }
                 break;
             case 2:  // Easing in-out
                 switch (easingIndex) {
                     case 0:
                         return easeLinear(value);
-                        break;
                     case 1:
                         return easeInOutSine(value);
-                        break;
                     case 2:
                         return easeInOutQuad(value);
-                        break;
                     case 3:
                         return easeInOutCubic(value);
-                        break;
                     case 4:
                         return easeInOutQuart(value);
-                        break;
                     case 5:
                         return easeInOutQuint(value);
-                        break;
                     case 6:
                         return easeInOutExpo(value);
-                        break;
                     case 7:
                         return easeInOutCirc(value);
-                        break;
                 }
                 break;
         }
+
+        return Float.NaN;
     }
 
     private double easeNormalized(double value, int easingIndex, int easingMode) {
         // Takes a value from -1 to 1, an easing function, and an easing mode. Returns the normalized eased value from -1 to 1
         double denormalized = Math.abs(value);  // De-normalize the value by separating it from its sign
-        boolean negative = value < 0 ? -1 : 1;  // Get the sign as an integer (1 or -1, to make the following code easier because we can just multiply)
+        int sign = value < 0 ? -1 : 1;  // Get the sign as an integer (1 or -1, to make the following code easier because we can just multiply)
 
         double eased = easeIndex(denormalized, easingIndex, easingMode);  // Run the requested easing function on the denormalized value
         double easedNormalized = eased * sign;  // Convert from the normalized value to the original value space by adding the sign again through multiplication
@@ -776,6 +742,7 @@ public class TeleOp99 extends OpMode {
     private double easeLinear(double value) {
         return value;
     }
+
     private double easeInSine(double value) {
         return 1 - Math.cos((value * Math.PI) / 2);
     }
