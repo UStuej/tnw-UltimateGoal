@@ -623,6 +623,10 @@ public class TeleOp99 extends OpMode {
         gamepad1RightShoulderPressed = !gamepad1RightShoulderWasHeld && gamepad1RightShoulderHeld;
         gamepad1LeftStickPressed = !gamepad1LeftStickWasHeld && gamepad1LeftStickHeld;
         gamepad1RightStickPressed = !gamepad1RightStickWasHeld && gamepad1RightStickHeld;
+        gamepad1DpadUpPressed = !gamepad1DpadUpWasHeld && gamepad1DpadUpHeld;
+        gamepad1DpadDownPressed = !gamepad1DpadDownWasHeld && gamepad1DpadDownHeld;
+        gamepad1DpadLeftPressed = !gamepad1DpadLeftWasHeld && gamepad1DpadLeftHeld;
+        gamepad1DpadRightPressed = !gamepad1DpadRightWasHeld && gamepad1DpadRightHeld;
 
         // Cache previous gamepad 2 inputs
         boolean gamepad2AWasHeld = gamepad2AHeld;  // Whether or not the gamepad 2 a button was held
@@ -661,6 +665,10 @@ public class TeleOp99 extends OpMode {
         gamepad2RightShoulderPressed = !gamepad2RightShoulderWasHeld && gamepad2RightShoulderHeld;
         gamepad2LeftStickPressed = !gamepad2LeftStickWasHeld && gamepad2LeftStickHeld;
         gamepad2RightStickPressed = !gamepad2RightStickWasHeld && gamepad2RightStickHeld;
+        gamepad2DpadUpPressed = !gamepad1DpadUpWasHeld && gamepad2DpadUpHeld;
+        gamepad2DpadDownPressed = !gamepad1DpadDownWasHeld && gamepad2DpadDownHeld;
+        gamepad2DpadLeftPressed = !gamepad1DpadLeftWasHeld && gamepad2DpadLeftHeld;
+        gamepad2DpadRightPressed = !gamepad1DpadRightWasHeld && gamepad2DpadRightHeld;
 
         // Gamepad 1 axes
         gamepad1LeftStickX = (Math.abs(gamepad1.left_stick_x) >= JOYSTICK_INPUT_THRESHOLD) ? gamepad1.left_stick_x : 0.0;  // Apply deadzone. Values below the deadzone are "snapped" to zero
