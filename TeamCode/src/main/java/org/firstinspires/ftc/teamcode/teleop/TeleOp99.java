@@ -576,6 +576,7 @@ public class TeleOp99 extends OpMode {
         wobbleClaw.setPosition(clawPosition);
         wobblePickup.setPosition(pickupPosition);
         wobbleShoulder.setPosition(shoulderPosition);
+        ringDump.setPosition(ringDumpPosition);
 
         // Update previous motor powers before the original motor values are changed on the next loop iteration
         frontLeftDrivePreviousPower = frontLeftDrivePower;
@@ -853,13 +854,13 @@ public class TeleOp99 extends OpMode {
         int pmode2;
         int pmode;
 
-        if (gamepad2DpadUpPressed) {
+        if (gamepad2DpadUpHeld) {
             pmode1 = 1;
-        } else if (gamepad2DpadDownPressed) {
+        } else if (gamepad2DpadDownHeld) {
             pmode1 = 2;
-        } else if (gamepad2DpadLeftPressed) {
+        } else if (gamepad2DpadLeftHeld) {
             pmode1 = 3;
-        } else if (gamepad2DpadRightPressed) {
+        } else if (gamepad2DpadRightHeld) {
             pmode1 = 4;
         } else {
             pmode1 = 0;
