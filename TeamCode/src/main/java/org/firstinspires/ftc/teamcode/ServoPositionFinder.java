@@ -13,7 +13,7 @@ public class ServoPositionFinder extends OpMode {
     private Servo servo1;
 
     //////////////////////////////////////////////////////////
-    final String SERVO_0_NAME = "WGShoulder";
+    final String SERVO_0_NAME = "ringDump";
     final String SERVO_1_NAME = "WGClaw";
     //////////////////////////////////////////////////////////
 

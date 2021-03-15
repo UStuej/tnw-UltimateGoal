@@ -21,7 +21,7 @@ public class TeleOp99 extends OpMode {
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
-    private static boolean BUMPERS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad bumpers will be able to cycle through custom speed curves. The left bumper toggles between in, out, and in-out easings and the right bumper selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
+    private static boolean BUTTONS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
     private static boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
     private static int DEFAULT_SPEED_CURVE = 0;  // Only applies if using variable speed curves. The index of the speed curve to use by default (from 0-7 inclusive), and when reset. See above comments for speed curve list
     private static int DEFAULT_SPEED_CURVE_MODE = 0;  // Only applies if using variable speed curves. The index of the speed curve mode to use by default (from 0-2) inclusive. See above comments for mode list
@@ -66,10 +66,12 @@ public class TeleOp99 extends OpMode {
     private static long CLAW_OPEN_TIME = 500L;  // The time (in milliseconds) it takes for the claw to be opened
     private static long CLAW_CLOSE_TIME = 1000L;  // The time (in milliseconds) it takes for the claw to close
 
-    private static double RING_DUMP_DUMP_POSITION = 0.0;  // The position of the ring dump when it's dumping. FIXME: I just assumed zero for this value as I didn't know what to put
-    private static double RING_DUMP_COLLECT_POSITION = 1.0;  // The position of the ring dump when it's collecting. FIXME: I just assumed one for this value as I didn't know what to put
+    private static double RING_DUMP_DUMP_POSITION = 0.83;  // The position of the ring dump when it's dumping
+    private static double RING_DUMP_COLLECT_POSITION = 0.48;  // The position of the ring dump when it's collecting
 
     private static double LIFT_POWER_MULTIPLIER = 0.10;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 10% of full power
+
+    private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
     private static int PMODE = 0;  // PMODE, for problems
 
@@ -125,6 +127,8 @@ public class TeleOp99 extends OpMode {
 
     // Ring manipulation servo
     private Servo ringDump;
+
+    private boolean slowMode;  // Whether or not we're currently going slower
 
     // Variables relating to wobble goal manipulation
     private boolean currentlyDeploying = false;  // Whether or not we're deploying the full wobble goal mechanism (claw, pickup, and shoulder)
@@ -250,9 +254,9 @@ public class TeleOp99 extends OpMode {
 
     @Override
     public void loop() {
-        time = System.currentTimeMillis();
-        deltaTime = time - lastTime;  // Calculate the delta time from the last frame
         lastTime = time;  // Save this time as the LAST time for the NEXT tick
+        time = System.currentTimeMillis();  // Get the new current time
+        deltaTime = time - lastTime;  // Calculate the delta time from the last frame
 
         handleInput();  // Handle all basic user input and convert to more useful, unified forms. This only sets user input values; it does nothing else with them. That's the job of the manual control functions.
         pMode();
@@ -275,7 +279,7 @@ public class TeleOp99 extends OpMode {
 
         autoServoControl();  // Run automatic servo control (wobble goal mechanism deployment or undeployment) on whatever motors are "free" from manual control if such deployment is enabled (which it also checks for through the user input variables). DO NOT move this function call into a conditional. Without this function, timekeeping for the deployment and undeployment would act really weird if any manual control interrupted it (it would act really weird in a number of circumstances for that matter. Don't do it.)
 
-        if (USE_VARIABLE_SPEED_CURVES && BUMPERS_CYCLE_SPEED_CURVES) {
+        if (USE_VARIABLE_SPEED_CURVES && BUTTONS_CYCLE_SPEED_CURVES) {
             inputAdjustVariableSpeedCurves();  // If we're using variable speed curves and they can be adjusted by user input, handle user input to adjust them if necessary
         }
 
@@ -320,24 +324,24 @@ public class TeleOp99 extends OpMode {
             telemetry.addLine("Gamepad 1 left stick pressed: reset speed curve and speed curve mode");  // Debug message
         }
 
-        if (gamepad1LeftShoulderPressed) {  // Cycle speed curve modes
+        if (gamepad1APressed) {  // Cycle speed curve modes
             if (currentSpeedCurveMode < 2) {
                 currentSpeedCurveMode++;  // Cycle
             } else {
                 currentSpeedCurveMode = 0;  // Wrap back around to the beginning
             }
 
-            telemetry.addData("Gamepad 1 left shoulder pressed: cycled speed curve mode to ", currentSpeedCurveMode);  // Debug message
+            telemetry.addData("Gamepad 1 A: cycled speed curve mode to ", currentSpeedCurveMode);  // Debug message
         }
 
-        if (gamepad1RightShoulderPressed) {  // Cycle speed curves
+        if (gamepad1BPressed) {  // Cycle speed curves
             if (currentSpeedCurve < 7) {
                 currentSpeedCurve++;  // Cycle
             } else {
                 currentSpeedCurve = 0;  // Wrap back around to the beginning
             }
 
-            telemetry.addData("Gamepad 1 right shoulder pressed: cycled speed curve to", currentSpeedCurve);  // Debug message
+            telemetry.addData("Gamepad 1 B: cycled speed curve to", currentSpeedCurve);  // Debug message
         }
     }
 
@@ -372,26 +376,31 @@ public class TeleOp99 extends OpMode {
             if (!currentlyDeploying) {
                 currentlyDeploying = true;  // Start deploying if we aren't already
                 deploymentStartTime = time;  // Set the deployment start time
+                telemetry.addLine("Gamepad 2 X pressed: deploying wobble goal mechanism");  // Debug message
+            }
+            else {
+                telemetry.addLine("Gamepad 2 X pressed, but not deploying: already deploying");  // Debug message
             }
 
             currentlyUndeploying = false;  // If we're undeploying, stop
-
-            telemetry.addLine("Gamepad 2 X pressed: deploying wobble goal mechanism");  // Debug message
         }
 
         if (gamepad2YPressed) {  // Undeploy
             if (!currentlyUndeploying) {
                 currentlyUndeploying = true;  // Start undeploying if we aren't already
                 undeploymentStartTime = time;
+                telemetry.addLine("Gamepad 2 Y pressed: undeploying wobble goal mechanism");  // Debug message
+            }
+            else {
+                telemetry.addLine("Gamepad 2 Y pressed, but not undeploying: already undeploying");  // Debug message
             }
 
             currentlyDeploying = false;  // If we're deploying, stop
-
-            telemetry.addLine("Gamepad 2 Y pressed: undeploying wobble goal mechanism");  // Debug message
         }
 
         if (currentlyDeploying) {
             long elapsedTime = time - deploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
+            telemetry.addData("Deployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
 
             if (elapsedTime < CLAW_OPEN_TIME && (!clawUserControl || AUTO_PRIORITY)) {  // If the claw hasn't been opened fully and we have control of it
@@ -401,20 +410,25 @@ public class TeleOp99 extends OpMode {
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
             }
 
-            if (elapsedTime < SHOULDER_EXTEND_TIME && (!shoulderUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of it and we're supposed to continue
+            if (elapsedTime < SHOULDER_EXTEND_TIME && elapsedTime > CLAW_OPEN_TIME && (!shoulderUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of it and we're supposed to continue
                 shoulderPosition = SHOULDER_OUT_POSITION;  // Extend it
             }
-            else if (elapsedTime < SHOULDER_EXTEND_TIME && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
+            else if (elapsedTime < SHOULDER_EXTEND_TIME && elapsedTime > CLAW_OPEN_TIME && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
             }
 
-            if (elapsedTime < SHOULDER_EXTEND_TIME && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of the pickup and we're supposed to continue
+            if (elapsedTime < SHOULDER_EXTEND_TIME && elapsedTime > CLAW_OPEN_TIME && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of the pickup and we're supposed to continue
                 pickupPosition = PICKUP_DOWN_POSITION;  // Lower the pickup (its movement is tied into the shoulder movement)
+            }
+
+            if (elapsedTime > SHOULDER_EXTEND_TIME) {  // The deployment has finished
+                telemetry.addLine("Finished wobble goal deployment sequence");
             }
         }
 
         if (currentlyUndeploying) {
             long elapsedTime = time - undeploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
+            telemetry.addData("Undeployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
 
             if (elapsedTime < SHOULDER_RETRACT_TIME && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been retracted fully and we have control of it
@@ -431,8 +445,12 @@ public class TeleOp99 extends OpMode {
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
             }
 
-            if (elapsedTime < CLAW_CLOSE_TIME && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been closed fully and we have control of it and we're supposed to continue
+            if (elapsedTime < CLAW_CLOSE_TIME && elapsedTime > SHOULDER_RETRACT_TIME && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been closed fully and we have control of it and we're supposed to continue
                 clawPosition = CLAW_CLOSED_POSITION;  // Open it
+            }
+
+            if (elapsedTime > CLAW_CLOSE_TIME) {  // The undeployment has finished
+                telemetry.addLine("Finished wobble goal undeployment sequence");
             }
         }
     }
@@ -441,6 +459,8 @@ public class TeleOp99 extends OpMode {
         double vertical = 0.0;  // Save each movement axis we'll use in its own variable
         double horizontal = 0.0;
         double rotation = 0.0;
+
+        double currentPowerFactor = gamepad1LeftShoulderHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
 
         if (AXIS_MOVEMENT) {  // If we're using axis movement
             if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
@@ -470,6 +490,10 @@ public class TeleOp99 extends OpMode {
 
             rotation = gamepad1LeftTrigger - gamepad1RightTrigger;  // In Dpad mode, left and right triggers on gamepad 1 rotate
         }
+
+        vertical *= currentPowerFactor;
+        horizontal *= currentPowerFactor;
+        rotation *= currentPowerFactor;
 
         // Set drive motor power
         frontLeftDrivePower = vertical + horizontal + rotation;
@@ -503,8 +527,10 @@ public class TeleOp99 extends OpMode {
             liftPower = 0.0;
         }
 
-        // Pickup movement, controlled by a gamepad trigger
-        pickupPosition = gamepad1RightTrigger >= JOYSTICK_INPUT_THRESHOLD ? PICKUP_DOWN_POSITION : PICKUP_UP_POSITION;
+        if (!(currentlyDeploying || currentlyUndeploying) || shoulderUserControl) {  // shoulderUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
+            // Pickup movement, controlled by a gamepad trigger
+            pickupPosition = gamepad1RightTrigger >= JOYSTICK_INPUT_THRESHOLD ? PICKUP_DOWN_POSITION : PICKUP_UP_POSITION;
+        }
 
         // Shoulder state
         if (!NATURAL_SHOULDER_CONTROL) {
@@ -521,8 +547,10 @@ public class TeleOp99 extends OpMode {
             }
         }
 
-        // Shoulder movement
-        shoulderPosition = shoulderState ? SHOULDER_IN_POSITION : SHOULDER_OUT_POSITION;
+        if (!(currentlyDeploying || currentlyUndeploying) || shoulderUserControl) {  // shoulderUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
+            // Shoulder movement
+            shoulderPosition = shoulderState ? SHOULDER_IN_POSITION : SHOULDER_OUT_POSITION;
+        }
 
         // Claw state
         if (!NATURAL_CLAW_CONTROL) {
@@ -539,8 +567,10 @@ public class TeleOp99 extends OpMode {
             }
         }
 
-        // Claw movement
-        clawPosition = clawState ? CLAW_CLOSED_POSITION : CLAW_OPENED_POSITION;
+        if (!(currentlyDeploying || currentlyUndeploying) || clawUserControl) {  // clawUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
+            // Claw movement
+            clawPosition = clawState ? CLAW_CLOSED_POSITION : CLAW_OPENED_POSITION;
+        }
 
         // Ring dump movement
         ringDumpPosition = gamepad2LeftShoulderHeld ? RING_DUMP_DUMP_POSITION : RING_DUMP_COLLECT_POSITION;
@@ -594,6 +624,7 @@ public class TeleOp99 extends OpMode {
         frontRightDrive.setPower(frontRightDrivePower * MOVEMENT_FACTOR);
         backLeftDrive.setPower(backLeftDrivePower * MOVEMENT_FACTOR);
         backRightDrive.setPower(backRightDrivePower * MOVEMENT_FACTOR);
+        intakeDrive.setPower(intakeDrivePower);
 
         // Apply all servo values
         wobbleLift.setPower(liftPower);
