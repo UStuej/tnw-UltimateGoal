@@ -212,23 +212,33 @@ public class TeleOp99 extends OpMode {
 
     @Override
     public void init() {
+        telemetry.addLine("Initializing drive motors");  // Debug message
+
         // Initialize drive motors
         frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive");
         backLeftDrive = hardwareMap.get(DcMotor.class, "backLeftDrive");
         backRightDrive = hardwareMap.get(DcMotor.class, "backRightDrive");
 
-        // Initialize intake motors
+        telemetry.addLine("Initializing intake motor");  // Debug message
+
+        // Initialize intake motor
         intakeDrive = hardwareMap.get(DcMotor.class, "intakeDrive");
+
+        telemetry.addLine("Initializing ring dump servo");  // Debug message
 
         // Initialize ring dump servo
         ringDump = hardwareMap.get(Servo.class, "ringDump");
+
+        telemetry.addLine("Initializing wobble goal manipulation motors");  // Debug message
 
         // Initialize Wobble Goal manipulation motors
         wobbleLift = hardwareMap.get(DcMotor.class, "WGLift");
         wobblePickup = hardwareMap.get(Servo.class, "WGPickup");
         wobbleShoulder = hardwareMap.get(Servo.class, "WGShoulder");
         wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
+
+        telemetry.addLine("Initializing servo/motor positions/powers");  // Debug message
 
         initMotorPositions();
 
@@ -276,7 +286,7 @@ public class TeleOp99 extends OpMode {
         applyManualMovementControls();  // The wobble-goal tasks don't prevent any manual movement, which is applied separately in this function
 
         if (FOOLPROOF_IMPOSSIBLE_POSITIONS) {
-            impossiblePositionCheck();  // If we're preventing impossible physical positions through software, check for such occurances and fix them in both manual, automatic, and combinations of the two (it doesn't matter at this point because this function handles the computed motor values outside any such contexts)
+            impossiblePositionCheck();  // If we're preventing impossible physical positions through software, check for such occurences and fix them in both manual, automatic, and combinations of the two (it doesn't matter at this point because this function handles the computed motor values outside any such contexts)
         }
 
         if (ACCELERATION_CAP != 0.0) {
@@ -304,6 +314,8 @@ public class TeleOp99 extends OpMode {
         if (LEFT_STICK_RESETS_SPEED_CURVE && gamepad1LeftStickPressed) {  // If the left stick resets the speed curve and was just pressed, reset the speed curve
             currentSpeedCurve = 0;
             currentSpeedCurveMode = 0;
+
+            telemetry.addLine("Gamepad 1 left stick pressed: reset speed curve and speed curve mode");  // Debug message
         }
 
         if (gamepad1LeftShoulderPressed) {  // Cycle speed curve modes
@@ -312,14 +324,18 @@ public class TeleOp99 extends OpMode {
             } else {
                 currentSpeedCurveMode = 0;  // Wrap back around to the beginning
             }
+
+            telemetry.addData("Gamepad 1 left shoulder pressed: cycled speed curve mode to ", currentSpeedCurveMode);  // Debug message
         }
 
         if (gamepad1RightShoulderPressed) {  // Cycle speed curves
             if (currentSpeedCurve < 7) {
                 currentSpeedCurve++;  // Cycle
             } else {
-                currentSpeedCurve = 0;  // Wrap abck around to the beginning
+                currentSpeedCurve = 0;  // Wrap back around to the beginning
             }
+
+            telemetry.addData("Gamepad 1 right shoulder pressed: cycled speed curve to", currentSpeedCurve);  // Debug message
         }
     }
 
@@ -346,6 +362,8 @@ public class TeleOp99 extends OpMode {
         if (gamepad1LeftStickPressed) {  // Cancel auto controls if the driver's left stick was pressed
             currentlyDeploying = false;
             currentlyUndeploying = false;
+
+            telemetry.addLine("Gamepad 1 left stick pressed: cancelled wobble goal deployment/undeployment (if active)");  // Debug message
         }
 
         if (gamepad1XPressed) {  // Deploy
@@ -355,6 +373,8 @@ public class TeleOp99 extends OpMode {
             }
 
             currentlyUndeploying = false;  // If we're undeploying, stop
+
+            telemetry.addLine("Gamepad 1 X pressed: deploying wobble goal mechanism");  // Debug message
         }
 
         if (gamepad1YPressed) {  // Undeploy
@@ -364,6 +384,8 @@ public class TeleOp99 extends OpMode {
             }
 
             currentlyDeploying = false;  // If we're deploying, stop
+
+            telemetry.addLine("Gamepad 1 Y pressed: undeploying wobble goal mechanism");  // Debug message
         }
 
         if (currentlyDeploying) {
