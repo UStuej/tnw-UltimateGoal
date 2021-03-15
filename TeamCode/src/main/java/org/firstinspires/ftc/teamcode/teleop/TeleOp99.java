@@ -361,14 +361,14 @@ public class TeleOp99 extends OpMode {
     }
 
     private void autoServoControl() {
-        if (gamepad1LeftStickPressed) {  // Cancel auto controls if the driver's left stick was pressed
+        if (gamepad2LeftStickPressed) {  // Cancel auto controls if the driver's left stick was pressed
             currentlyDeploying = false;
             currentlyUndeploying = false;
 
-            telemetry.addLine("Gamepad 1 left stick pressed: cancelled wobble goal deployment/undeployment (if active)");  // Debug message
+            telemetry.addLine("Gamepad 2 left stick pressed: cancelled wobble goal deployment/undeployment (if active)");  // Debug message
         }
 
-        if (gamepad1XPressed) {  // Deploy
+        if (gamepad2XPressed) {  // Deploy
             if (!currentlyDeploying) {
                 currentlyDeploying = true;  // Start deploying if we aren't already
                 deploymentStartTime = time;  // Set the deployment start time
@@ -376,10 +376,10 @@ public class TeleOp99 extends OpMode {
 
             currentlyUndeploying = false;  // If we're undeploying, stop
 
-            telemetry.addLine("Gamepad 1 X pressed: deploying wobble goal mechanism");  // Debug message
+            telemetry.addLine("Gamepad 2 X pressed: deploying wobble goal mechanism");  // Debug message
         }
 
-        if (gamepad1YPressed) {  // Undeploy
+        if (gamepad2YPressed) {  // Undeploy
             if (!currentlyUndeploying) {
                 currentlyUndeploying = true;  // Start undeploying if we aren't already
                 undeploymentStartTime = time;
@@ -387,7 +387,7 @@ public class TeleOp99 extends OpMode {
 
             currentlyDeploying = false;  // If we're deploying, stop
 
-            telemetry.addLine("Gamepad 1 Y pressed: undeploying wobble goal mechanism");  // Debug message
+            telemetry.addLine("Gamepad 2 Y pressed: undeploying wobble goal mechanism");  // Debug message
         }
 
         if (currentlyDeploying) {
@@ -498,9 +498,9 @@ public class TeleOp99 extends OpMode {
     private void applyManualServoControls() {
         // Lift movement
         if (!RESTRICT_LIFT_MOVEMENT || (shoulderEstimatedPosition == SHOULDER_OUT_POSITION)) {  // Only allow the lift to move when the wobble goal shoulder is rotated out or RESTRICT_LIFT_MOVEMENT is false
-            liftPower = Math.abs(LIFT_POWER_MULTIPLIER*gamepad2LeftStickY);
+            liftPower = LIFT_POWER_MULTIPLIER * gamepad2LeftStickY;
         } else {  // If we've restricted the movement, make sure that the lift is either out of the way or getting there
-            liftPower = 0.0;  // FIXME: This is the right down lift position, right?
+            liftPower = 0.0;
         }
 
         // Pickup movement, controlled by a gamepad trigger
