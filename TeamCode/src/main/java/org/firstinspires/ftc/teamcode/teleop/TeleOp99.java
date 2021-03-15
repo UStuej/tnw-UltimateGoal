@@ -28,7 +28,7 @@ public class TeleOp99 extends OpMode {
 
     private static boolean FOOLPROOF_IMPOSSIBLE_POSITIONS = false;  // Whether or not servo position combinations which are impossible to reach physically will be prevented through software rather than servo gear-grinding, fire or accidental destruction of other parts. This only works to the point that such positions are predicted and tweaked accurately, and may be disabled under careful operation. TODO: This
 
-    private static double ACCELERATION_CAP = 4.0;  // The max allowed acceleration of any movement motor in units per second per second. This is included because max acceleration might tip the robot, but use with care as very low accelerations will make the robot sluggish. If the cap is reached, velocity will be incremented at this acceleration rather than the alternative. This value should be set to 1 divided by the number of seconds it should take for the motors to increment to maximum velocity. May be set above 1 for accelerations faster than 1 unit per second per second. 4.0 (the default value) means it should take 0.25 seconds to go from 0 to full. Set to 0 to disable
+    private static double ACCELERATION_CAP = 1.33333;  // The max allowed acceleration of any movement motor in units per second per second. This is included because max acceleration might tip the robot, but use with care as very low accelerations will make the robot sluggish. If the cap is reached, velocity will be incremented at this acceleration rather than the alternative. This value should be set to 1 divided by the number of seconds it should take for the motors to increment to maximum velocity. May be set above 1 for accelerations faster than 1 unit per second per second. 1.33333... (the default value) means it should take 0.75 seconds to go from 0 to full. Set to 0 to disable
 
     private static boolean MOVEMENT_ROTATION_CORRECTION = false;  // Whether or not we should attempt to adjust the robot's movement based on an accumulated rotation offset, which, if accurately maintained, would allow for rotating the robot without affecting movement from the driver's perspective. Disable this if steering seems to drift clockwise or counterclockwise after some amounts of rotation TODO: This
 
@@ -68,6 +68,8 @@ public class TeleOp99 extends OpMode {
 
     private static double RING_DUMP_DUMP_POSITION = 0.0;  // The position of the ring dump when it's dumping. FIXME: I just assumed zero for this value as I didn't know what to put
     private static double RING_DUMP_COLLECT_POSITION = 1.0;  // The position of the ring dump when it's collecting. FIXME: I just assumed one for this value as I didn't know what to put
+
+    private static double LIFT_POWER_MULTIPLIER = 0.10;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 10% of full power
 
     private static int PMODE = 0;  // PMODE, for problems
 
@@ -442,11 +444,11 @@ public class TeleOp99 extends OpMode {
 
         if (AXIS_MOVEMENT) {  // If we're using axis movement
             if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
-                vertical = easeNormalized(gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
+                vertical = easeNormalized(-gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
                 horizontal = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
                 rotation = easeNormalized(gamepad1RightStickX, currentSpeedCurve, currentSpeedCurveMode);
             } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
-                vertical = gamepad1LeftStickY;
+                vertical = -gamepad1LeftStickY;
                 horizontal = gamepad1LeftStickX;
                 rotation = gamepad1RightStickX;
             }
@@ -496,7 +498,7 @@ public class TeleOp99 extends OpMode {
     private void applyManualServoControls() {
         // Lift movement
         if (!RESTRICT_LIFT_MOVEMENT || (shoulderEstimatedPosition == SHOULDER_OUT_POSITION)) {  // Only allow the lift to move when the wobble goal shoulder is rotated out or RESTRICT_LIFT_MOVEMENT is false
-            liftPower = Math.abs(gamepad2LeftStickY);
+            liftPower = Math.abs(LIFT_POWER_MULTIPLIER*gamepad2LeftStickY);
         } else {  // If we've restricted the movement, make sure that the lift is either out of the way or getting there
             liftPower = 0.0;  // FIXME: This is the right down lift position, right?
         }
