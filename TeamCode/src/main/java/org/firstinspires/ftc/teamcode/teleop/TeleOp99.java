@@ -687,10 +687,10 @@ public class TeleOp99 extends OpMode {
         gamepad2RightShoulderPressed = !gamepad2RightShoulderWasHeld && gamepad2RightShoulderHeld;
         gamepad2LeftStickPressed = !gamepad2LeftStickWasHeld && gamepad2LeftStickHeld;
         gamepad2RightStickPressed = !gamepad2RightStickWasHeld && gamepad2RightStickHeld;
-        gamepad2DpadUpPressed = !gamepad1DpadUpWasHeld && gamepad2DpadUpHeld;
-        gamepad2DpadDownPressed = !gamepad1DpadDownWasHeld && gamepad2DpadDownHeld;
-        gamepad2DpadLeftPressed = !gamepad1DpadLeftWasHeld && gamepad2DpadLeftHeld;
-        gamepad2DpadRightPressed = !gamepad1DpadRightWasHeld && gamepad2DpadRightHeld;
+        gamepad2DpadUpPressed = !gamepad2DpadUpWasHeld && gamepad2DpadUpHeld;
+        gamepad2DpadDownPressed = !gamepad2DpadDownWasHeld && gamepad2DpadDownHeld;
+        gamepad2DpadLeftPressed = !gamepad2DpadLeftWasHeld && gamepad2DpadLeftHeld;
+        gamepad2DpadRightPressed = !gamepad2DpadRightWasHeld && gamepad2DpadRightHeld;
 
         // Gamepad 1 axes
         gamepad1LeftStickX = (Math.abs(gamepad1.left_stick_x) >= JOYSTICK_INPUT_THRESHOLD) ? gamepad1.left_stick_x : 0.0;  // Apply deadzone. Values below the deadzone are "snapped" to zero
