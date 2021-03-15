@@ -51,11 +51,11 @@ public class TeleOp99 extends OpMode {
     private static double PICKUP_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
     private static double PICKUP_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
 
-    private static double SHOULDER_OUT_POSITION = 0.27;  // The position of the shoulder when it is out
+    private static double SHOULDER_OUT_POSITION = 0.24;  // The position of the shoulder when it is out
     private static double SHOULDER_IN_POSITION = 0.68;  // The position of the shoulder when it is in
 
-    private static double CLAW_OPENED_POSITION = 0.31;  // The position of the claw when it is open
-    private static double CLAW_CLOSED_POSITION = 0.89;  // The position of the claw when it is closed
+    private static double CLAW_OPENED_POSITION = 0.66;  // The position of the claw when it is open
+    private static double CLAW_CLOSED_POSITION = 0.13;  // The position of the claw when it is closed
 
     private static double PICKUP_UP_POSITION = 0.32;  // The position of the pickup when it is up
     private static double PICKUP_DOWN_POSITION = 0.70;  // The position of the pickup when it is down
