@@ -63,7 +63,7 @@ public class TeleOp99 extends OpMode {
     private static double RING_DUMP_DUMP_POSITION = 0.83;  // The position of the ring dump when it's dumping
     private static double RING_DUMP_COLLECT_POSITION = 0.48;  // The position of the ring dump when it's collecting
 
-    private static double LIFT_POWER_MULTIPLIER = 0.10;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 10% of full power
+    private static double LIFT_POWER_MULTIPLIER = 0.25;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
 
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
@@ -399,6 +399,7 @@ public class TeleOp99 extends OpMode {
 
             if (elapsedTime < 500 && (!clawUserControl || AUTO_PRIORITY)) {  // If the claw hasn't been closed fully and we have control of it
                 clawPosition = CLAW_CLOSED_POSITION;  // Close it
+                clawState = true;
             }
             else if (elapsedTime < 500 && (clawUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the claw
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
@@ -418,6 +419,7 @@ public class TeleOp99 extends OpMode {
 
             if (elapsedTime > 1000) {  // The deployment has finished
                 telemetry.addLine("Finished wobble goal deployment sequence");
+                currentlyDeploying = false;
             }
         }
 
@@ -428,6 +430,7 @@ public class TeleOp99 extends OpMode {
 
             if (elapsedTime < 300 && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been opened fully and we have control of it and we're supposed to continue
                 clawPosition = CLAW_OPENED_POSITION;  // Open it
+                clawState = false;
             }
             else if (elapsedTime < 300 && (clawUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the claw
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
@@ -449,11 +452,13 @@ public class TeleOp99 extends OpMode {
             }
 
             if (elapsedTime < 1300 && elapsedTime > 800 && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been closed fully and we have control of it and we're supposed to continue
-                clawPosition = CLAW_CLOSED_POSITION;  // Open it
+                clawPosition = CLAW_CLOSED_POSITION;  // Close it
+                clawState = true;
             }
 
             if (elapsedTime > 1300) {  // The undeployment has finished
                 telemetry.addLine("Finished wobble goal undeployment sequence");
+                currentlyUndeploying = false;
             }
         }
     }
@@ -525,7 +530,7 @@ public class TeleOp99 extends OpMode {
     private void applyManualServoControls() {
         // Lift movement
         if (!RESTRICT_LIFT_MOVEMENT || (shoulderEstimatedPosition == SHOULDER_OUT_POSITION)) {  // Only allow the lift to move when the wobble goal shoulder is rotated out or RESTRICT_LIFT_MOVEMENT is false
-            liftPower = LIFT_POWER_MULTIPLIER * gamepad2LeftStickY;
+            liftPower = LIFT_POWER_MULTIPLIER * -gamepad2LeftStickY;
         } else {  // If we've restricted the movement, make sure that the lift is either out of the way or getting there
             liftPower = 0.0;
         }
