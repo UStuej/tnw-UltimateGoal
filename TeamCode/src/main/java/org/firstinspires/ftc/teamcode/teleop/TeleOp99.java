@@ -407,7 +407,7 @@ public class TeleOp99 extends OpMode {
 
             if (elapsedTime < 1000 && elapsedTime > 500 && (!shoulderUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of it and we're supposed to continue
                 shoulderPosition = SHOULDER_OUT_POSITION;  // Extend it
-                shoulderState = true;
+                shoulderState = false;
             }
             else if (elapsedTime < 1000 && elapsedTime > 500 && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
@@ -438,7 +438,7 @@ public class TeleOp99 extends OpMode {
 
             if (elapsedTime < 800 && elapsedTime > 300 && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been retracted fully and we have control of it
                 shoulderPosition = SHOULDER_IN_POSITION;  // Retract it
-                shoulderState = false;
+                shoulderState = true;
             }
             else if (elapsedTime < 800 && elapsedTime > 300 && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
@@ -549,9 +549,9 @@ public class TeleOp99 extends OpMode {
         } else {
             // Shoulder state adjustment based on consistent user input (holding the button)
             if (INVERT_NATURAL_SHOULDER_CONTROL) {  // Holding the button keeps the shoulder in
-                shoulderState = !gamepad2AHeld;
-            } else {  // Holding the button keeps the shoulder out
                 shoulderState = gamepad2AHeld;
+            } else {  // Holding the button keeps the shoulder out
+                shoulderState = !gamepad2AHeld;
             }
         }
 
