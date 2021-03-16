@@ -82,7 +82,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
 
         int currentCase = getCase();
 
-        int currentCase = 0;  // TODO: Figure this out using OpenCV
+        //int currentCase = 0;  // TODO: Figure this out using OpenCV
 
         if (currentCase == 1) {
             drive.followTrajectory(case1Trajectory);
@@ -120,14 +120,11 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
 
     int pixelCountToRings(int numPixels) {
         // Do something here to count the pixels. This might require both tweaking and estimation
+        return numPixels/1000;  // Literally just guessed this value. Please don't rely on it
     }
 
     public int getCase() {
         int rings = getRings();
-
-        if (rings == 0) {
-            return 1;
-        }
 
         if (rings == 1) {
             return 2;
@@ -136,5 +133,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         if (rings >= 4) {
             return 3;
         }
+
+        return 1;  // Zero rings
     }
 }
