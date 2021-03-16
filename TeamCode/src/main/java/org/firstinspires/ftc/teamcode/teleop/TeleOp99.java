@@ -60,12 +60,6 @@ public class TeleOp99 extends OpMode {
     private static double PICKUP_UP_POSITION = 0.32;  // The position of the pickup when it is up
     private static double PICKUP_DOWN_POSITION = 0.70;  // The position of the pickup when it is down
 
-    private static long SHOULDER_EXTEND_TIME = 1000L;  // The time (in milliseconds) it takes for the shoulder to swing out
-    private static long SHOULDER_RETRACT_TIME = 500L;  // The time (in milliseconds) it takes for the shoulder to retract
-
-    private static long CLAW_OPEN_TIME = 500L;  // The time (in milliseconds) it takes for the claw to be opened
-    private static long CLAW_CLOSE_TIME = 1000L;  // The time (in milliseconds) it takes for the claw to close
-
     private static double RING_DUMP_DUMP_POSITION = 0.83;  // The position of the ring dump when it's dumping
     private static double RING_DUMP_COLLECT_POSITION = 0.48;  // The position of the ring dump when it's collecting
 
@@ -403,25 +397,25 @@ public class TeleOp99 extends OpMode {
             telemetry.addData("Deployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
 
-            if (elapsedTime < CLAW_OPEN_TIME && (!clawUserControl || AUTO_PRIORITY)) {  // If the claw hasn't been opened fully and we have control of it
-                clawPosition = CLAW_OPENED_POSITION;  // Open it
+            if (elapsedTime < 500 && (!clawUserControl || AUTO_PRIORITY)) {  // If the claw hasn't been closed fully and we have control of it
+                clawPosition = CLAW_CLOSED_POSITION;  // Close it
             }
-            else if (elapsedTime < CLAW_OPEN_TIME && (clawUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the claw
+            else if (elapsedTime < 500 && (clawUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the claw
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
             }
 
-            if (elapsedTime < SHOULDER_EXTEND_TIME && elapsedTime > CLAW_OPEN_TIME && (!shoulderUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of it and we're supposed to continue
+            if (elapsedTime < 1000 && elapsedTime > 500 && (!shoulderUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of it and we're supposed to continue
                 shoulderPosition = SHOULDER_OUT_POSITION;  // Extend it
             }
-            else if (elapsedTime < SHOULDER_EXTEND_TIME && elapsedTime > CLAW_OPEN_TIME && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
+            else if (elapsedTime < 1000 && elapsedTime > 500 && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
             }
 
-            if (elapsedTime < SHOULDER_EXTEND_TIME && elapsedTime > CLAW_OPEN_TIME && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of the pickup and we're supposed to continue
+            if (elapsedTime < 1000 && elapsedTime > 500 && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of the pickup and we're supposed to continue
                 pickupPosition = PICKUP_DOWN_POSITION;  // Lower the pickup (its movement is tied into the shoulder movement)
             }
 
-            if (elapsedTime > SHOULDER_EXTEND_TIME) {  // The deployment has finished
+            if (elapsedTime > 1000) {  // The deployment has finished
                 telemetry.addLine("Finished wobble goal deployment sequence");
             }
         }
@@ -431,25 +425,32 @@ public class TeleOp99 extends OpMode {
             telemetry.addData("Undeployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
 
-            if (elapsedTime < SHOULDER_RETRACT_TIME && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been retracted fully and we have control of it
+            if (elapsedTime < 300 && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been opened fully and we have control of it and we're supposed to continue
+                clawPosition = CLAW_OPENED_POSITION;  // Open it
+            }
+            else if (elapsedTime < 300 && (clawUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the claw
+                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
+            }
+
+            if (elapsedTime < 800 && elapsedTime > 300 && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been retracted fully and we have control of it
                 shoulderPosition = SHOULDER_IN_POSITION;  // Retract it
             }
-            else if (elapsedTime < SHOULDER_RETRACT_TIME && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
+            else if (elapsedTime < 800 && elapsedTime > 300 && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
             }
 
-            if (elapsedTime < SHOULDER_RETRACT_TIME && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been retracted fully and we have control of the pickup and we're supposed to continue
+            if (elapsedTime < 800 && elapsedTime > 300 && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been retracted fully and we have control of the pickup and we're supposed to continue
                 pickupPosition = PICKUP_UP_POSITION;  // Raise the pickup (its movement is tied into the shoulder movement)
             }
-            else if (elapsedTime < SHOULDER_RETRACT_TIME && (!pickupUserControl && !AUTO_PRIORITY)) {
+            else if (elapsedTime < 800 && elapsedTime > 300 && (!pickupUserControl && !AUTO_PRIORITY)) {
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
             }
 
-            if (elapsedTime < CLAW_CLOSE_TIME && elapsedTime > SHOULDER_RETRACT_TIME && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been closed fully and we have control of it and we're supposed to continue
+            if (elapsedTime < 1300 && elapsedTime > 800 && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been closed fully and we have control of it and we're supposed to continue
                 clawPosition = CLAW_CLOSED_POSITION;  // Open it
             }
 
-            if (elapsedTime > CLAW_CLOSE_TIME) {  // The undeployment has finished
+            if (elapsedTime > 1300) {  // The undeployment has finished
                 telemetry.addLine("Finished wobble goal undeployment sequence");
             }
         }
@@ -605,6 +606,7 @@ public class TeleOp99 extends OpMode {
             if (backLeftDrivePower > backLeftDrivePreviousPower) {  // Try to maintain direction relative to the previous power
                 backLeftDrivePower = backLeftDrivePreviousPower + ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
             } else {
+                backLeftDrivePower = backLeftDrivePreviousPower - ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
                 backLeftDrivePower = backLeftDrivePreviousPower - ACCELERATION_CAP * deltaTime;  // Increment the motor power by the acceleration cap
             }
         }
