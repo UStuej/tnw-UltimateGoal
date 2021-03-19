@@ -68,61 +68,61 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
 
         // Assuming the builder function units are in inches
 
-        Trajectory moveOut = drive.trajectoryBuilder(new Pose2d())
+        Trajectory moveOut = drive.trajectoryBuilder(initialPose)
                 .strafeRight(6)
                 .build();
 
         // Case A
 
-        Trajectory deliver1A = drive.trajectoryBuilder(new Pose2d())
+        Trajectory deliver1A = drive.trajectoryBuilder(moveOut.end())
                 .splineTo(new Vector2d(12, -58), Math.toRadians(180))
                 .build();
 
-        Trajectory collect2A = drive.trajectoryBuilder(new Pose2d())
+        Trajectory collect2A = drive.trajectoryBuilder(deliver1A.end())
                 .splineTo(new Vector2d(-48, 30), Math.toRadians(270))
                 .build();
 
-        Trajectory deliver2A = drive.trajectoryBuilder(new Pose2d())
+        Trajectory deliver2A = drive.trajectoryBuilder(collect2A.end())
                 .splineTo(new Vector2d(0, -58), Math.toRadians(180))
                 .build();
 
-        Trajectory parkA = drive.trajectoryBuilder(new Pose2d())
+        Trajectory parkA = drive.trajectoryBuilder(deliver2A.end())
                 .splineTo(new Vector2d(8, -32), Math.toRadians(0))
                 .build();
 
         // Case B
 
-        Trajectory deliver1B = drive.trajectoryBuilder(new Pose2d())
+        Trajectory deliver1B = drive.trajectoryBuilder(moveOut.end())
                 .splineTo(new Vector2d(36, -36), Math.toRadians(225))
                 .build();
 
-        Trajectory collect2B = drive.trajectoryBuilder(new Pose2d())
+        Trajectory collect2B = drive.trajectoryBuilder(deliver1B.end())
                 .splineTo(new Vector2d(-48, -30), Math.toRadians(270))
                 .build();
 
-        Trajectory deliver2B = drive.trajectoryBuilder(new Pose2d())
+        Trajectory deliver2B = drive.trajectoryBuilder(collect2B.end())
                 .splineTo(new Vector2d(28, -44), Math.toRadians(225))
                 .build();
 
-        Trajectory parkB = drive.trajectoryBuilder(new Pose2d())
+        Trajectory parkB = drive.trajectoryBuilder(deliver2B.end())
                 .splineTo(new Vector2d(12, -60), Math.toRadians(0))
                 .build();
 
         // Case C
 
-        Trajectory deliver1C = drive.trajectoryBuilder(new Pose2d())
+        Trajectory deliver1C = drive.trajectoryBuilder(moveOut.end())
                 .splineTo(new Vector2d(60, -48), Math.toRadians(180))
                 .build();
 
-        Trajectory collect2C = drive.trajectoryBuilder(new Pose2d())
+        Trajectory collect2C = drive.trajectoryBuilder(deliver1C.end())
                 .splineTo(new Vector2d(-48, 30), Math.toRadians(270))
                 .build();
 
-        Trajectory deliver2C = drive.trajectoryBuilder(new Pose2d())
+        Trajectory deliver2C = drive.trajectoryBuilder(collect2C.end())
                 .splineTo(new Vector2d(-48, -58), Math.toRadians(180))
                 .build();
 
-        Trajectory parkC = drive.trajectoryBuilder(new Pose2d())
+        Trajectory parkC = drive.trajectoryBuilder(deliver2C.end())
                 .splineTo(new Vector2d(-12, -58), Math.toRadians(180))
                 .build();
 
