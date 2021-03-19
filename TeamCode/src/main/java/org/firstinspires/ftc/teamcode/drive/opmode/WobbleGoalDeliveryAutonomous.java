@@ -12,6 +12,7 @@ import org.opencv.videoio.*;
 import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
@@ -36,15 +37,19 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
     private static final int RING_COLOR_S_END = 255;
     private static final int RING_COLOR_V_END = 255;
 
+    final Pose2d initialPose = new Pose2d(-63, -52, Math.toRadians(90));
+
     public static VideoCapture videoFeed;
 
     public static Scalar lowerBound;
     public static Scalar upperBound;
 
-    Mat image;
-    Mat imageHSV;
-    Mat ringMask;
-    int pixels;
+    private Servo wgPickup;
+
+    private Mat image;
+    private Mat imageHSV;
+    private Mat ringMask;
+    private int pixels;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -56,42 +61,166 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
+        drive.setPoseEstimate(initialPose);
+
+        // Initialize the wobble goal pickup
+        wgPickup = hardwareMap.get(Servo.class, "WGPickup");
+
         // Assuming the builder function units are in inches
 
-        Trajectory case1Trajectory = drive.trajectoryBuilder(new Pose2d())
+        Trajectory moveOut = drive.trajectoryBuilder(new Pose2d())
                 .strafeRight(6)
-                .splineTo(new Vector2d(5*12, 9), Math.toRadians(90))
-                .back(50)
                 .build();
 
-        Trajectory case2Trajectory = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(6)
-                .splineTo(new Vector2d(5*12, 9), Math.toRadians(90))
-                .back(65)
+        // Case A
+
+        Trajectory deliver1A = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(12, -58), Math.toRadians(180))
                 .build();
 
-        Trajectory case3Trajectory = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(6)
-                .splineTo(new Vector2d(5*12, 9), Math.toRadians(90))
-                .back(100)
+        Trajectory collect2A = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(-48, 30), Math.toRadians(270))
+                .build();
+
+        Trajectory deliver2A = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(0, -58), Math.toRadians(180))
+                .build();
+
+        Trajectory parkA = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(8, -32), Math.toRadians(0))
+                .build();
+
+        // Case B
+
+        Trajectory deliver1B = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(36, -36), Math.toRadians(225))
+                .build();
+
+        Trajectory collect2B = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(-48, -30), Math.toRadians(270))
+                .build();
+
+        Trajectory deliver2B = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(28, -44), Math.toRadians(225))
+                .build();
+
+        Trajectory parkB = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(12, -60), Math.toRadians(0))
+                .build();
+
+        // Case C
+
+        Trajectory deliver1C = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(60, -48), Math.toRadians(180))
+                .build();
+
+        Trajectory collect2C = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(-48, 30), Math.toRadians(270))
+                .build();
+
+        Trajectory deliver2C = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(-48, -58), Math.toRadians(180))
+                .build();
+
+        Trajectory parkC = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(-12, -58), Math.toRadians(180))
                 .build();
 
         waitForStart();
 
         if (isStopRequested()) return;
 
-        int currentCase = getCase();
+        //int currentCase = getCase();
 
-        //int currentCase = 0;  // TODO: Figure this out using OpenCV
+        int currentCase;  // TODO: Finish OpenCV code that figures this out
+
+        if (gamepad1.a) {  // A is case A
+            currentCase = 1;
+        }
+        else if (gamepad1.b) {  // B is case B
+            currentCase = 2;
+        }
+        else if (gamepad1.x) {  // X is case C
+            currentCase = 3;
+        }
+        else {
+            currentCase = 1;  // Default to case A
+        }
 
         if (currentCase == 1) {
-            drive.followTrajectory(case1Trajectory);
+            telemetry.addLine("Moving out");
+            drive.followTrajectory(moveOut);
+
+            telemetry.addLine("Moving to deliver 1A");
+            drive.followTrajectory(deliver1A);
+
+            telemetry.addLine("Lowering pickup");
+            wgPickup.setPosition(0.7);
+
+            telemetry.addLine("Moving to collect 2A");
+            drive.followTrajectory(collect2A);
+
+            telemetry.addLine("Raising pickup");
+            wgPickup.setPosition(0.32);
+
+            telemetry.addLine("Moving to deliver 2A");
+            drive.followTrajectory(deliver2A);
+
+            telemetry.addLine("Lowering pickup");
+            wgPickup.setPosition(0.7);
+
+            telemetry.addLine("Moving to park A");
+            drive.followTrajectory(parkA);
         }
         else if (currentCase == 2) {
-            drive.followTrajectory(case2Trajectory);
+            telemetry.addLine("Moving out");
+            drive.followTrajectory(moveOut);
+
+            telemetry.addLine("Moving to deliver 1B");
+            drive.followTrajectory(deliver1B);
+
+            telemetry.addLine("Lowering pickup");
+            wgPickup.setPosition(0.7);
+
+            telemetry.addLine("Moving to collect 2B");
+            drive.followTrajectory(collect2B);
+
+            telemetry.addLine("Raising pickup");
+            wgPickup.setPosition(0.32);
+
+            telemetry.addLine("Moving to deliver 2B");
+            drive.followTrajectory(deliver2B);
+
+            telemetry.addLine("Lowering pickup");
+            wgPickup.setPosition(0.7);
+
+            telemetry.addLine("Moving to park B");
+            drive.followTrajectory(parkB);
         }
         else if (currentCase == 3) {
-            drive.followTrajectory(case3Trajectory);
+            telemetry.addLine("Moving out");
+            drive.followTrajectory(moveOut);
+
+            telemetry.addLine("Moving to deliver 1C");
+            drive.followTrajectory(deliver1C);
+
+            telemetry.addLine("Lowering pickup");
+            wgPickup.setPosition(0.7);
+
+            telemetry.addLine("Moving to collect 2C");
+            drive.followTrajectory(collect2C);
+
+            telemetry.addLine("Raising pickup");
+            wgPickup.setPosition(0.32);
+
+            telemetry.addLine("Moving to deliver 2C");
+            drive.followTrajectory(deliver2C);
+
+            telemetry.addLine("Lowering pickup");
+            wgPickup.setPosition(0.7);
+
+            telemetry.addLine("Moving to park C");
+            drive.followTrajectory(parkC);
         }
         else {
             // Error here

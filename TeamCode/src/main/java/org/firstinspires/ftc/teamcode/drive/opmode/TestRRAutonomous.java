@@ -72,6 +72,7 @@ public class TestRRAutonomous extends LinearOpMode {
                 .splineTo(new Vector2d(-40, -58), Math.toRadians(180))
                 .splineTo(new Vector2d(8, -58), Math.toRadians(180))
                 .splineTo(new Vector2d(36,-36), Math.toRadians(225))
+                .splineTo(new Vector2d(36, -36), Math.toRadians(225))
                 .build();
 
         Trajectory return1B = drive.trajectoryBuilder(deliver1B.end())
@@ -235,7 +236,7 @@ public class TestRRAutonomous extends LinearOpMode {
             drive.followTrajectory(parkC);
         }
         else {
-            // Invalid target zone. Probably error here or somthing telemetry-wise
+            // Invalid target zone. Probably error here or something telemetry-wise
         }
         //if (isStopRequested())  // Probably not needed
 
