@@ -29,7 +29,7 @@ public class SquareRRTest extends LinearOpMode {
 
         Trajectory step1 = drive.trajectoryBuilder(strafeOut.end())
                 .splineTo(new Vector2d(0,-10), Math.toRadians(0))
-                .splineTo(new Vector2d(24, -30), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(24, -30), Math.toRadians(0))
                 .build();
 
         Trajectory right1 = drive.trajectoryBuilder(step1.end())

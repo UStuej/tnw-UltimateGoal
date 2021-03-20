@@ -4,241 +4,211 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import org.opencv.core.*;
+import org.opencv.imgcodecs.*;
+import org.opencv.imgproc.*;
+import org.opencv.videoio.*;
+
+import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.videoio.VideoCapture;
 
+import java.util.Vector;
 
+/*
+ * This is a simple routine to test translational drive capabilities.
+ */
 @Config
 @Autonomous(group = "drive")
 public class TestRRAutonomous extends LinearOpMode {
+    //  The section of the image where the ring colors are checked
+    private static final int RING_SECTION_CROP_Y1 = 0;  // TODO: Assign these
+    private static final int RING_SECTION_CROP_Y2 = 0;
+    private static final int RING_SECTION_CROP_X1 = 0;
+    private static final int RING_SECTION_CROP_X2 = 0;
+
+    // The range of colors that can be detected as rings
+    private static final int RING_COLOR_H_START = 0;
+    private static final int RING_COLOR_S_START = 0;
+    private static final int RING_COLOR_V_START = 20;
+
+    private static final int RING_COLOR_H_END = 255;
+    private static final int RING_COLOR_S_END = 255;
+    private static final int RING_COLOR_V_END = 255;
 
     final Pose2d initialPose = new Pose2d(-63, -52, Math.toRadians(90));
-    byte wobbleGoalTargetZone = -1; // 0, 1, and 2 correspond to target zones A, B, and C, respectively.
+
+    public static VideoCapture videoFeed;
+
+    public static Scalar lowerBound;
+    public static Scalar upperBound;
 
     private Servo wgPickup;
 
-    //to do:
-    // invert y-axis for other states
+    private Mat image;
+    private Mat imageHSV;
+    private Mat ringMask;
+    private int pixels;
 
     @Override
     public void runOpMode() throws InterruptedException {
+        lowerBound = new Scalar(RING_COLOR_H_START, RING_COLOR_S_START, RING_COLOR_V_START);
+        upperBound = new Scalar(RING_COLOR_H_END, RING_COLOR_S_END, RING_COLOR_V_END);
+
+        // Initialize OpenCV VideoCapture
+        videoFeed = new VideoCapture(0);
+
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         drive.setPoseEstimate(initialPose);
 
-        // CASE A TRAJECTORIES:
-        Trajectory strafeOut = drive.trajectoryBuilder(initialPose)
-                .splineTo(new Vector2d(-57,-52), Math.toRadians(90))  // Strafe right 6
-                .splineToLinearHeading(new Pose2d(-40, -58, Math.toRadians(180)), Math.toRadians(0))
+        // Initialize the wobble goal pickup
+        wgPickup = hardwareMap.get(Servo.class, "WGPickup");
+
+        // Assuming the builder function units are in inches
+
+        /*Trajectory moveOut = drive.trajectoryBuilder(initialPose)
+                .strafeRight(6)
+                .build();*/
+
+        // Case A
+
+        Trajectory deliver1A = drive.trajectoryBuilder(initialPose, true)
+                .splineToConstantHeading(new Vector2d(-57, -52), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-36, -58, Math.toRadians(180)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(12, -58, Math.toRadians(180)), Math.toRadians(0))
+                .build();
+        /*Trajectory deliver1A = drive.trajectoryBuilder(moveOut.end())
+                .splineTo(new Vector2d(12, -58), Math.toRadians(180))
                 .build();
 
-        Trajectory deliver1A = drive.trajectoryBuilder(strafeOut.end(), true)
-                .lineToConstantHeading(new Vector2d(12, -58))  // Back 52
+        Trajectory collect2A = drive.trajectoryBuilder(deliver1A.end())
+                .splineTo(new Vector2d(-48, 30), Math.toRadians(270))
                 .build();
 
-        Trajectory return1A = drive.trajectoryBuilder(deliver1A.end())
-                .lineToLinearHeading(new Pose2d(-56, -58, Math.toRadians(180)))
-                .build();
-
-        Trajectory collect2A = drive.trajectoryBuilder(return1A.end())
-                .lineToLinearHeading(new Pose2d(-48,-30, Math.toRadians(270)))
-                .build();
-
-        Trajectory toDeliverPositionA = drive.trajectoryBuilder(collect2A.end())
-                .lineToLinearHeading(new Pose2d(-60,-58, Math.toRadians(180)))
-                .build();
-
-        Trajectory deliver2A = drive.trajectoryBuilder(toDeliverPositionA.end())
-                .lineToLinearHeading(new Pose2d(0, -58, Math.toRadians(180)))
+        Trajectory deliver2A = drive.trajectoryBuilder(collect2A.end())
+                .splineTo(new Vector2d(0, -58), Math.toRadians(180))
                 .build();
 
         Trajectory parkA = drive.trajectoryBuilder(deliver2A.end())
-                .splineTo(new Vector2d(-8, -58), Math.toRadians(180))
-                .splineTo(new Vector2d(-8,-40), Math.toRadians(135))
-                .splineTo(new Vector2d(8,-32), Math.toRadians(0))
+                .splineTo(new Vector2d(8, -32), Math.toRadians(0))
                 .build();
 
-        // CASE B TRAJECTORIES
-        Trajectory deliver1B = drive.trajectoryBuilder(initialPose)
-                .splineTo(new Vector2d(-57, -52), Math.toRadians(90))
-                .splineTo(new Vector2d(-40, -58), Math.toRadians(180))
-                .splineTo(new Vector2d(8, -58), Math.toRadians(180))
-                .splineTo(new Vector2d(36,-36), Math.toRadians(225))
+        // Case B
+
+        Trajectory deliver1B = drive.trajectoryBuilder(moveOut.end())
                 .splineTo(new Vector2d(36, -36), Math.toRadians(225))
                 .build();
 
-        Trajectory return1B = drive.trajectoryBuilder(deliver1B.end())
-                .splineTo(new Vector2d(8,-58), Math.toRadians(180))
-                .splineTo(new Vector2d(-56, -58), Math.toRadians(180))
+        Trajectory collect2B = drive.trajectoryBuilder(deliver1B.end())
+                .splineTo(new Vector2d(-48, -30), Math.toRadians(270))
                 .build();
 
-        Trajectory collect2B = drive.trajectoryBuilder(return1B.end())
-                .splineTo(new Vector2d(-48,-30), Math.toRadians(270))
-                .build();
-
-        Trajectory toDeliverPositionB = drive.trajectoryBuilder(collect2B.end())
-                .splineTo(new Vector2d(-60, -58), Math.toRadians(180))
-                .build();
-
-        Trajectory deliver2B = drive.trajectoryBuilder(toDeliverPositionB.end())
-                .splineTo(new Vector2d(8, -58), Math.toRadians(180))  // Back 85
-                .splineTo(new Vector2d(28,-44), Math.toRadians(225))
+        Trajectory deliver2B = drive.trajectoryBuilder(collect2B.end())
+                .splineTo(new Vector2d(28, -44), Math.toRadians(225))
                 .build();
 
         Trajectory parkB = drive.trajectoryBuilder(deliver2B.end())
-                .splineTo(new Vector2d(16,56), Math.toRadians(225))  // Forward 12
-                .splineTo(new Vector2d(12,-60), Math.toRadians(0))
+                .splineTo(new Vector2d(12, -60), Math.toRadians(0))
+                .build();
+                */
+
+
+        // Case C
+
+        /*Trajectory deliver1C = drive.trajectoryBuilder(moveOut.end())
+                .splineTo(new Vector2d(60, -48), Math.toRadians(180))
                 .build();
 
-        // CASE C TRAJECTORIES
-        Trajectory deliver1C = drive.trajectoryBuilder(initialPose)
-                .splineTo(new Vector2d(-57, -52), Math.toRadians(90))  // Strafe right 6
-                .splineTo(new Vector2d(-40,-58), Math.toRadians(180))
-                .splineTo(new Vector2d(60, -58), Math.toRadians(180))  // Back 100
+        Trajectory collect2C = drive.trajectoryBuilder(deliver1C.end())
+                .splineTo(new Vector2d(-48, 30), Math.toRadians(270))
                 .build();
 
-        Trajectory return1C = drive.trajectoryBuilder(deliver1C.end())
-                .splineTo(new Vector2d(-56, -58), Math.toRadians(180))  // Forward 116
-                .build();
-
-        Trajectory collect2C = drive.trajectoryBuilder(return1C.end())
-                .splineTo(new Vector2d(-48,-30), Math.toRadians(270))
-                .build();
-
-        Trajectory toDeliverPositionC = drive.trajectoryBuilder(collect2C.end())
-                .splineTo(new Vector2d(-60,-58), Math.toRadians(180))
-                .build();
-
-        Trajectory deliver2C = drive.trajectoryBuilder(toDeliverPositionC.end())
-                .splineTo(new Vector2d(48, -58), Math.toRadians(180))  // Back 108
+        Trajectory deliver2C = drive.trajectoryBuilder(collect2C.end())
+                .splineTo(new Vector2d(-48, -58), Math.toRadians(180))
                 .build();
 
         Trajectory parkC = drive.trajectoryBuilder(deliver2C.end())
-                .splineTo(new Vector2d(-12, -58), Math.toRadians(180))  // Forward 60
+                .splineTo(new Vector2d(-12, -58), Math.toRadians(180))
                 .build();
+                */
 
-        wgPickup = hardwareMap.get(Servo.class, "WGPickup");
-
-        if (gamepad1.a) {  // A is case A
-            wobbleGoalTargetZone = 0;
-        }
-        else if (gamepad1.b) {  // B is case B
-            wobbleGoalTargetZone = 1;
-        }
-        else if (gamepad1.x) {  // X is case C
-            wobbleGoalTargetZone = 2;
-        }
-        else {
-            wobbleGoalTargetZone = 0;  // Default to case A
-        }
 
         waitForStart();
 
-        if (wobbleGoalTargetZone == 0) {
-            telemetry.addLine("Using target zone A");
-            telemetry.addLine("Following delivery 1A");
-            telemetry.update();
-            drive.followTrajectory(strafeOut);
-            drive.followTrajectory(deliver1A);
-            telemetry.addLine("Lowering pickup");
-            telemetry.update();
-            wgPickup.setPosition(.7);  // 0.7 is the down position
-            telemetry.addLine("Following return 1A");
-            telemetry.update();
-            drive.followTrajectory(return1A);
-            telemetry.addLine("Following collect 2A");
-            telemetry.update();
-            drive.followTrajectory(collect2A);
-            telemetry.addLine("Raising pickup");
-            telemetry.update();
-            wgPickup.setPosition(.32);  // 0.32 is the up position
-            telemetry.addLine("Following deliver position A");
-            telemetry.update();
-            drive.followTrajectory(toDeliverPositionA);
-            telemetry.addLine("Following deliver 2A");
-            telemetry.update();
-            drive.followTrajectory(deliver2A);
-            telemetry.addLine("Lowering pickup");
-            telemetry.update();
-            wgPickup.setPosition(.7);
-            telemetry.addLine("Following park A");
-            telemetry.update();
-            drive.followTrajectory(parkA);
+        if (isStopRequested()) return;
+
+        //int currentCase = getCase();
+
+        int currentCase;  // TODO: Finish OpenCV code that figures this out
+
+        if (gamepad1.a) {  // A is case A
+            currentCase = 1;
         }
-        else if (wobbleGoalTargetZone == 1) {
-            telemetry.addLine("Using target zone B");
-            telemetry.addLine("Following deliver 1B");
-            telemetry.update();
-            drive.followTrajectory(deliver1B);
-            telemetry.addLine("Lowering pickup");
-            telemetry.update();
-            wgPickup.setPosition(.7);
-            telemetry.addLine("Following return 1B");
-            telemetry.update();
-            drive.followTrajectory(return1B);
-            telemetry.addLine("Following collect 2B");
-            telemetry.update();
-            drive.followTrajectory(collect2B);
-            telemetry.addLine("Raising pickukp");
-            telemetry.update();
-            wgPickup.setPosition(.32);
-            telemetry.addLine("Following deliver position B");
-            telemetry.update();
-            drive.followTrajectory(toDeliverPositionB);
-            telemetry.addLine("Following deliver position 2B");
-            telemetry.update();
-            drive.followTrajectory(deliver2B);
-            telemetry.addLine("Lowering pickup");
-            telemetry.update();
-            wgPickup.setPosition(.7);
-            telemetry.addLine("Following park B");
-            telemetry.update();
-            drive.followTrajectory(parkB);
+        else if (gamepad1.b) {  // B is case B
+            currentCase = 2;
         }
-        else if (wobbleGoalTargetZone == 2) {
-            telemetry.addLine("Using target zone C");
-            telemetry.update();
-            telemetry.update();
-            telemetry.addLine("Following deliver 1C");
-            telemetry.update();
-            drive.followTrajectory(deliver1C);
-            telemetry.addLine("Lowering pickup");
-            telemetry.update();
-            wgPickup.setPosition(.7);
-            telemetry.addLine("Following return 1C");
-            telemetry.update();
-            drive.followTrajectory(return1C);
-            telemetry.addLine("Following collect 2C");
-            telemetry.update();
-            drive.followTrajectory(collect2C);
-            telemetry.addLine("Raising pickup");
-            telemetry.update();
-            wgPickup.setPosition(.32);
-            telemetry.addLine("Following deliver position C");
-            telemetry.update();
-            drive.followTrajectory(toDeliverPositionC);
-            telemetry.addLine("Following deliver position 2C");
-            telemetry.update();
-            drive.followTrajectory(deliver2C);
-            telemetry.addLine("Lowering pickup");
-            telemetry.update();
-            wgPickup.setPosition(.7);
-            telemetry.addLine("Following park C");
-            telemetry.update();
-            drive.followTrajectory(parkC);
+        else if (gamepad1.x) {  // X is case C
+            currentCase = 3;
         }
         else {
-            // Invalid target zone. Probably error here or something telemetry-wise
+            currentCase = 1;  // Default to case A
         }
-        //if (isStopRequested())  // Probably not needed
 
+        if (currentCase == 1) {
+            drive.followTrajectory(deliver1A);
+            wgPickup.setPosition(.70);
+        }
+        else if (currentCase == 2) {
+
+        }
+        else if (currentCase == 3) {
+
+        }
+        else {
+            // Error here
+        }
+    }
+
+    public int getRings() {
+        image = new Mat();
+        ringMask = new Mat();
+        videoFeed.read(image);
+
+        // Crop the image to the search region
+        image = image.submat(RING_SECTION_CROP_Y1, RING_SECTION_CROP_Y2, RING_SECTION_CROP_X1, RING_SECTION_CROP_X2);
+
+        // Convert the image to the HSV colorspace for easier color detection
+        Imgproc.cvtColor(image, imageHSV, Imgproc.COLOR_RGB2HSV);  // Assuming this implementation of OpenCV's VideoCapture object reads pixels in the RGB colorspace rather than the BGR one
+
+        // Threshold the HSV image based on our ring search colors
+        Core.inRange(imageHSV, lowerBound, upperBound, ringMask);
+
+        // Count the number of nonzero pixels in the mask
+        pixels = Core.countNonZero(ringMask);
+
+        return pixelCountToRings(pixels);
+    }
+
+    int pixelCountToRings(int numPixels) {
+        // Do something here to count the pixels. This might require both tweaking and estimation
+        return numPixels/1000;  // Literally just guessed this value. Please don't rely on it
+    }
+
+    public int getCase() {
+        int rings = getRings();
+
+        if (rings == 1) {
+            return 2;
+        }
+
+        if (rings >= 4) {
+            return 3;
+        }
+
+        return 1;  // Zero rings
     }
 }
