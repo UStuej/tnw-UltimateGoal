@@ -140,8 +140,8 @@ public class TeleOp99 extends OpMode {
     private boolean gamepad1BPressed = false;  // Whether or not the gamepad 1 b button was JUST pressed, handled by the handleInput function
     private boolean gamepad1XPressed = false;  // Whether or not the gamepad 1 x button was JUST pressed, handled by the handleInput function
     private boolean gamepad1YPressed = false;  // Whether or not the gamepad 1 y button was JUST pressed, handled by the handleInput function
-    private boolean gamepad1LeftShoulderPressed = false;  // Whether or not the gamepad 1 left shoulder button was JUST pressed, handled by the handleInput function
-    private boolean gamepad1RightShoulderPressed = false;  // Whether or not the gamepad 1 left shoulder button was JUST pressed, handled by the handleInput function
+    private boolean gamepad1LeftBumperPressed = false;  // Whether or not the gamepad 1 left bumper button was JUST pressed, handled by the handleInput function
+    private boolean gamepad1RightBumperPressed = false;  // Whether or not the gamepad 1 right bumper button was JUST pressed, handled by the handleInput function
     private boolean gamepad1LeftStickPressed = false;  // Whether or not the gamepad 1 left stick button was JUST pressed, handled by the handleInput function
     private boolean gamepad1RightStickPressed = false;  // Whether or not the gamepad 1 right stick button was JUST pressed, handled by the handleInput function
     private boolean gamepad1DpadUpPressed = false;  // Whether or not the gamepad 1 dpad up button was JUST pressed, handled by the handleInput function
@@ -154,8 +154,8 @@ public class TeleOp99 extends OpMode {
     private boolean gamepad1BHeld = false;  // Whether or not the gamepad 1 b button is being held, handled by the handleInput function
     private boolean gamepad1XHeld = false;  // Whether or not the gamepad 1 x button is being held, handled by the handleInput function
     private boolean gamepad1YHeld = false;  // Whether or not the gamepad 1 y button is being held, handled by the handleInput function
-    private boolean gamepad1LeftShoulderHeld = false;  // Whether or not the gamepad 1 left shoulder button is being held, handled by the handleInput function
-    private boolean gamepad1RightShoulderHeld = false;  // Whether or not the gamepad 1 left shoulder button is being held, handled by the handleInput function
+    private boolean gamepad1LeftBumperHeld = false;  // Whether or not the gamepad 1 left bumper button is being held, handled by the handleInput function
+    private boolean gamepad1RightBumperHeld = false;  // Whether or not the gamepad 1 right bumper button is being held, handled by the handleInput function
     private boolean gamepad1LeftStickHeld = false;  // Whether or not the gamepad 1 left stick button is being held, handled by the handleInput function
     private boolean gamepad1RightStickHeld = false;  // Whether or not the gamepad 1 right stick button is being held, handled by the handleInput function
     private boolean gamepad1DpadUpHeld = false;  // Whether or not the gamepad 1 dpad up button is being held, handled by the handleInput function
@@ -168,8 +168,8 @@ public class TeleOp99 extends OpMode {
     private boolean gamepad2BPressed = false;  // Whether or not the gamepad 2 b button was JUST pressed, handled by the handleInput function
     private boolean gamepad2XPressed = false;  // Whether or not the gamepad 2 x button was JUST pressed, handled by the handleInput function
     private boolean gamepad2YPressed = false;  // Whether or not the gamepad 2 y button was JUST pressed, handled by the handleInput function
-    private boolean gamepad2LeftShoulderPressed = false;  // Whether or not the gamepad 2 left shoulder button was JUST pressed, handled by the handleInput function
-    private boolean gamepad2RightShoulderPressed = false;  // Whether or not the gamepad 2 left shoulder button was JUST pressed, handled by the handleInput function
+    private boolean gamepad2LeftBumperPressed = false;  // Whether or not the gamepad 2 left bumper button was JUST pressed, handled by the handleInput function
+    private boolean gamepad2RightBumperPressed = false;  // Whether or not the gamepad 2 right bumper button was JUST pressed, handled by the handleInput function
     private boolean gamepad2LeftStickPressed = false;  // Whether or not the gamepad 2 left stick button was JUST pressed, handled by the handleInput function
     private boolean gamepad2RightStickPressed = false;  // Whether or not the gamepad 2 right stick button was JUST pressed, handled by the handleInput function
     private boolean gamepad2DpadUpPressed = false;  // Whether or not the gamepad 1 dpad up button is being held, handled by the handleInput function
@@ -182,8 +182,8 @@ public class TeleOp99 extends OpMode {
     private boolean gamepad2BHeld = false;  // Whether or not the gamepad 2 b button is being held, handled by the handleInput function
     private boolean gamepad2XHeld = false;  // Whether or not the gamepad 2 x button is being held, handled by the handleInput function
     private boolean gamepad2YHeld = false;  // Whether or not the gamepad 2 y button is being held, handled by the handleInput function
-    private boolean gamepad2LeftShoulderHeld = false;  // Whether or not the gamepad 2 left shoulder button is being held, handled by the handleInput function
-    private boolean gamepad2RightShoulderHeld = false;  // Whether or not the gamepad 2 left shoulder button is being held, handled by the handleInput function
+    private boolean gamepad2LeftBumperHeld = false;  // Whether or not the gamepad 2 left bumper button is being held, handled by the handleInput function
+    private boolean gamepad2RightBumperHeld = false;  // Whether or not the gamepad 2 right bumper button is being held, handled by the handleInput function
     private boolean gamepad2LeftStickHeld = false;  // Whether or not the gamepad 2 left stick button is being held, handled by the handleInput function
     private boolean gamepad2RightStickHeld = false;  // Whether or not the gamepad 2 right stick button is being held, handled by the handleInput function
     private boolean gamepad2DpadUpHeld = false;  // Whether or not the gamepad 1 dpad up button is being held, handled by the handleInput function
@@ -468,7 +468,7 @@ public class TeleOp99 extends OpMode {
         double horizontal = 0.0;
         double rotation = 0.0;
 
-        double currentPowerFactor = gamepad1LeftShoulderHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
+        double currentPowerFactor = gamepad1LeftBumperHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
 
         if (AXIS_MOVEMENT) {  // If we're using axis movement
             if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
@@ -581,7 +581,7 @@ public class TeleOp99 extends OpMode {
         }
 
         // Ring dump movement
-        ringDumpPosition = gamepad2LeftShoulderHeld ? RING_DUMP_DUMP_POSITION : RING_DUMP_COLLECT_POSITION;
+        ringDumpPosition = gamepad2LeftBumperHeld ? RING_DUMP_DUMP_POSITION : RING_DUMP_COLLECT_POSITION;
     }
 
     private void estimateServoPositions() {
@@ -655,8 +655,8 @@ public class TeleOp99 extends OpMode {
         boolean gamepad1BWasHeld = gamepad1BHeld;  // Whether or not the gamepad 1 b button was held
         boolean gamepad1XWasHeld = gamepad1XHeld;  // Whether or not the gamepad 1 x button was held
         boolean gamepad1YWasHeld = gamepad1YHeld;  // Whether or not the gamepad 1 y button was held
-        boolean gamepad1LeftShoulderWasHeld = gamepad1LeftShoulderHeld;  // Whether or not the gamepad 1 left shoulder button was held
-        boolean gamepad1RightShoulderWasHeld = gamepad1RightShoulderHeld;  // Whether or not the gamepad 1 left shoulder button was held
+        boolean gamepad1LeftBumperWasHeld = gamepad1LeftBumperHeld;  // Whether or not the gamepad 1 left bumper button was held
+        boolean gamepad1RightBumperWasHeld = gamepad1RightBumperHeld;  // Whether or not the gamepad 1 right bumper button was held
         boolean gamepad1LeftStickWasHeld = gamepad1LeftStickHeld;  // Whether or not the gamepad 1 left stick button was held
         boolean gamepad1RightStickWasHeld = gamepad1RightStickHeld;  // Whether or not the gamepad 1 right stick button was held
         boolean gamepad1DpadUpWasHeld = gamepad1DpadUpHeld;  // Whether or not the gamepad 1 dpad up button was held
@@ -669,8 +669,8 @@ public class TeleOp99 extends OpMode {
         gamepad1BHeld = gamepad1.b;
         gamepad1XHeld = gamepad1.x;
         gamepad1YHeld = gamepad1.y;
-        gamepad1LeftShoulderHeld = gamepad1.left_bumper;
-        gamepad1RightShoulderHeld = gamepad1.right_bumper;
+        gamepad1LeftBumperHeld = gamepad1.left_bumper;
+        gamepad1RightBumperHeld = gamepad1.right_bumper;
         gamepad1LeftStickHeld = gamepad1.left_stick_button;
         gamepad1RightStickHeld = gamepad1.right_stick_button;
         gamepad1DpadUpHeld = gamepad1.dpad_up;
@@ -683,8 +683,8 @@ public class TeleOp99 extends OpMode {
         gamepad1BPressed = !gamepad1BWasHeld && gamepad1BHeld;
         gamepad1XPressed = !gamepad1XWasHeld && gamepad1XHeld;
         gamepad1YPressed = !gamepad1YWasHeld && gamepad1YHeld;
-        gamepad1LeftShoulderPressed = !gamepad1LeftShoulderWasHeld && gamepad1LeftShoulderHeld;
-        gamepad1RightShoulderPressed = !gamepad1RightShoulderWasHeld && gamepad1RightShoulderHeld;
+        gamepad1LeftBumperPressed = !gamepad1LeftBumperWasHeld && gamepad1LeftBumperHeld;
+        gamepad1RightBumperPressed = !gamepad1RightBumperWasHeld && gamepad1RightBumperHeld;
         gamepad1LeftStickPressed = !gamepad1LeftStickWasHeld && gamepad1LeftStickHeld;
         gamepad1RightStickPressed = !gamepad1RightStickWasHeld && gamepad1RightStickHeld;
         gamepad1DpadUpPressed = !gamepad1DpadUpWasHeld && gamepad1DpadUpHeld;
@@ -697,8 +697,8 @@ public class TeleOp99 extends OpMode {
         boolean gamepad2BWasHeld = gamepad2BHeld;  // Whether or not the gamepad 2 b button was held
         boolean gamepad2XWasHeld = gamepad2XHeld;  // Whether or not the gamepad 2 x button was held
         boolean gamepad2YWasHeld = gamepad2YHeld;  // Whether or not the gamepad 2 y button was held
-        boolean gamepad2LeftShoulderWasHeld = gamepad2LeftShoulderHeld;  // Whether or not the gamepad 2 left shoulder button was held
-        boolean gamepad2RightShoulderWasHeld = gamepad2RightShoulderHeld;  // Whether or not the gamepad 2 left shoulder button was held
+        boolean gamepad2LeftBumperWasHeld = gamepad2LeftBumperHeld;  // Whether or not the gamepad 2 left bumper button was held
+        boolean gamepad2RightBumperWasHeld = gamepad2RightBumperHeld;  // Whether or not the gamepad 2 right bumper button was held
         boolean gamepad2LeftStickWasHeld = gamepad2LeftStickHeld;  // Whether or not the gamepad 2 left stick button was held
         boolean gamepad2RightStickWasHeld = gamepad2RightStickHeld;  // Whether or not the gamepad 2 right stick button was held
         boolean gamepad2DpadUpWasHeld = gamepad2DpadUpHeld;  // Whether or not the gamepad 2 dpad up button was held
@@ -711,8 +711,8 @@ public class TeleOp99 extends OpMode {
         gamepad2BHeld = gamepad2.b;
         gamepad2XHeld = gamepad2.x;
         gamepad2YHeld = gamepad2.y;
-        gamepad2LeftShoulderHeld = gamepad2.left_bumper;
-        gamepad2RightShoulderHeld = gamepad2.right_bumper;
+        gamepad2LeftBumperHeld = gamepad2.left_bumper;
+        gamepad2RightBumperHeld = gamepad2.right_bumper;
         gamepad2LeftStickHeld = gamepad2.left_stick_button;
         gamepad2RightStickHeld = gamepad2.right_stick_button;
         gamepad2DpadUpHeld = gamepad2.dpad_up;
@@ -725,8 +725,8 @@ public class TeleOp99 extends OpMode {
         gamepad2BPressed = !gamepad2BWasHeld && gamepad2BHeld;
         gamepad2XPressed = !gamepad2XWasHeld && gamepad2XHeld;
         gamepad2YPressed = !gamepad2YWasHeld && gamepad2YHeld;
-        gamepad2LeftShoulderPressed = !gamepad2LeftShoulderWasHeld && gamepad2LeftShoulderHeld;
-        gamepad2RightShoulderPressed = !gamepad2RightShoulderWasHeld && gamepad2RightShoulderHeld;
+        gamepad2LeftBumperPressed = !gamepad2LeftBumperWasHeld && gamepad2LeftBumperHeld;
+        gamepad2RightBumperPressed = !gamepad2RightBumperWasHeld && gamepad2RightBumperHeld;
         gamepad2LeftStickPressed = !gamepad2LeftStickWasHeld && gamepad2LeftStickHeld;
         gamepad2RightStickPressed = !gamepad2RightStickWasHeld && gamepad2RightStickHeld;
         gamepad2DpadUpPressed = !gamepad2DpadUpWasHeld && gamepad2DpadUpHeld;
@@ -961,45 +961,45 @@ public class TeleOp99 extends OpMode {
                 Pmode = 0;
 
                 if (pmode == 257) {
-                    AXIS_MOVEMENT = gamepad2RightShoulderHeld;
+                    AXIS_MOVEMENT = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 258) {
-                    AUTO_PRIORITY = gamepad2RightShoulderHeld;
+                    AUTO_PRIORITY = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 259) {
-                    CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = gamepad2RightShoulderHeld;
+                    CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 260) {
-                    USE_VARIABLE_SPEED_CURVES = gamepad2RightShoulderHeld;
+                    USE_VARIABLE_SPEED_CURVES = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 513) {
-                    FOOLPROOF_IMPOSSIBLE_POSITIONS = gamepad2RightShoulderHeld;
+                    FOOLPROOF_IMPOSSIBLE_POSITIONS = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 514) {
-                    ACCELERATION_CAP += (gamepad2RightShoulderHeld) ? 1 : -1;
+                    ACCELERATION_CAP += (gamepad2RightBumperHeld) ? 1 : -1;
                     ACCELERATION_CAP = Math.max(0, Math.min(1, ACCELERATION_CAP));
                 }
                 else if (pmode == 515) {
-                    RESTRICT_LIFT_MOVEMENT = gamepad2RightShoulderHeld;
+                    RESTRICT_LIFT_MOVEMENT = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 516) {
-                    NATURAL_CLAW_CONTROL = gamepad2RightShoulderHeld;
+                    NATURAL_CLAW_CONTROL = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 769) {
-                    INVERT_NATURAL_CLAW_CONTROL = gamepad2RightShoulderHeld;
+                    INVERT_NATURAL_CLAW_CONTROL = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 770) {
-                    NATURAL_SHOULDER_CONTROL = gamepad2RightShoulderHeld;
+                    NATURAL_SHOULDER_CONTROL = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 771) {
-                    INVERT_NATURAL_SHOULDER_CONTROL = gamepad2RightShoulderHeld;
+                    INVERT_NATURAL_SHOULDER_CONTROL = gamepad2RightBumperHeld;
                 }
                 else if (pmode == 772) {
-                    JOYSTICK_INPUT_THRESHOLD += (gamepad2RightShoulderHeld) ? 0.1 : -0.1;
+                    JOYSTICK_INPUT_THRESHOLD += (gamepad2RightBumperHeld) ? 0.1 : -0.1;
                     JOYSTICK_INPUT_THRESHOLD = Math.max(0, Math.min(1, JOYSTICK_INPUT_THRESHOLD));
                 }
                 else if (pmode == 1025) {
-                    MOVEMENT_FACTOR += (gamepad2RightShoulderHeld) ? 0.1 : -0.1;
+                    MOVEMENT_FACTOR += (gamepad2RightBumperHeld) ? 0.1 : -0.1;
                     MOVEMENT_FACTOR = Math.max(0, Math.min(1, MOVEMENT_FACTOR));
                 }
 
