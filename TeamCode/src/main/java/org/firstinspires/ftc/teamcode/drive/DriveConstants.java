@@ -62,8 +62,8 @@ public class DriveConstants {
      * forces acceleration-limited profiling). All distance units are inches.
      */
     public static DriveConstraints BASE_CONSTRAINTS = new DriveConstraints(
-            30, 30, 0.0,
-            Math.toRadians(140), Math.toRadians(140), 0.0
+            30.0, 30.0, 0.0,
+            Math.toRadians(140.0), Math.toRadians(140.0), 0.0
     );
 
 
