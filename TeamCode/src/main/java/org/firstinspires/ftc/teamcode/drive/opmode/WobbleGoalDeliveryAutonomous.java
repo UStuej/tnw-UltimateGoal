@@ -16,9 +16,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
-/*
- * This is a simple routine to test translational drive capabilities.
- */
 @Config
 @Autonomous(group = "drive")
 public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
