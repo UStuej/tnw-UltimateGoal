@@ -16,9 +16,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
-/*
- * This is a simple routine to test translational drive capabilities.
- */
 @Config
 @Autonomous(group = "drive")
 public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
@@ -165,6 +162,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
 
             telemetry.addLine("Moving to deliver 2A");
             drive.followTrajectory(deliver2A);
+            PoseStorage.wobbleGoal2RedPosition = new Pose2d(0, -58);  // TODO: Do likewise for all autonomous wobble goal movements. Also TODO: Headings should be included here
 
             telemetry.addLine("Lowering pickup");
             wgPickup.setPosition(0.7);
@@ -225,6 +223,8 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         else {
             // Error here
         }
+
+        PoseStorage.currentPose = drive.getPoseEstimate();
     }
 
     public int getRings() {
