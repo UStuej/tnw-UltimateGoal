@@ -51,12 +51,16 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         lowerBound = new Scalar(RING_COLOR_H_START, RING_COLOR_S_START, RING_COLOR_V_START);
         upperBound = new Scalar(RING_COLOR_H_END, RING_COLOR_S_END, RING_COLOR_V_END);
 
+        telemetry.addLine("Initializing OpenCV VideoCapture on index 0");
+
         // Initialize OpenCV VideoCapture
         videoFeed = new VideoCapture(0);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         // Assuming the builder function units are in inches
+
+        telemetry.addLine("Building trajectories...");
 
         Trajectory case1Trajectory = drive.trajectoryBuilder(new Pose2d())
                 .strafeRight(6)
@@ -76,11 +80,17 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
                 .back(100)
                 .build();
 
+        telemetry.addLine("Waiting for start...");
+
         waitForStart();
 
         if (isStopRequested()) return;
 
+        telemetry.addLine("Getting case from OpenCV code");
+
         int currentCase = getCase();
+
+        telemetry.addData("Determined trajectory case: ", currentCase);
 
         //int currentCase = 0;  // TODO: Figure this out using OpenCV
 
@@ -125,6 +135,8 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
 
     public int getCase() {
         int rings = getRings();
+
+        telemetry.addData("Estimated ring count: ", rings);
 
         if (rings == 1) {
             return 2;
