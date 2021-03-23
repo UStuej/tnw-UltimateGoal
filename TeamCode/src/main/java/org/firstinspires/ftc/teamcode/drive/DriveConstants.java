@@ -40,8 +40,8 @@ public class DriveConstants {
      * convenience. Make sure to exclude any gear ratio included in MOTOR_CONFIG from GEAR_RATIO.
      */
     public static double WHEEL_RADIUS = 1.4763; // in
-    public static double GEAR_RATIO = 0.01485066403115189; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 17.4; // in
+    public static double GEAR_RATIO = 0.0976430976430976; // output (wheel) speed / input (motor) speed
+    public static double TRACK_WIDTH = 17.2; // in
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -49,8 +49,8 @@ public class DriveConstants {
      * motor encoders or have elected not to use them for velocity control, these values should be
      * empirically tuned.
      */
-    public static double kV = 0.01485066403115189;
-    public static double kA = 0.004;
+    public static double kV = 0.0120664031151;
+    public static double kA = 0.003;
     public static double kStatic = 0.005;
 
     /*
@@ -62,8 +62,8 @@ public class DriveConstants {
      * forces acceleration-limited profiling). All distance units are inches.
      */
     public static DriveConstraints BASE_CONSTRAINTS = new DriveConstraints(
-            10.249832448233091, 10.249832448233091, 0.0,
-            Math.toRadians(77.01929704918032), Math.toRadians(77.01929704918032), 0.0
+            45.0, 45.0, 0.0,
+            Math.toRadians(70.0), Math.toRadians(70.0), 0.0
     );
 
 

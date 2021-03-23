@@ -37,7 +37,6 @@ public class TestRRAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory deliver1A = drive.trajectoryBuilder(initialPose)
-                .lineTo(new Vector2d(-57,-52))  // Strafe right 6
                 .splineTo(new Vector2d(-40, -58), Math.toRadians(180))
                 .splineTo(new Vector2d(12, -58), Math.toRadians(180))  // Back 52
                 .build();
@@ -143,7 +142,7 @@ public class TestRRAutonomous extends LinearOpMode {
             telemetry.addLine("Using target zone A");
             telemetry.addLine("Following delivery 1A");
             telemetry.update();
-            //drive.followTrajectory(strafeOut);
+            drive.followTrajectory(strafeOut);
             drive.followTrajectory(deliver1A);
             telemetry.addLine("Lowering pickup");
             telemetry.update();
