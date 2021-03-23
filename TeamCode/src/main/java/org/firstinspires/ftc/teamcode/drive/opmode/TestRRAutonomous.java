@@ -47,6 +47,7 @@ public class TestRRAutonomous extends LinearOpMode {
     public static Scalar upperBound;
 
     private Servo wgPickup;
+    private Servo ringDump;
 
     private Mat image;
     private Mat imageHSV;
@@ -67,35 +68,102 @@ public class TestRRAutonomous extends LinearOpMode {
 
         // Initialize the wobble goal pickup
         wgPickup = hardwareMap.get(Servo.class, "WGPickup");
-
-        // Assuming the builder function units are in inches
-
-        /*Trajectory moveOut = drive.trajectoryBuilder(initialPose)
-                .strafeRight(6)
-                .build();*/
+        ringDump = hardwareMap.get(Servo.class, "ringDump");
 
         // Case A
 
         Trajectory deliver1A = drive.trajectoryBuilder(initialPose)             // Distance from wall, then drive to target zone A, while facing the tower goal
                 .splineToConstantHeading(new Vector2d(-51, -52), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(-36, -60, Math.toRadians(180)), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(28, -60, Math.toRadians(180)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-36, -60, Math.toRadians(0)), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(27, -60), Math.toRadians(0))
                 .build();
 
-        Trajectory toLowGoal = drive.trajectoryBuilder(deliver1A.end())         // Drives forward to completely release wobble goal, then drives to base of tower goal facing drop zone
+        Trajectory toLowGoalA = drive.trajectoryBuilder(deliver1A.end())         // Drives forward to completely release wobble goal, then drives to base of tower goal facing drop zone
                 .splineToConstantHeading(new Vector2d(38, -60), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(64, -32, Math.toRadians(180)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(64, -36, Math.toRadians(180)), Math.toRadians(0))
                 .build();
 
+        Trajectory driveToCollect2A = drive.trajectoryBuilder(toLowGoalA.end())
+                .lineToLinearHeading(new Pose2d(-24, -12, Math.toRadians(27)))
+                .build();
 
+        Trajectory collect2A = drive.trajectoryBuilder(driveToCollect2A.end())
+                .lineTo(new Vector2d(-48, -24))
+                .build();
 
+        Trajectory deliver2A = drive.trajectoryBuilder(collect2A.end(), true)
+                .splineTo(new Vector2d(-24, -60), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(3, -60, Math.toRadians(180)), Math.toRadians(0))
+                .build();
 
+        Trajectory parkA = drive.trajectoryBuilder(deliver2A.end())
+                .splineToConstantHeading(new Vector2d(-8, -60), Math.toRadians(0))
+                .splineTo(new Vector2d(-16, -52), Math.toRadians(0))
+                .splineTo(new Vector2d(-8, -44), Math.toRadians(0))
+                .splineTo(new Vector2d(8, -32), Math.toRadians(0))
+                .build();
 
+        // Case B
+
+        Trajectory deliver1B = drive.trajectoryBuilder(initialPose)
+                .splineToConstantHeading(new Vector2d(-51, -52), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-24, -60, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(48, -40, Math.toRadians(60)), Math.toRadians(0))
+                .build();
+
+        Trajectory toLowGoalB = drive.trajectoryBuilder(deliver1B.end())
+                .splineToConstantHeading(new Vector2d(56, -20), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d( 56, -20.1, Math.toRadians(180)), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(64, -36), Math.toRadians(0))
+                .build();
+
+        Trajectory collect2B = drive.trajectoryBuilder(toLowGoalB.end())
+                .splineToConstantHeading(new Vector2d(56, -36), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-24, -12, Math.toRadians(27)), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(-48, -24), Math.toRadians(0))
+                .build();
+
+        Trajectory deliver2B = drive.trajectoryBuilder(collect2B.end(), true)
+                .splineTo(new Vector2d(-24, -60), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(24, -32, Math.toRadians(0)), Math.toRadians(0))
+                .build();
+
+        Trajectory parkB = drive.trajectoryBuilder(deliver2B.end())
+                .splineToConstantHeading(new Vector2d(12, -32), Math.toRadians(0))
+                .build();
+
+        // Case C
+
+        /*Trajectory deliver1C = drive.trajectoryBuilder(initialPose)
+                .splineToConstantHeading(new Vector2d(-51, -52), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-24, -60, Math.toRadians(0)), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(60, -60), Math.toRadians(0))
+                .build();
+
+        Trajectory toLowGoalC = drive.trajectoryBuilder(deliver1C.end())
+                .splineToConstantHeading(new Vector2d(48, -60), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(64, -36), Math.toRadians(0))
+                .build();
+
+        Trajectory collect2C = drive.trajectoryBuilder(toLowGoalC.end())
+                .splineToConstantHeading(new Vector2d(56, -36), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-24, -12, Math.toRadians(27)), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(-48, -24), Math.toRadians(0))
+                .build();
+
+        Trajectory deliver2C = drive.trajectoryBuilder(collect2C.end(), true)
+                .splineTo(new Vector2d(-24, -60), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(48, -60, Math.toRadians(180)), Math.toRadians(0))
+                .build();
+
+        Trajectory parkC = drive.trajectoryBuilder(deliver2C.end())
+                .splineToConstantHeading(new Vector2d(12, -60), Math.toRadians(0))
+                .build();*/
 
 
         waitForStart();
 
-        if (isStopRequested()) return;
+       // if (isStopRequested()) return;
 
         //int currentCase = getCase();
 
@@ -111,18 +179,72 @@ public class TestRRAutonomous extends LinearOpMode {
             currentCase = 3;
         }
         else {
-            currentCase = 1;  // Default to case A
+            currentCase = 2;  // Default to case A
         }
 
         if (currentCase == 1) {
             drive.followTrajectory(deliver1A);
+            wgPickup.setPosition(.70); // Drop wobble goal pickup
+            pause(750);
+            drive.followTrajectory(toLowGoalA);
+            ringDump.setPosition(.83); // Dump preloaded rings
+            pause(200);
+            ringDump.setPosition(.48);
+            pause(50);
+            ringDump.setPosition(.83);
+            pause(500);
+            ringDump.setPosition(.48);
             wgPickup.setPosition(.70);
+            drive.followTrajectory(driveToCollect2A);
+            drive.followTrajectory(collect2A);
+            wgPickup.setPosition(.32);
+            pause(500);
+            drive.followTrajectory(deliver2A);
+            wgPickup.setPosition(.70);
+            pause(750);
+            drive.followTrajectory(parkA);
         }
         else if (currentCase == 2) {
-
+            drive.followTrajectory(deliver1B);
+            wgPickup.setPosition(.70); // Drop wobble goal pickup
+            pause(750);
+            drive.followTrajectory(toLowGoalB);
+            ringDump.setPosition(.83); // Dump preloaded rings
+            pause(200);
+            ringDump.setPosition(.48);
+            pause(50);
+            ringDump.setPosition(.83);
+            pause(500);
+            ringDump.setPosition(.48);
+            wgPickup.setPosition(.70);
+            drive.followTrajectory(collect2B);
+            wgPickup.setPosition(.32);
+            pause(500);
+            drive.followTrajectory(deliver2B);
+            wgPickup.setPosition(.70);
+            pause(500);
+            drive.followTrajectory(parkB);
         }
         else if (currentCase == 3) {
-
+   /*         drive.followTrajectory(deliver1C);
+            wgPickup.setPosition(.70); // Drop wobble goal pickup
+            pause(500);
+            drive.followTrajectory(toLowGoalC);
+            ringDump.setPosition(.83); // Dump preloaded rings
+            pause(200);
+            ringDump.setPosition(.48);
+            pause(50);
+            ringDump.setPosition(.83);
+            pause(500);
+            ringDump.setPosition(.48);
+            wgPickup.setPosition(.70);
+            drive.followTrajectory(collect2C);
+            wgPickup.setPosition(.32);
+            pause(500);
+            drive.followTrajectory(deliver2C);
+            wgPickup.setPosition(.70);
+            pause(500);
+            drive.followTrajectory(parkC);*/
         }
         else {
             // Error here
@@ -152,6 +274,11 @@ public class TestRRAutonomous extends LinearOpMode {
     int pixelCountToRings(int numPixels) {
         // Do something here to count the pixels. This might require both tweaking and estimation
         return numPixels/1000;  // Literally just guessed this value. Please don't rely on it
+    }
+
+    void pause(long waitTime) {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() <= startTime + waitTime) {}
     }
 
     public int getCase() {
