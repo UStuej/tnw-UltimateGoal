@@ -46,10 +46,15 @@ public class StarterStackDetection extends LinearOpMode
     OpenCvCamera phoneCam;
     imageFeedPipeline pipeline = new imageFeedPipeline();
 
-    final double RING_SCAN_CROP_PERCENT_X1 = 0.1;  // 0.0
-    final double RING_SCAN_CROP_PERCENT_X2 = 0.9;  // 1.0
-    final double RING_SCAN_CROP_PERCENT_Y1 = 0.1;  // .49
-    final double RING_SCAN_CROP_PERCENT_Y2 = 0.9;  // .75
+    final boolean JOYSTICKS_ADJUST_BB = true;
+    final double JOYSTICK_DEADZONE = 0.1;
+
+    double RING_SCAN_CROP_PERCENT_X1 = 0.0;  // 0.0
+    double RING_SCAN_CROP_PERCENT_X2 = 0.3;  // 1.0
+    double RING_SCAN_CROP_PERCENT_Y1 = 0.3;  // .49
+    double RING_SCAN_CROP_PERCENT_Y2 = 1.0;  // .75
+
+    double ringImagePercent = 0.0;
 
     private static final int RING_COLOR_H_START = 13;  // 15
     private static final int RING_COLOR_S_START = 45;  // 51
@@ -60,6 +65,8 @@ public class StarterStackDetection extends LinearOpMode
 
     public static Scalar lowerBound = new Scalar(RING_COLOR_H_START, RING_COLOR_S_START, RING_COLOR_V_START);
     public static Scalar upperBound = new Scalar(RING_COLOR_H_END, RING_COLOR_S_END, RING_COLOR_V_END);
+
+    char autoCase = 'X'; // 'X' is initialized (unset)
 
     @Override
     public void runOpMode()
@@ -127,7 +134,13 @@ public class StarterStackDetection extends LinearOpMode
             /*
              * Send some stats to the telemetry
              */
+            if (ringImagePercent >= .002 && ringImagePercent < .01) { autoCase = 'B'; }
+            else if (ringImagePercent >= .01) { autoCase = 'C'; }
+            else {autoCase = 'A'; }
+
             int pixels = pipeline.getRingPixels();
+            telemetry.addData("Auto Case: ", (char) (autoCase));
+            telemetry.addData("Ring Percentage: ", ringImagePercent);
             telemetry.addData("Frame Count", phoneCam.getFrameCount());
             telemetry.addData("FPS", String.format("%.2f", phoneCam.getFps()));
             telemetry.addData("Total frame time ms", phoneCam.getTotalFrameTimeMs());
@@ -135,6 +148,11 @@ public class StarterStackDetection extends LinearOpMode
             telemetry.addData("Overhead time ms", phoneCam.getOverheadTimeMs());
             telemetry.addData("Theoretical max FPS", phoneCam.getCurrentPipelineMaxFps());
             telemetry.addData("Ring-Colored Pixels: ", pixels);
+            telemetry.addData("Ring crop region X1", RING_SCAN_CROP_PERCENT_X1);
+            telemetry.addData("Ring crop region Y1", RING_SCAN_CROP_PERCENT_Y1);
+            telemetry.addData("Ring crop region X2", RING_SCAN_CROP_PERCENT_X2);
+            telemetry.addData("Ring crop region Y2", RING_SCAN_CROP_PERCENT_Y2);
+            telemetry.addData("Total pixels", pipeline.totalPixels);
             telemetry.update();
 
             /*
@@ -142,7 +160,31 @@ public class StarterStackDetection extends LinearOpMode
              * when it will be automatically stopped for you) *IS* supported. The "if" statement
              * below will stop streaming from the camera when the "A" button on gamepad 1 is pressed.
              */
-            if(gamepad1.a)
+
+            // Use the gamepad axes to adjust the bounding box if it's enabled
+            if (JOYSTICKS_ADJUST_BB) {
+                if (gamepad1.left_stick_x >= JOYSTICK_DEADZONE) {
+                    RING_SCAN_CROP_PERCENT_X1 += (gamepad1.left_stick_x / 60);
+                    RING_SCAN_CROP_PERCENT_X1 = Math.max(Math.min(1.0, RING_SCAN_CROP_PERCENT_X1), 0.0);
+                }
+
+                if (gamepad1.left_stick_y >= JOYSTICK_DEADZONE) {
+                    RING_SCAN_CROP_PERCENT_Y1 += (gamepad1.left_stick_y / 60);
+                    RING_SCAN_CROP_PERCENT_Y1 = Math.max(Math.min(1.0, RING_SCAN_CROP_PERCENT_Y1), 0.0);
+                }
+
+                if (gamepad1.right_stick_x >= JOYSTICK_DEADZONE) {
+                    RING_SCAN_CROP_PERCENT_X2 += (gamepad1.right_stick_x / 60);
+                    RING_SCAN_CROP_PERCENT_X2 = Math.max(Math.min(1.0, RING_SCAN_CROP_PERCENT_X2), 0.0);
+                }
+
+                if (gamepad1.right_stick_y >= JOYSTICK_DEADZONE) {
+                    RING_SCAN_CROP_PERCENT_Y2 += (gamepad1.right_stick_y / 60);
+                    RING_SCAN_CROP_PERCENT_Y2 = Math.max(Math.min(1.0, RING_SCAN_CROP_PERCENT_Y2), 0.0);
+                }
+            }
+
+            if (gamepad1.a)
             {
                 /*
                  * IMPORTANT NOTE: calling stopStreaming() will indeed stop the stream of images
@@ -207,13 +249,15 @@ public class StarterStackDetection extends LinearOpMode
         Mat imageHSV = new Mat();
         Mat ringMask = new Mat();
         int ringPixels = 0;
-        byte autoCase = -1;
         double[] pixel;
+        double[] setpixel;
+        Point setpixelPoint;
         double greenValue, blueValue;
-        final int resolutionTuner = 10; // One pixel sampled every # pixels.  Raise for speed, lower for reliability.
+        final int resolutionTuner = 5; // One pixel sampled every # pixels.  Raise for speed, lower for reliability.
         final double orangeGBRatioLowThreshold = 1.5;
         double oneRingPercentageMinimum = .001; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
         double fourRingPercentageMinimum = .004; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
+        public int totalPixels = 0;
 
 
         @Override
@@ -226,16 +270,17 @@ public class StarterStackDetection extends LinearOpMode
              * it to another Mat.
              */
 
-            /*
-             * Draw a simple box around the middle 1/2 of the entire frame
-             */
             final int RING_SECTION_CROP_Y1 = (int) (imageFeed.rows() * RING_SCAN_CROP_PERCENT_Y1);
             final int RING_SECTION_CROP_Y2 = (int) (imageFeed.rows() * RING_SCAN_CROP_PERCENT_Y2);
             final int RING_SECTION_CROP_X1 = (int) (imageFeed.cols() * RING_SCAN_CROP_PERCENT_X1);
             final int RING_SECTION_CROP_X2 = (int) (imageFeed.cols() * RING_SCAN_CROP_PERCENT_X2);
+            final Scalar ringVisualizeColor = new Scalar(0.0d, 255.0d, 0.0d);
 
-            int oneRingPixelsMinimum = (int) (((RING_SECTION_CROP_Y2 - RING_SECTION_CROP_Y1) * (RING_SECTION_CROP_X2 - RING_SECTION_CROP_X1)) / resolutionTuner * oneRingPercentageMinimum); // Where maxXResolution is the number of pixels in a row
-            int fourRingPixelsMinimum = (int) (((RING_SECTION_CROP_Y2 - RING_SECTION_CROP_Y1) * (RING_SECTION_CROP_X2 - RING_SECTION_CROP_X1)) / resolutionTuner * fourRingPercentageMinimum); // Where maxXResolution is the number of pixels in a row
+            setpixelPoint = new Point(0, 0);
+
+            totalPixels = ((RING_SECTION_CROP_Y2 - RING_SECTION_CROP_Y1) * (RING_SECTION_CROP_X2 - RING_SECTION_CROP_X1) / resolutionTuner);
+            int oneRingPixelsMinimum = (int) (totalPixels / resolutionTuner * oneRingPercentageMinimum); // Where maxXResolution is the number of pixels in a row
+            int fourRingPixelsMinimum = (int) (totalPixels / resolutionTuner * fourRingPercentageMinimum); // Where maxXResolution is the number of pixels in a row
 
             ringPixels = 0;
             for(int x = RING_SECTION_CROP_X1; x <= RING_SECTION_CROP_X2; x += resolutionTuner) {
@@ -243,7 +288,13 @@ public class StarterStackDetection extends LinearOpMode
                     pixel = imageFeed.get(y, x);
                     greenValue = pixel[1];
                     blueValue = pixel[2];
-                    if (greenValue >= blueValue * orangeGBRatioLowThreshold) { ringPixels++; }
+                    if (greenValue >= blueValue * orangeGBRatioLowThreshold) {
+                        ringPixels++;
+                        // imageFeed.set(y, x, setpixel)
+                        setpixelPoint.x = (int) x;
+                        setpixelPoint.y = (int) y;
+                        //Imgproc.circle(imageFeed, setpixelPoint, 5, ringVisualizeColor, Imgproc.FILLED);
+                    }
                 }
             }
 
@@ -258,6 +309,7 @@ public class StarterStackDetection extends LinearOpMode
                     new Scalar(0, 255, 0), 4);
 
 
+            ringImagePercent = (double) ringPixels / (double) totalPixels;
 
             /**
              * NOTE: to see how to get data from your pipeline to your OpMode as well as how

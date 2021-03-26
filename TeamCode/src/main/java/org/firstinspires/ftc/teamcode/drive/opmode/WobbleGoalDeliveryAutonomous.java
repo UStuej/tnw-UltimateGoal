@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.drive.opmode;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.MarkerCallback;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.*;
@@ -42,6 +43,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
     public static Scalar upperBound;
 
     private Servo wgPickup;
+    private Servo ringDump;
 
     private Mat image;
     private Mat imageHSV;
@@ -65,6 +67,9 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         // Initialize the wobble goal pickup
         wgPickup = hardwareMap.get(Servo.class, "WGPickup");
 
+        // Initialize the ring dump
+        ringDump = hardwareMap.get(Servo.class, "ringDump");
+
         // Assuming the builder function units are in inches
 
         Trajectory moveOut = drive.trajectoryBuilder(initialPose)
@@ -74,19 +79,52 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         // Case A
 
         Trajectory deliver1A = drive.trajectoryBuilder(moveOut.end())
-                .splineTo(new Vector2d(12, -58), Math.toRadians(180))
+                .splineTo(new Vector2d(-24, -58), Math.toRadians(0))
+                .splineTo(new Vector2d(23, -58), Math.toRadians(0))
+                .addDisplacementMarker(new MarkerCallback() {
+                        @Override
+                        public void onMarkerReached() {
+                            wgPickup.setPosition(.70);
+                        }
+                })
                 .build();
 
-        Trajectory collect2A = drive.trajectoryBuilder(deliver1A.end())
-                .splineTo(new Vector2d(-48, 30), Math.toRadians(270))
+        Trajectory toLowGoalA = drive.trajectoryBuilder(deliver1A.end())
+                .splineToConstantHeading(new Vector2d(33, -58), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(66, -36, Math.toRadians(180)), Math.toRadians(0))
+                .addDisplacementMarker(new MarkerCallback() {
+                        @Override
+                        public void onMarkerReached() {
+                            ringDump.setPosition(.83);
+                        }
+                })
                 .build();
 
-        Trajectory deliver2A = drive.trajectoryBuilder(collect2A.end())
-                .splineTo(new Vector2d(0, -58), Math.toRadians(180))
+        Trajectory collect2A = drive.trajectoryBuilder(toLowGoalA.end())
+                .splineTo(new Vector2d(12, -12), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-40, -20), Math.toRadians(30))
+                .addDisplacementMarker(new MarkerCallback() {
+                        @Override
+                        public void onMarkerReached() {
+                            wgPickup.setPosition(.32);
+                        }
+                })
+                .build();
+
+        Trajectory deliver2A = drive.trajectoryBuilder(collect2A.end(), true)
+                .splineTo(new Vector2d(-36, -48), Math.toRadians(0))
+                .splineTo(new Vector2d(3, -58), Math.toRadians(0))
+                .addDisplacementMarker(new MarkerCallback() {
+                        @Override
+                        public void onMarkerReached() {
+                          wgPickup.setPosition(.70);
+                        }
+                })
                 .build();
 
         Trajectory parkA = drive.trajectoryBuilder(deliver2A.end())
-                .splineTo(new Vector2d(8, -32), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(-7, -58), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(12, -36, Math.toRadians(0)), Math.toRadians(0))
                 .build();
 
         // Case B
@@ -126,6 +164,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
                 .build();
 
         telemetry.addLine("Waiting for start...");
+        telemetry.update();
 
         waitForStart();
 
@@ -136,96 +175,120 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         int currentCase;  // TODO: Finish OpenCV code that figures this out
 
         if (gamepad1.a) {  // A is case A
-            currentCase = 1;
+            currentCase = 0;
         }
         else if (gamepad1.b) {  // B is case B
-            currentCase = 2;
+            currentCase = 1;
         }
         else if (gamepad1.x) {  // X is case C
-            currentCase = 3;
+            currentCase = 2;
         }
         else {
-            currentCase = 1;  // Default to case A
+            currentCase = 0;  // Default to case A
         }
 
-        if (currentCase == 1) {
-            telemetry.addLine("Moving out");
-            drive.followTrajectory(moveOut);
+        switch (currentCase) {
+            case 0: {
+                telemetry.addLine("Moving out");
+                telemetry.update();
+                drive.followTrajectory(moveOut);
 
-            telemetry.addLine("Moving to deliver 1A");
-            drive.followTrajectory(deliver1A);
+                telemetry.addLine("Moving to deliver 1A");
+                telemetry.update();
+                drive.followTrajectory(deliver1A);
 
-            telemetry.addLine("Lowering pickup");
-            wgPickup.setPosition(0.7);
+                telemetry.addLine("Lowering pickup");
+                //wgPickup.setPosition(0.7);
 
-            telemetry.addLine("Moving to collect 2A");
-            drive.followTrajectory(collect2A);
+                telemetry.addLine("Moving to collect 2A");
+                telemetry.update();
+                drive.followTrajectory(collect2A);
 
-            telemetry.addLine("Raising pickup");
-            wgPickup.setPosition(0.32);
+                telemetry.addLine("Raising pickup");
+                telemetry.update();
+                //wgPickup.setPosition(0.32);
 
-            telemetry.addLine("Moving to deliver 2A");
-            drive.followTrajectory(deliver2A);
-            PoseStorage.wobbleGoal2RedPosition = new Pose2d(0, -58);  // TODO: Do likewise for all autonomous wobble goal movements. Also TODO: Headings should be included here
+                telemetry.addLine("Moving to deliver 2A");
+                telemetry.update();
+                drive.followTrajectory(deliver2A);
+                //PoseStorage.wobbleGoal2RedPosition = new Pose2d(0, -58);  // TODO: Do likewise for all autonomous wobble goal movements. Also TODO: Headings should be included here
 
-            telemetry.addLine("Lowering pickup");
-            wgPickup.setPosition(0.7);
+                telemetry.addLine("Lowering pickup");
+                telemetry.update();
+                //wgPickup.setPosition(0.7);
 
-            telemetry.addLine("Moving to park A");
-            drive.followTrajectory(parkA);
-        }
-        else if (currentCase == 2) {
-            telemetry.addLine("Moving out");
-            drive.followTrajectory(moveOut);
+                telemetry.addLine("Moving to park A");
+                telemetry.update();
+                drive.followTrajectory(parkA);
+            } break;
 
-            telemetry.addLine("Moving to deliver 1B");
-            drive.followTrajectory(deliver1B);
+            case 1: {
+                telemetry.addLine("Moving out");
+                telemetry.update();
+                drive.followTrajectory(moveOut);
 
-            telemetry.addLine("Lowering pickup");
-            wgPickup.setPosition(0.7);
+                telemetry.addLine("Moving to deliver 1B");
+                telemetry.update();
+                drive.followTrajectory(deliver1B);
 
-            telemetry.addLine("Moving to collect 2B");
-            drive.followTrajectory(collect2B);
+                telemetry.addLine("Lowering pickup");
+                telemetry.update();
+                wgPickup.setPosition(0.7);
 
-            telemetry.addLine("Raising pickup");
-            wgPickup.setPosition(0.32);
+                telemetry.addLine("Moving to collect 2B");
+                telemetry.update();
+                drive.followTrajectory(collect2B);
 
-            telemetry.addLine("Moving to deliver 2B");
-            drive.followTrajectory(deliver2B);
+                telemetry.addLine("Raising pickup");
+                telemetry.update();
+                wgPickup.setPosition(0.32);
 
-            telemetry.addLine("Lowering pickup");
-            wgPickup.setPosition(0.7);
+                telemetry.addLine("Moving to deliver 2B");
+                telemetry.update();
+                drive.followTrajectory(deliver2B);
 
-            telemetry.addLine("Moving to park B");
-            drive.followTrajectory(parkB);
-        }
-        else if (currentCase == 3) {
-            telemetry.addLine("Moving out");
-            drive.followTrajectory(moveOut);
+                telemetry.addLine("Lowering pickup");
+                telemetry.update();
+                wgPickup.setPosition(0.7);
 
-            telemetry.addLine("Moving to deliver 1C");
-            drive.followTrajectory(deliver1C);
+                telemetry.addLine("Moving to park B");
+                telemetry.update();
+                drive.followTrajectory(parkB);
+            } break;
 
-            telemetry.addLine("Lowering pickup");
-            wgPickup.setPosition(0.7);
+            case 2: {
+                telemetry.addLine("Moving out");
+                telemetry.update();
+                drive.followTrajectory(moveOut);
 
-            telemetry.addLine("Moving to collect 2C");
-            drive.followTrajectory(collect2C);
+                telemetry.addLine("Moving to deliver 1C");
+                telemetry.update();
+                drive.followTrajectory(deliver1C);
 
-            telemetry.addLine("Raising pickup");
-            wgPickup.setPosition(0.32);
+                telemetry.addLine("Lowering pickup");
+                telemetry.update();
+                wgPickup.setPosition(0.7);
 
-            telemetry.addLine("Moving to deliver 2C");
-            drive.followTrajectory(deliver2C);
+                telemetry.addLine("Moving to collect 2C");
+                telemetry.update();
+                drive.followTrajectory(collect2C);
 
-            telemetry.addLine("Lowering pickup");
-            wgPickup.setPosition(0.7);
+                telemetry.addLine("Raising pickup");
+                telemetry.update();
+                wgPickup.setPosition(0.32);
 
-            telemetry.addLine("Moving to park C");
-            drive.followTrajectory(parkC);
-        }
-        else {
-            // Error here
+                telemetry.addLine("Moving to deliver 2C");
+                telemetry.update();
+                drive.followTrajectory(deliver2C);
+
+                telemetry.addLine("Lowering pickup");
+                telemetry.update();
+                wgPickup.setPosition(0.7);
+
+                telemetry.addLine("Moving to park C");
+                telemetry.update();
+                drive.followTrajectory(parkC);
+            } break;
         }
 
         PoseStorage.currentPose = drive.getPoseEstimate();
@@ -262,13 +325,13 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         telemetry.addData("Estimated ring count: ", rings);
 
         if (rings == 1) {
-            return 2;
+            return 1;
         }
 
         if (rings >= 4) {
-            return 3;
+            return 2;
         }
 
-        return 1;  // Zero rings
+        return 0;  // Zero rings
     }
 }
