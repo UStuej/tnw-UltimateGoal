@@ -103,30 +103,24 @@ public class TestRRAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory driveToCollect2A = drive.trajectoryBuilder(toLowGoalA.end())
-                .addDisplacementMarker(new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        ringDump.setPosition(.48); // Move ring dump to collect position
-                    }
-                })
-                .lineToLinearHeading(new Pose2d(-24, -26, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(-46, -8, Math.toRadians(90)))
+                /*.splineToConstantHeading(new Vector2d(56, -52), Math.toRadians(0))*/
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.70); // Drop wobble goal pickup
+                        ringDump.setPosition(.48); // Move ring dump to collect position
                     }
                 })
-                .addSpatialMarker(new Vector2d(63, -36), new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        ringDump.setPosition(.83); // Dump preloaded rings
-                    }
-                })
+                /*.splineToConstantHeading(new Vector2d(48, -56), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-24, -56, Math.toRadians(0)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-48, -36, Math.toRadians(270)), Math.toRadians(0))*/
                 .build();
 
         Trajectory collect2A = drive.trajectoryBuilder(driveToCollect2A.end())
-                .lineTo(new Vector2d(-46, -26))
-                .addSpatialMarker(new Vector2d(-40, -26), new MarkerCallback() {
+                .lineTo(new Vector2d(-46, -18))
+                //.lineToConstantHeading(new Vector2d(-24, -30))
+                .addSpatialMarker(new Vector2d(-24, -34), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.32); // Raise wobble goal pickup
@@ -136,8 +130,8 @@ public class TestRRAutonomous extends LinearOpMode {
 
         Trajectory deliver2A = drive.trajectoryBuilder(collect2A.end(), true)
                 .splineTo(new Vector2d(-24, -60), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(3, -60, Math.toRadians(180)), Math.toRadians(0))
-                .addSpatialMarker(new Vector2d(-40, -26), new MarkerCallback() {
+                .splineToSplineHeading(new Pose2d(4, -60, Math.toRadians(180)), Math.toRadians(0))
+                .addSpatialMarker(new Vector2d(2, -60), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.70); // Drop wobble goal pickup
@@ -162,8 +156,8 @@ public class TestRRAutonomous extends LinearOpMode {
         Trajectory deliver1B = drive.trajectoryBuilder(initialPose)
                 .splineToConstantHeading(new Vector2d(-51, -48), Math.toRadians(0))
                 .splineToSplineHeading(new Pose2d(-24, -54, Math.toRadians(0)), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(48, -40, Math.toRadians(60)), Math.toRadians(0))
-                .addSpatialMarker(new Vector2d(36, -44), new MarkerCallback() {
+                .splineToSplineHeading(new Pose2d(46, -36, Math.toRadians(60)), Math.toRadians(0))
+                .addSpatialMarker(new Vector2d(40, -40), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.70); // Drop wobble goal pickup
@@ -171,11 +165,21 @@ public class TestRRAutonomous extends LinearOpMode {
                 })
                 .build();
 
-        Trajectory toLowGoalB = drive.trajectoryBuilder(deliver1B.end())
-                .splineToConstantHeading(new Vector2d(56, -24), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d( 60, -36, Math.toRadians(180)), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(65, -36), Math.toRadians(0))
-                .addSpatialMarker(new Vector2d(63, -36), new MarkerCallback() {
+        Trajectory toLowGoal1B = drive.trajectoryBuilder(deliver1B.end())
+                .lineTo(new Vector2d(53, -20))
+                //.splineToSplineHeading(new Pose2d( 65, -36, Math.toRadians(180)), Math.toRadians(0))
+                //.splineToConstantHeading(new Vector2d(65, -36), Math.toRadians(0))
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wgPickup.setPosition(.32); // Raise wobble goal pickup
+                    }
+                })
+                .build();
+
+        Trajectory toLowGoal2B = drive.trajectoryBuilder(toLowGoal1B.end())
+                .lineToLinearHeading(new Pose2d(65, -32, Math.toRadians(180)))
+                .addSpatialMarker(new Vector2d(63, -32), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         ringDump.setPosition(.83); // Dump preloaded rings
@@ -183,21 +187,24 @@ public class TestRRAutonomous extends LinearOpMode {
                 })
                 .build();
 
-        Trajectory driveToCollect2B = drive.trajectoryBuilder(toLowGoalB.end())
-                .splineToConstantHeading(new Vector2d(56, -52), Math.toRadians(0))
+        Trajectory driveToCollect2B = drive.trajectoryBuilder(toLowGoal2B.end())
+                .lineToLinearHeading(new Pose2d(-46, -8, Math.toRadians(90)))
+                /*.splineToConstantHeading(new Vector2d(56, -52), Math.toRadians(0))*/
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.70); // Drop wobble goal pickup
+                        ringDump.setPosition(.48); // Move ring dump to collect position
                     }
                 })
-                .splineToConstantHeading(new Vector2d(48, -56), Math.toRadians(0))
+                /*.splineToConstantHeading(new Vector2d(48, -56), Math.toRadians(0))
                 .splineToSplineHeading(new Pose2d(-24, -56, Math.toRadians(0)), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(-48, -36, Math.toRadians(270)), Math.toRadians(0))
+                .splineToSplineHeading(new Pose2d(-48, -36, Math.toRadians(270)), Math.toRadians(0))*/
                 .build();
 
         Trajectory collect2B = drive.trajectoryBuilder(driveToCollect2B.end())
-                .lineToConstantHeading(new Vector2d(-24, -30))
+                .lineTo(new Vector2d(-46, -18))
+                //.lineToConstantHeading(new Vector2d(-24, -30))
                 .addSpatialMarker(new Vector2d(-24, -34), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -206,11 +213,16 @@ public class TestRRAutonomous extends LinearOpMode {
                 })
                 .build();
 
-        Trajectory deliver2B = drive.trajectoryBuilder(collect2B.end(), true)
-                .splineTo(new Vector2d(-24, -16), Math.toRadians(0))
+        Trajectory deliver2B1 = drive.trajectoryBuilder(collect2B.end())
+                .lineTo(new Vector2d(-47, -8))
+                .build();
+
+        Trajectory deliver2B2 = drive.trajectoryBuilder(deliver2B1.end(), true)
+                .lineToLinearHeading(new Pose2d(24, -32, Math.toRadians(180)))
+                /*.splineTo(new Vector2d(-24, -16), Math.toRadians(0))
                 .splineTo(new Vector2d(12, -32), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(24, -32, Math.toRadians(180)), Math.toRadians(0))
-                .addSpatialMarker(new Vector2d(-24, -34), new MarkerCallback() {
+                .splineToSplineHeading(new Pose2d(24, -32, Math.toRadians(180)), Math.toRadians(0))*/
+                .addSpatialMarker(new Vector2d(18, -30), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.70); // Drop wobble goal pickup
@@ -218,7 +230,7 @@ public class TestRRAutonomous extends LinearOpMode {
                 })
                 .build();
 
-        Trajectory parkB = drive.trajectoryBuilder(deliver2B.end())
+        Trajectory parkB = drive.trajectoryBuilder(deliver2B2.end())
                 .splineToConstantHeading(new Vector2d(12, -32), Math.toRadians(0))
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
@@ -281,7 +293,7 @@ public class TestRRAutonomous extends LinearOpMode {
             currentCase = 3;
         }
         else {
-            currentCase = 1;  // Default to case A
+            currentCase = 2;  // Default to case A
         }
 
         if (currentCase == 1) {
@@ -294,9 +306,13 @@ public class TestRRAutonomous extends LinearOpMode {
         }
         else if (currentCase == 2) {
             drive.followTrajectory(deliver1B);
-            drive.followTrajectory(toLowGoalB);
+            drive.followTrajectory(toLowGoal1B);
+            drive.followTrajectory(toLowGoal2B);
+            pause(250);
+            drive.followTrajectory(driveToCollect2B);
             drive.followTrajectory(collect2B);
-            drive.followTrajectory(deliver2B);
+            drive.followTrajectory(deliver2B1);
+            drive.followTrajectory(deliver2B2);
             drive.followTrajectory(parkB);
         }
         else if (currentCase == 3) {
