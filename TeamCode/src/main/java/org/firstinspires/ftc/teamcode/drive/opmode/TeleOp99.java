@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.teleop;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "TeleOp99")
@@ -59,9 +60,9 @@ public class TeleOp99 extends OpMode {
     private static double PICKUP_DOWN_POSITION = 0.70;  // The position of the pickup when it is down
 
     private static double RING_DUMP_DUMP_POSITION = 0.83;  // The position of the ring dump when it's dumping
-    private static double RING_DUMP_COLLECT_POSITION = 0.48;  // The position of the ring dump when it's collecting
+    private static double RING_DUMP_COLLECT_POSITION = 0.5;  // The position of the ring dump when it's collecting
 
-    private static double LIFT_POWER_MULTIPLIER = 0.25;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
+    private static double LIFT_POWER_MULTIPLIER = 0.35;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
 
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
@@ -301,6 +302,7 @@ public class TeleOp99 extends OpMode {
         // Set drive motor directions
         frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        intakeDrive.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Initialize servo positions
         wobblePickup.setPosition(PICKUP_UP_POSITION);
