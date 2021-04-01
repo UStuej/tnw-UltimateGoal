@@ -79,8 +79,8 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
         // Case A
 
         Trajectory deliver1A = drive.trajectoryBuilder(moveOut.end())
-                .splineTo(new Vector2d(-24, -58), Math.toRadians(0))
-                .splineTo(new Vector2d(23, -58), Math.toRadians(0))
+                .splineTo(new Vector2d(-24, -54), Math.toRadians(0))
+                .splineTo(new Vector2d(23, -54), Math.toRadians(0))
                 .addDisplacementMarker(new MarkerCallback() {
                         @Override
                         public void onMarkerReached() {
@@ -90,7 +90,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory toLowGoalA = drive.trajectoryBuilder(deliver1A.end())
-                .splineToConstantHeading(new Vector2d(33, -58), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(33, -54), Math.toRadians(0))
                 .splineToSplineHeading(new Pose2d(66, -36, Math.toRadians(180)), Math.toRadians(0))
                 .addDisplacementMarker(new MarkerCallback() {
                         @Override
@@ -113,7 +113,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
 
         Trajectory deliver2A = drive.trajectoryBuilder(collect2A.end(), true)
                 .splineTo(new Vector2d(-36, -48), Math.toRadians(0))
-                .splineTo(new Vector2d(3, -58), Math.toRadians(0))
+                .splineTo(new Vector2d(3, -54), Math.toRadians(0))
                 .addDisplacementMarker(new MarkerCallback() {
                         @Override
                         public void onMarkerReached() {
@@ -123,8 +123,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory parkA = drive.trajectoryBuilder(deliver2A.end())
-                .splineToConstantHeading(new Vector2d(-7, -58), Math.toRadians(0))
-                .splineToSplineHeading(new Pose2d(12, -36, Math.toRadians(0)), Math.toRadians(0))
+                .lineToLinearHeading(new Pose2d(12, -36, Math.toRadians(0)))
                 .build();
 
         // Case B
@@ -142,7 +141,7 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory parkB = drive.trajectoryBuilder(deliver2B.end())
-                .splineTo(new Vector2d(12, -60), Math.toRadians(0))
+                .splineTo(new Vector2d(12, -54), Math.toRadians(0))
                 .build();
 
         // Case C
@@ -156,11 +155,11 @@ public class WobbleGoalDeliveryAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory deliver2C = drive.trajectoryBuilder(collect2C.end())
-                .splineTo(new Vector2d(-48, -58), Math.toRadians(180))
+                .splineTo(new Vector2d(-48, -54), Math.toRadians(180))
                 .build();
 
         Trajectory parkC = drive.trajectoryBuilder(deliver2C.end())
-                .splineTo(new Vector2d(-12, -58), Math.toRadians(180))
+                .splineTo(new Vector2d(-12, -54), Math.toRadians(180))
                 .build();
 
         telemetry.addLine("Waiting for start...");
