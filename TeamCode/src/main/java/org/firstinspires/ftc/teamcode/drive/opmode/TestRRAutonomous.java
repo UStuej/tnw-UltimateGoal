@@ -25,7 +25,10 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.Vector;
 
 /*
- * This is a simple routine to test translational drive capabilities.
+ * Main autonomous for iteration 1 of the robot. It scans a section of pixels in an image taken
+ * by the phone camera for ring colors, counts those pixels, converts that to a number of rings,
+ * then finally runs a preset trajectory based on the size of the ring stack, delivering the
+ * wobble goals to the correct target
  */
 @Config
 @Autonomous(group = "drive")
@@ -470,39 +473,48 @@ public class TestRRAutonomous extends LinearOpMode {
 
         if (currentCase == 1) {
             drive.followTrajectory(deliver1A1);
-            drive.followTrajectory(deliver1A2);
+            drive.followTrajectory(deliver1A2);  // Drops wobble goal at 23, -56
+            PoseStorage.wobbleGoal1RedPosition = new Pose2d(23, -56, deliver1A2.end().getHeading());  // Store this position as the new wobble goal position
             drive.followTrajectory(toLowGoalA1);
             drive.followTrajectory(toLowGoalA2);
             drive.followTrajectory(driveToCollect2A);
-            drive.followTrajectory(collect2A);
-            drive.followTrajectory(deliver2A);
+            drive.followTrajectory(collect2A);  // Picks wobble goal up at -24, -34
+            drive.followTrajectory(deliver2A);  // Drops wobble goal at 2, -56
+            PoseStorage.wobbleGoal2RedPosition = new Pose2d(2, -56, deliver2A.end().getHeading());
             drive.followTrajectory(parkA);
+            PoseStorage.currentPose = parkA.end();  // Set our ending pose for any TeleOp code that relies on it
         }
         else if (currentCase == 2) {
             drive.followTrajectory(deliver1B1);
             drive.followTrajectory(deliver1B2);
-            drive.followTrajectory(deliver1B3);
+            drive.followTrajectory(deliver1B3);  // Drops wobble goal at 42, -40
+            PoseStorage.wobbleGoal1RedPosition = new Pose2d(42, -40, deliver1B3.end().getHeading());
             drive.followTrajectory(toLowGoal1B);
             drive.followTrajectory(toLowGoal2B);
             pause(250);
             drive.followTrajectory(driveToCollect2B);
             drive.followTrajectory(collect2B);
             drive.followTrajectory(deliver2B1);
-            drive.followTrajectory(deliver2B2);
+            drive.followTrajectory(deliver2B2);  // Drops wobble goal at 18, -30
+            PoseStorage.wobbleGoal2RedPosition = new Pose2d(18, -30, deliver2B2.end().getHeading());
             drive.followTrajectory(parkB);
+            PoseStorage.currentPose = parkB.end();
         }
         else if (currentCase == 3) {
             drive.followTrajectory(deliver1C1);
             drive.followTrajectory(deliver1C2);
-            drive.followTrajectory(deliver1C3);
+            drive.followTrajectory(deliver1C3);  // Drops wobble goal at 56, -58
+            PoseStorage.wobbleGoal1RedPosition = new Pose2d(56, -58, deliver1C3.end().getHeading());
             drive.followTrajectory(toLowGoal1C);
             drive.followTrajectory(toLowGoal2C);
             pause(250);
             drive.followTrajectory(driveToCollect2C);
             drive.followTrajectory(collect2C);
             drive.followTrajectory(deliver2C1);
-            drive.followTrajectory(deliver2C2);
+            drive.followTrajectory(deliver2C2);  // Drops wobble goal at 48, -55
+            PoseStorage.wobbleGoal2RedPosition = new Pose2d(48, -55, deliver2C2.end().getHeading());
             drive.followTrajectory(parkC);
+            PoseStorage.currentPose = parkC.end();
         }
         else {
             // Error here
