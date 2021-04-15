@@ -101,7 +101,7 @@ public class Shoot extends OpMode {
 
         if (currentTimeMillis >= lastIterTime + MILLIS_PER_ITER) {
             shootCurrentPosition = shoot.getCurrentPosition();
-            rpm = (int) ((Math.abs(shootCurrentPosition - lastIterEncoder) / COUNTS_PER_REVOLUTION) / (currentTimeMillis - lastIterTime));
+            rpm = (int) ((Math.abs(shootCurrentPosition - lastIterEncoder) / COUNTS_PER_REVOLUTION) / ((double) (currentTimeMillis - lastIterTime) / 60000));
             lastIterTime = currentTimeMillis;
             lastIterEncoder = shootCurrentPosition;
         }

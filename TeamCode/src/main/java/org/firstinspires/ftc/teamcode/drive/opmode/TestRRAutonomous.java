@@ -228,8 +228,8 @@ public class TestRRAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory deliver1B3 = drive.trajectoryBuilder(deliver1B2.end())
-                .lineTo(new Vector2d(46, -34))
-                .addSpatialMarker(new Vector2d(42, -40), new MarkerCallback() {
+                .lineTo(new Vector2d(42, -34))
+                .addSpatialMarker(new Vector2d(40, -34), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.70); // Drop wobble goal pickup
@@ -290,11 +290,11 @@ public class TestRRAutonomous extends LinearOpMode {
                 .build();
 
         Trajectory deliver2B2 = drive.trajectoryBuilder(deliver2B1.end(), true)
-                .lineToLinearHeading(new Pose2d(24, -34, Math.toRadians(180)))
+                .lineToLinearHeading(new Pose2d(24, -32, Math.toRadians(180)))
                 /*.splineTo(new Vector2d(-24, -16), Math.toRadians(0))
                 .splineTo(new Vector2d(12, -32), Math.toRadians(0))
                 .splineToSplineHeading(new Pose2d(24, -32, Math.toRadians(180)), Math.toRadians(0))*/
-                .addSpatialMarker(new Vector2d(18, -30), new MarkerCallback() {
+                .addSpatialMarker(new Vector2d(22, -30), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wgPickup.setPosition(.70); // Drop wobble goal pickup
