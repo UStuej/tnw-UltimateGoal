@@ -1,10 +1,20 @@
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
+import com.acmerobotics.roadrunner.drive.DriveSignal;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 @TeleOp(name = "TeleOp99")
 
@@ -19,6 +29,8 @@ public class TeleOp99 extends OpMode {
 
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
+    private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not the X and Y buttons on the driver gamepad should toggle Roadrunner-powered automatic driving. If this is true, X will enable and Y will disable automatic control
+
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
     private static boolean BUTTONS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
     private static boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
@@ -29,7 +41,7 @@ public class TeleOp99 extends OpMode {
 
     private static double ACCELERATION_CAP = 1.33333;  // The max allowed acceleration of any movement motor in units per second per second. This is included because max acceleration might tip the robot, but use with care as very low accelerations will make the robot sluggish. If the cap is reached, velocity will be incremented at this acceleration rather than the alternative. This value should be set to 1 divided by the number of seconds it should take for the motors to increment to maximum velocity. May be set above 1 for accelerations faster than 1 unit per second per second. 1.33333... (the default value) means it should take 0.75 seconds to go from 0 to full. Set to 0 to disable
 
-    private static boolean MOVEMENT_ROTATION_CORRECTION = true;  // Whether or not we should attempt to adjust the robot's movement based on an accumulated rotation offset, which, if accurately maintained, would allow for rotating the robot without affecting movement from the driver's perspective. Disable this if steering seems to drift clockwise or counterclockwise after some amounts of rotation TODO: This
+    private static boolean MOVEMENT_ROTATION_CORRECTION = true;  // Whether or not we should attempt to adjust the robot's movement based on an accumulated rotation offset, which, if accurately maintained, would allow for rotating the robot without affecting movement from the driver's perspective. Disable this if steering seems to drift clockwise or counterclockwise after some amounts of rotation. DO NOTE THAT THIS OPTION EVADES ACCELERATION CHECKS. It does, however, respect all direct power limitations as well as any internal PID control from roadrunner (if any)
 
     private static boolean RESTRICT_LIFT_MOVEMENT = true;  // Whether or not the lift's movement should be disabled when the shoulder is in
 
@@ -63,6 +75,9 @@ public class TeleOp99 extends OpMode {
     private static double RING_DUMP_COLLECT_POSITION = 0.5;  // The position of the ring dump when it's collecting
 
     private static double LIFT_POWER_MULTIPLIER = 0.35;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
+
+    private static int RING_ELEVATOR_UP_POSITION = 0; // The position of the Ring Elevator when it is in the UP state // TODO set these values
+    private static int RING_ELEVATOR_DOWN_POSITION = 0; // The position of the Ring Elevator when it is in the DOWN state
 
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
@@ -121,6 +136,9 @@ public class TeleOp99 extends OpMode {
     // Ring manipulation servo
     private Servo ringDump;
 
+    // Ring Elevator motor
+    private DcMotor ringElevator;
+
     private boolean slowMode;  // Whether or not we're currently going slower
 
     // Variables relating to wobble goal manipulation
@@ -133,6 +151,9 @@ public class TeleOp99 extends OpMode {
     private boolean clawUserControl = false;  // Whether or not the user has claimed control of the claw during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment.
     private boolean shoulderUserControl = false;  // Whether or not the user has claimed control of the shoulder during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment
     private boolean pickupUserControl = false;  // Whether or not the user has claimed control of the pickup during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment
+
+    // Ring Elevator motor position
+    private boolean ringElevatorUp = false;
 
     // Gamepad 1 inputs JUST pressed
     private boolean gamepad1APressed = false;  // Whether or not the gamepad 1 a button was JUST pressed, handled by the handleInput function
@@ -209,8 +230,37 @@ public class TeleOp99 extends OpMode {
     private long pModeStart = 0;
     private int Pmode = 0;
 
+    private boolean autoDrive = false;  // Whether or not the robot is currently being driven automatically (through Roadrunner). Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
+
+    double vertical = 0.0;  // Movement axes for the manual robot movement control
+    double horizontal = 0.0;
+    double rotation = 0.0;
+
+    private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));  // TODO: SYNC THIS WITH AUTONOMOUS ASAP. PoseStorage should come in handy here
+    private SampleMecanumDrive drive;
+
+    private int autoPoseIndex = -1;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
+
+    // The possible target positions for automatic driving
+    public static Pose2d highGoalShootPose = new Pose2d();  // Index 0
+    public static Pose2d powerShotPose1 = new Pose2d();  // Index 1
+    public static Pose2d powerShotPose2 = new Pose2d();  // Index 2
+    public static Pose2d powerShotPose3 = new Pose2d();  // Index 3
+
+    // The trajectory we're currently following, if we're following a trajectory
+    private Trajectory targetTrajectory;
+
+    // The pose that we're currently targeting, extraacted from the current index
+    private Pose2d targetPose;
+
+    private boolean currentlyFollowingAutoTrajectory = false;  // Whether or not we're currently following an automatic trajectory. This should be set to false whenever we switch back to manual control
+
     @Override
     public void init() {
+        drive = new SampleMecanumDrive(hardwareMap);  // The roadrunner representation of the robot, used for automatic rotation correction
+
+        drive.setPoseEstimate(currentPose);
+
         telemetry.addLine("Initializing drive motors");  // Debug message
 
         // Initialize drive motors
@@ -236,6 +286,10 @@ public class TeleOp99 extends OpMode {
         wobblePickup = hardwareMap.get(Servo.class, "WGPickup");
         wobbleShoulder = hardwareMap.get(Servo.class, "WGShoulder");
         wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
+
+        // Initialize Ring Elevator motor
+        // TODO (Currently does not exist, therefore it is commented out)
+        // ringElevator = hardwareMap.get(DcMotor.class, "ringElevator");
 
         telemetry.addLine("Initializing servo/motor positions/powers");  // Debug message
 
@@ -282,7 +336,13 @@ public class TeleOp99 extends OpMode {
             applyManualServoControls();  // Run manual control on the wobble goal-related servos if there aren't automatic tasks that conflict with them
         }
 
-        applyManualMovementControls();  // The wobble-goal tasks don't prevent any manual movement, which is applied separately in this function
+        if (!GAMEPAD_XY_TOGGLES_AUTO_DRIVE || !autoDrive) {  // If we're not automatically driving the robot, apply manual movement controls
+            applyManualMovementControls();  // The wobble-goal tasks don't prevent any manual movement, which is applied separately in this function
+        }
+        else {  // If we're using automatic (Roadrunner powered) controls, apply those
+            getAutoPoseIndex();  // Use user input changes to determine what pose index we should be at
+            applyAutomaticMovementControls();  // Make any changes necessary to get to that previous selected pose
+        }
 
         if (FOOLPROOF_IMPOSSIBLE_POSITIONS) {
             impossiblePositionCheck();  // If we're preventing impossible physical positions through software, check for such occurences and fix them in both manual, automatic, and combinations of the two (it doesn't matter at this point because this function handles the computed motor values outside any such contexts)
@@ -308,6 +368,11 @@ public class TeleOp99 extends OpMode {
         wobblePickup.setPosition(PICKUP_UP_POSITION);
         wobbleShoulder.setPosition(SHOULDER_IN_POSITION);
         wobbleClaw.setPosition(CLAW_OPENED_POSITION);
+
+        // Set Ring Elevator motor...
+        // TODO (Currently does not exist, therefore it is commented out)
+        // ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
+        // ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // inital (down) position
     }
 
     private void inputAdjustVariableSpeedCurves() {
@@ -356,6 +421,10 @@ public class TeleOp99 extends OpMode {
         shoulderPosition = Math.max(0, Math.min(1, shoulderPosition));
         clawPosition = Math.max(0, Math.min(1, clawPosition));
         ringDumpPosition = Math.max(0, Math.min(1, ringDumpPosition));
+    }
+
+    private void getAutoPoseIndex() {
+        // FIXME: Benjamin needs to program this. Tip: you can rely on the current pose and target pose in case one pose should automatically lead to another. Just wait until we're not currently following a trajectory before switching to the next one
     }
 
     private void autoServoControl() {
@@ -463,10 +532,44 @@ public class TeleOp99 extends OpMode {
         }
     }
 
+    private void applyAutomaticMovementControls() {
+        // If a target position index is currently set and we're not within a certain threshold of that position and we're not currently following a trajectory for automatic driving, make a new trajectory and follow it asynchronously
+        if (autoPoseIndex != -1) {
+            if (autoPoseIndex > 0 && autoPoseIndex < 4) {
+                switch (autoPoseIndex) {
+                    case (0):
+                        targetPose = highGoalShootPose;
+                        break;
+                    case (1):
+                        targetPose = powerShotPose1;
+                        break;
+                    case (2):
+                        targetPose = powerShotPose2;
+                        break;
+                    case (3):
+                        targetPose = powerShotPose3;
+                        break;
+                }
+
+                if (currentPose != targetPose || !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
+                    targetTrajectory = drive.trajectoryBuilder(PoseStorage.currentPose).lineToLinearHeading(targetPose).build();
+                    drive.followTrajectoryAsync(targetTrajectory);
+                    currentlyFollowingAutoTrajectory = true;
+                }
+                else if (currentPose == targetPose) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
+                    currentlyFollowingAutoTrajectory = false;
+                }
+            }
+            else {  // We have an invalid automatic position. We should probably throw an error here
+                // Maybe throw error???
+            }
+        }
+    }
+
     private void applyManualMovementControls() {
-        double vertical = 0.0;  // Save each movement axis we'll use in its own variable
-        double horizontal = 0.0;
-        double rotation = 0.0;
+        vertical = 0.0;  // Save each movement axis we'll use in its own variable
+        horizontal = 0.0;
+        rotation = 0.0;
 
         double currentPowerFactor = gamepad1LeftShoulderHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
 
@@ -582,6 +685,13 @@ public class TeleOp99 extends OpMode {
 
         // Ring dump movement
         ringDumpPosition = gamepad2LeftShoulderHeld ? RING_DUMP_DUMP_POSITION : RING_DUMP_COLLECT_POSITION;
+
+        // Ring Elevator movement
+        // TODO (Currently does not exist, therefore it is commented out)
+        // if (gamepad2APressed) {
+        //     ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
+        //     ringElevatorUp = !ringElevatorUp;
+        // }
     }
 
     private void estimateServoPositions() {
@@ -628,12 +738,47 @@ public class TeleOp99 extends OpMode {
     }
 
     private void applyMotorValues() {  // Assumes all sanity checks have already been applied to the variables it uses in setPosition
-        // Apply all motor values
-        frontLeftDrive.setPower(frontLeftDrivePower * MOVEMENT_FACTOR);
-        frontRightDrive.setPower(frontRightDrivePower * MOVEMENT_FACTOR);
-        backLeftDrive.setPower(backLeftDrivePower * MOVEMENT_FACTOR);
-        backRightDrive.setPower(backRightDrivePower * MOVEMENT_FACTOR);
-        intakeDrive.setPower(intakeDrivePower);
+        if (MOVEMENT_ROTATION_CORRECTION || GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're using rotation correction or automatic driving is enabled, we'll have to use roadrunner's functions to set power and correct rotation
+            Vector2d directionalVector = new Vector2d(horizontal, vertical);
+            directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());
+            //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
+            //telemetry.update();
+
+            drive.setDrivePower(
+                    new Pose2d(
+                            directionalVector.getX(),
+                            directionalVector.getY(),
+                            -rotation
+                    )
+            );
+
+            // Update all roadrunner stuff (odometry, etc.)
+            // Do not that this method completely evades acceleration checks and the like, leaving all calculations to roadrunner
+            drive.update();
+
+            // Read pose
+            currentPose = drive.getPoseEstimate();  // We don't currently use this for anything, but roadrunner should automatically correct our rotation
+            telemetry.addData("Current position x:", currentPose.getX());
+            telemetry.addData("Current position y: ", currentPose.getY());
+            telemetry.addData("Current heading: ", currentPose.getHeading());
+            telemetry.update();
+
+            intakeDrive.setPower(intakeDrivePower);
+        }
+        else {  // Otherwise, we won't be using roadrunner at all
+            // Apply all motor values
+            frontLeftDrive.setPower(frontLeftDrivePower * MOVEMENT_FACTOR);
+            frontRightDrive.setPower(frontRightDrivePower * MOVEMENT_FACTOR);
+            backLeftDrive.setPower(backLeftDrivePower * MOVEMENT_FACTOR);
+            backRightDrive.setPower(backRightDrivePower * MOVEMENT_FACTOR);
+            intakeDrive.setPower(intakeDrivePower);
+
+            // Update previous motor powers before the original motor values are changed on the next loop iteration
+            frontLeftDrivePreviousPower = frontLeftDrivePower;
+            frontRightDrivePreviousPower = frontRightDrivePower;
+            backLeftDrivePreviousPower = backLeftDrivePower;
+            backRightDrivePreviousPower = backRightDrivePower;
+        }
 
         // Apply all servo values
         wobbleLift.setPower(liftPower);
@@ -641,12 +786,6 @@ public class TeleOp99 extends OpMode {
         wobblePickup.setPosition(pickupPosition);
         wobbleShoulder.setPosition(shoulderPosition);
         ringDump.setPosition(ringDumpPosition);
-
-        // Update previous motor powers before the original motor values are changed on the next loop iteration
-        frontLeftDrivePreviousPower = frontLeftDrivePower;
-        frontRightDrivePreviousPower = frontRightDrivePower;
-        backLeftDrivePreviousPower = backLeftDrivePower;
-        backRightDrivePreviousPower = backRightDrivePower;
     }
 
     private void handleInput() {
