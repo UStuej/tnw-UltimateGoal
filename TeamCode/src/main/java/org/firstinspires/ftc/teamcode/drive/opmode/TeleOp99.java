@@ -76,8 +76,9 @@ public class TeleOp99 extends OpMode {
 
     private static double LIFT_POWER_MULTIPLIER = 0.35;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
 
-    private static int RING_ELEVATOR_UP_POSITION = 0; // The position of the Ring Elevator when it is in the UP state // TODO set these values
-    private static int RING_ELEVATOR_DOWN_POSITION = 0; // The position of the Ring Elevator when it is in the DOWN state
+    private static int RING_ELEVATOR_UP_POSITION; // The position of the Ring Elevator when it is in the UP state
+    private static int RING_ELEVATOR_DOWN_POSITION; // The position of the Ring Elevator when it is in the DOWN state
+    private static double RING_ELEVATOR_POWER = 0.3; // The power for the motor to use when running to its target position
 
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
@@ -288,8 +289,7 @@ public class TeleOp99 extends OpMode {
         wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
 
         // Initialize Ring Elevator motor
-        // TODO (Currently does not exist, therefore it is commented out)
-        // ringElevator = hardwareMap.get(DcMotor.class, "ringElevator");
+        ringElevator = hardwareMap.get(DcMotor.class, "ringElevator");
 
         telemetry.addLine("Initializing servo/motor positions/powers");  // Debug message
 
@@ -297,6 +297,11 @@ public class TeleOp99 extends OpMode {
 
         time = System.currentTimeMillis();
         lastTime = time;  // Initialize the last tick time so that deltas can be properly calculated
+    }
+
+    @Override
+    public void start() {
+        ringElevator.setPower(RING_ELEVATOR_POWER);
     }
 
     @Override
@@ -370,9 +375,9 @@ public class TeleOp99 extends OpMode {
         wobbleClaw.setPosition(CLAW_OPENED_POSITION);
 
         // Set Ring Elevator motor...
-        // TODO (Currently does not exist, therefore it is commented out)
-        // ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
-        // ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // inital (down) position
+        ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
+        RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION - 2017;
     }
 
     private void inputAdjustVariableSpeedCurves() {
@@ -687,11 +692,10 @@ public class TeleOp99 extends OpMode {
         ringDumpPosition = gamepad2LeftShoulderHeld ? RING_DUMP_DUMP_POSITION : RING_DUMP_COLLECT_POSITION;
 
         // Ring Elevator movement
-        // TODO (Currently does not exist, therefore it is commented out)
-        // if (gamepad2APressed) {
-        //     ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
-        //     ringElevatorUp = !ringElevatorUp;
-        // }
+        if (gamepad2APressed) {
+            ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
+            ringElevatorUp = !ringElevatorUp;
+        }
     }
 
     private void estimateServoPositions() {
