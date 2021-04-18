@@ -76,11 +76,13 @@ public class TeleOp99 extends OpMode {
 
     private static double LIFT_POWER_MULTIPLIER = 0.35;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
 
-    private static int RING_ELEVATOR_UP_POSITION; // The position of the Ring Elevator when it is in the UP state
-    private static int RING_ELEVATOR_DOWN_POSITION; // The position of the Ring Elevator when it is in the DOWN state
-    private static double RING_ELEVATOR_POWER = 0.3; // The power for the motor to use when running to its target position
+    private static int RING_ELEVATOR_UP_POSITION;  // The position of the Ring Elevator when it is in the UP state
+    private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
+    private static double RING_ELEVATOR_POWER = 0.3;  // The power for the motor to use when running to its target position
 
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
+
+    private static boolean FULLAXIS_CONTROL = true;  // Whether or not fullaxis mode is used. With this enabled, both thumb axes contribute equally (half power maximum on each joystick) to the final robot speed. In this mode, the gamepad 1 triggers are used for rotation, which also yields more movement and thus more overall control
 
     private static int PMODE = 0;  // PMODE, for problems
 
@@ -579,14 +581,27 @@ public class TeleOp99 extends OpMode {
         double currentPowerFactor = gamepad1LeftShoulderHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
 
         if (AXIS_MOVEMENT) {  // If we're using axis movement
-            if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
-                vertical = easeNormalized(-gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
-                horizontal = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
-                rotation = easeNormalized(gamepad1RightStickX, currentSpeedCurve, currentSpeedCurveMode);
-            } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
-                vertical = -gamepad1LeftStickY;
-                horizontal = gamepad1LeftStickX;
-                rotation = gamepad1RightStickX;
+            if (FULLAXIS_CONTROL) {  // We're using the fullaxis movement scheme
+                if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
+                    vertical = easeNormalized((-gamepad1LeftStickY - gamepad1RightStickY) / 2.0, currentSpeedCurve, currentSpeedCurveMode);
+                    horizontal = easeNormalized((gamepad1LeftStickX + gamepad1RightStickX) / 2.0, currentSpeedCurve, currentSpeedCurveMode);
+                    rotation = easeNormalized(gamepad1LeftTrigger - gamepad1RightTrigger, currentSpeedCurve, currentSpeedCurveMode);
+                } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
+                    vertical = (-gamepad1LeftStickY - gamepad1RightStickY) / 2.0;
+                    horizontal = (gamepad1LeftStickX + gamepad1RightStickX) / 2.0;
+                    rotation = (gamepad1LeftTrigger - gamepad1RightTrigger);
+                }
+            }
+            else {
+                if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
+                    vertical = easeNormalized(-gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
+                    horizontal = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
+                    rotation = easeNormalized(gamepad1RightStickX, currentSpeedCurve, currentSpeedCurveMode);
+                } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
+                    vertical = -gamepad1LeftStickY;
+                    horizontal = gamepad1LeftStickX;
+                    rotation = gamepad1RightStickX;
+                }
             }
         } else {  // If we're using dpad movement
             if (gamepad1DpadUpHeld && !gamepad1DpadDownHeld) {  // Up
