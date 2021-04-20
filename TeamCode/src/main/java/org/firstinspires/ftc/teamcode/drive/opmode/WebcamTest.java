@@ -40,6 +40,22 @@ public class WebcamTest extends LinearOpMode
 {
     OpenCvCamera webcam;
 
+    double RING_SCAN_CROP_PERCENT_X1 = 0.0;
+    double RING_SCAN_CROP_PERCENT_X2 = 1.0;
+    double RING_SCAN_CROP_PERCENT_Y1 = 0.0;
+    double RING_SCAN_CROP_PERCENT_Y2 = 1.0;
+
+    double ringImagePercent = 0.0;
+
+    private static final int RING_COLOR_H_START = 13;  // 15
+    private static final int RING_COLOR_S_START = 45;  // 51
+    private static final int RING_COLOR_V_START = 0;  // 0
+    private static final int RING_COLOR_H_END = 35;  // 32
+    private static final int RING_COLOR_S_END = 92;  // 89
+    private static final int RING_COLOR_V_END = 100;  // 100
+
+    char autoCase = 'X';
+
     @Override
     public void runOpMode()
     {

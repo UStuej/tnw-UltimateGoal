@@ -1,18 +1,25 @@
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import org.firstinspires.ftc.teamcode.tnwutil.collections.Triplet;
 
+@Config
 @TeleOp(name = "Shoot")
 
 public class Shoot extends OpMode {
 
-    private DcMotor shoot;
+    private DcMotorEx shoot;
 
-    double shootPower = .5;
+    FtcDashboard dashboard;
+
+    public static int shootRps = 30;
     int pulseTime = 1000; // milliseconds
     boolean pulsing = false;
     boolean firstIter = false;
@@ -26,33 +33,40 @@ public class Shoot extends OpMode {
     boolean g1APressed = false;
     boolean g1BPressed = false;
 
-    final double powerIncr = .05;
+    final int rpsIncr = 1;
     final int pulseTimeIncr = 250;
 
     // RPM variables
     final int COUNTS_PER_REVOLUTION = 28; // REV HD Hex no gearbox
-    final int MILLIS_PER_ITER = 100; // milliseconds
+    final int MILLIS_PER_ITER = 10; // milliseconds
     int lastIterEncoder = 0;
     long lastIterTime = 0L;
-    int rpm = 0;
+    public static int targetRps = 0;
+    public static double rps = 0;
 
-    double p = 0.0;
-    double i = 0.0;
-    double d = 0.0;
+    public static double p = 0.0;
+    public static double i = 0.0;
+    public static double d = 0.0;
+
+    PIDCoefficients PID = new PIDCoefficients(p, i, d);
 
     @Override
     public void init() {
+
         telemetry.addLine("Initializing drive motors");  // Debug message
 
         // Initialize drive motors
-        shoot = hardwareMap.get(DcMotor.class, "shoot");
+        shoot = hardwareMap.get(DcMotorEx.class, "shoot");
+
+        dashboard = FtcDashboard.getInstance();
+        telemetry = dashboard.getTelemetry();
 
     }
 
-    void pulse(double power, int time, long iterStartTime) {
-        shoot.setPower(power);
+    void pulse(double targetRps, int time, long iterStartTime) {
+        shoot.setVelocity(targetRps * COUNTS_PER_REVOLUTION);
         if (currentTimeMillis >= iterStartTime + time) {
-            shoot.setPower(0);
+            shoot.setVelocity(0);
             pulsing = false;
         }
     }
@@ -75,9 +89,10 @@ public class Shoot extends OpMode {
     @Override
     public void loop() {
         currentTimeMillis = System.currentTimeMillis();
+        shoot.setVelocityPIDFCoefficients(p, i, d, 0); // Ideal values as of 04/20/2020 - P:150 I:7 D:10
 
-        if (gamepad1.a && !g1APressed) shootPower += powerIncr;
-        else if (gamepad1.b && !g1BPressed) shootPower -= powerIncr;
+        if (gamepad1.a && !g1APressed) shootRps += rpsIncr;
+        else if (gamepad1.b && !g1BPressed) shootRps -= rpsIncr;
 
         if (gamepad1.right_bumper && !g1RightBumperPressed) pulseTime += pulseTimeIncr;
         else if (gamepad1.left_bumper && !g1LeftBumperPressed) pulseTime -= pulseTimeIncr;
@@ -87,7 +102,7 @@ public class Shoot extends OpMode {
             iterStartTime = currentTimeMillis;
         }
         if (pulsing) {
-            pulse(shootPower, pulseTime, iterStartTime);
+            pulse(shootRps, pulseTime, iterStartTime);
         }
 
         if (gamepad1.left_bumper) g1LeftBumperPressed = true;
@@ -101,14 +116,14 @@ public class Shoot extends OpMode {
 
         if (currentTimeMillis >= lastIterTime + MILLIS_PER_ITER) {
             shootCurrentPosition = shoot.getCurrentPosition();
-            rpm = (int) ((Math.abs(shootCurrentPosition - lastIterEncoder) / COUNTS_PER_REVOLUTION) / ((double) (currentTimeMillis - lastIterTime) / 60000));
+            rps = (((double)(Math.abs(shootCurrentPosition - lastIterEncoder) / (double) COUNTS_PER_REVOLUTION) / ((double) (currentTimeMillis - lastIterTime) / 1000)));
             lastIterTime = currentTimeMillis;
             lastIterEncoder = shootCurrentPosition;
         }
 
         telemetry.addData("Encoder: ", lastIterEncoder);
-        telemetry.addData("Speed: ", rpm);
-        telemetry.addData("Power: ", shootPower);
+        telemetry.addData("Speed: ", rps);
+        telemetry.addData("Target: ", shootRps);
         telemetry.addData("Pulse time: ", pulseTime);
         telemetry.update();
 
