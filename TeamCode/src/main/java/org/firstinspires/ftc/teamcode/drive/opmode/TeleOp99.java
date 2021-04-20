@@ -158,6 +158,11 @@ public class TeleOp99 extends OpMode {
     // Ring Elevator motor position
     private boolean ringElevatorUp = false;
 
+    // Automatic robot scoring states TODO: Remove if Unused
+    private boolean autoMedGoalScore = false;
+    private boolean autoHighGoalScore = false;
+    private boolean autoPowerScore = false;
+
     // Gamepad 1 inputs JUST pressed
     private boolean gamepad1APressed = false;  // Whether or not the gamepad 1 a button was JUST pressed, handled by the handleInput function
     private boolean gamepad1BPressed = false;  // Whether or not the gamepad 1 b button was JUST pressed, handled by the handleInput function
@@ -432,6 +437,12 @@ public class TeleOp99 extends OpMode {
 
     private void getAutoPoseIndex() {
         // FIXME: Benjamin needs to program this. Tip: you can rely on the current pose and target pose in case one pose should automatically lead to another. Just wait until we're not currently following a trajectory before switching to the next one
+        if (currentPose == targetPose){
+            if (gamepad1APressed) autoPoseIndex = 0;
+            else if (gamepad1XPressed) autoPoseIndex = 1;
+            else if (gamepad1YPressed) autoPoseIndex = 2;
+            else if (gamepad1BPressed) autoPoseIndex = 3;
+        }
     }
 
     private void autoServoControl() {
