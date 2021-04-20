@@ -253,7 +253,7 @@ public class TeleOp99 extends OpMode {
     // The trajectory we're currently following, if we're following a trajectory
     private Trajectory targetTrajectory;
 
-    // The pose that we're currently targeting, extraacted from the current index
+    // The pose that we're currently targeting, extracted from the current index
     private Pose2d targetPose;
 
     private boolean currentlyFollowingAutoTrajectory = false;  // Whether or not we're currently following an automatic trajectory. This should be set to false whenever we switch back to manual control
@@ -542,7 +542,7 @@ public class TeleOp99 extends OpMode {
     private void applyAutomaticMovementControls() {
         // If a target position index is currently set and we're not within a certain threshold of that position and we're not currently following a trajectory for automatic driving, make a new trajectory and follow it asynchronously
         if (autoPoseIndex != -1) {
-            if (autoPoseIndex > 0 && autoPoseIndex < 4) {
+            if (autoPoseIndex >= 0 && autoPoseIndex < 4) {
                 switch (autoPoseIndex) {
                     case (0):
                         targetPose = highGoalShootPose;
@@ -558,9 +558,9 @@ public class TeleOp99 extends OpMode {
                         break;
                 }
 
-                if (currentPose != targetPose || !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
+                if (currentPose != targetPose && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
                     targetTrajectory = drive.trajectoryBuilder(PoseStorage.currentPose).lineToLinearHeading(targetPose).build();
-                    drive.followTrajectoryAsync(targetTrajectory);
+                    drive.followTrajectoryAsync(targetTrajectory);  // This would be path continuity exception after the first iteration if this code were accessible while currentlyFollowingAutoTrajectory were true
                     currentlyFollowingAutoTrajectory = true;
                 }
                 else if (currentPose == targetPose) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
