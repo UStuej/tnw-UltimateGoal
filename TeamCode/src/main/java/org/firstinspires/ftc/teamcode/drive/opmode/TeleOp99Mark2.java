@@ -768,13 +768,15 @@ public class TeleOp99Mark2 extends OpMode {
             //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
             //telemetry.update();
 
-            drive.setDrivePower(
-                    new Pose2d(
-                            directionalVector.getX(),
-                            directionalVector.getY(),
-                            -rotation
-                    )
-            );
+            if (!autoDrive || !GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're NOT currently automatic driving
+                drive.setDrivePower(
+                        new Pose2d(
+                                directionalVector.getX(),
+                                directionalVector.getY(),
+                                -rotation
+                        )
+                );
+            }
 
             // Update all roadrunner stuff (odometry, etc.)
             // Do not that this method completely evades acceleration checks and the like, leaving all calculations to roadrunner
