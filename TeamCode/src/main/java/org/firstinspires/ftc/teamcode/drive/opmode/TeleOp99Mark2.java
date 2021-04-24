@@ -700,10 +700,9 @@ public class TeleOp99Mark2 extends OpMode {
         // Arm state
         if (gamepad2YPressed) {  // FIXME: Is this in use somewhere else
             armUp = !armUp;
+            armPosition = armUp ? ARM_DOWN_POSITION : ARM_UP_POSITION;
+            wobbleArm.setTargetPosition(armPosition);
         }
-
-        armPosition = armUp ? ARM_DOWN_POSITION : ARM_UP_POSITION;
-        wobbleArm.setTargetPosition(armPosition);
 
         // Finger state
         fingerPosition = gamepad2XHeld ? RING_FINGER_IN_POSITION : RING_FINGER_OUT_POSITION;
