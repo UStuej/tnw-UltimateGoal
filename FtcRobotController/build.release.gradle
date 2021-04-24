@@ -9,5 +9,5 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
 
     // For Road Runner support
-    implementation 'com.acmerobotics.dashboard:dashboard:0.3.10'
+    implementation 'com.acmerobotics.dashboard:dashboard:0.4.0'
 }
