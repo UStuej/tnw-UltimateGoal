@@ -688,9 +688,7 @@ public class TeleOp99Mark2 extends OpMode {
         }
 
         // Shooter state
-        if (gamepad2LeftShoulderPressed) {
-            shooterState = !shooterState;  // Toggle the shooter when the left bumper is pressed
-        }
+        shooterState = gamepad2LeftShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
 
         if (shooterState) {
             ringShooter.setVelocity(highGoalTPS);  // When the shooter is active, set the velocity to the target rate of the shooter for the high goal
