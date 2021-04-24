@@ -25,7 +25,7 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
-    private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not the X and Y buttons on the driver gamepad should toggle Roadrunner-powered automatic driving. If this is true, X will enable and Y will disable automatic control
+    private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled. The name is currently misleading (FIXME)
 
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
     private static boolean BUTTONS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
@@ -335,6 +335,8 @@ public class TeleOp99Mark2 extends OpMode {
             applyManualServoControls();  // Run manual control on the wobble goal-related servos if there aren't automatic tasks that conflict with them
         }
 
+        getAutoPoseIndex();  // Use user input changes to determine what pose index we should be at, and whether we should be driving automatically or not
+
         if (GAMEPAD_XY_TOGGLES_AUTO_DRIVE && autoDrive) {  // If we're currently driving automatically
             checkAutoMovementInterrupts();  // Disable automatic driving if any manaul movement is detected that should override it
         }
@@ -343,7 +345,6 @@ public class TeleOp99Mark2 extends OpMode {
             applyManualMovementControls();  // The wobble-goal tasks don't prevent any manual movement, which is applied separately in this function
         }
         else {  // If we're using automatic (Roadrunner powered) controls, apply those
-            getAutoPoseIndex();  // Use user input changes to determine what pose index we should be at
             applyAutomaticMovementControls();  // Make any changes necessary to get to that previous selected pose
         }
 
@@ -437,18 +438,26 @@ public class TeleOp99Mark2 extends OpMode {
         if (gamepad1APressed) {
             autoPoseIndex = 0;  // High goal
             currentlyFollowingAutoTrajectory = true;
+            autoDrive = true;
         }
         else if (gamepad1XPressed) {
             autoPoseIndex = 1;  // Power shot 1
             currentlyFollowingAutoTrajectory = true;
+            autoDrive = true;
         }
         else if (gamepad1YPressed) {
             autoPoseIndex = 2;  // Power shot 2
             currentlyFollowingAutoTrajectory = true;
+            autoDrive = true;
         }
         else if (gamepad1BPressed) {
             autoPoseIndex = 3;  // Power shot 3
             currentlyFollowingAutoTrajectory = true;
+            autoDrive = true;
+        }
+        else if (gamepad1RightStickPressed) {  // Cancel auto following if the right stick is pressed
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = false;
         }
 
         if (RIGHT_SHOULDER_RESETS_CURRENT_TARGET && gamepad1RightShoulderPressed) {
