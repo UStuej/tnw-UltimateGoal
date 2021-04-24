@@ -40,6 +40,7 @@ public class TeleOp99Mark2 extends OpMode {
     private static double ACCELERATION_CAP = 1.33333;  // The max allowed acceleration of any movement motor in units per second per second. This is included because max acceleration might tip the robot, but use with care as very low accelerations will make the robot sluggish. If the cap is reached, velocity will be incremented at this acceleration rather than the alternative. This value should be set to 1 divided by the number of seconds it should take for the motors to increment to maximum velocity. May be set above 1 for accelerations faster than 1 unit per second per second. 1.33333... (the default value) means it should take 0.75 seconds to go from 0 to full. Set to 0 to disable
 
     private static boolean MOVEMENT_ROTATION_CORRECTION = true;  // Whether or not we should attempt to adjust the robot's movement based on an accumulated rotation offset, which, if accurately maintained, would allow for rotating the robot without affecting movement from the driver's perspective. Disable this if steering seems to drift clockwise or counterclockwise after some amounts of rotation. DO NOTE THAT THIS OPTION EVADES ACCELERATION CHECKS. It does, however, respect all direct power limitations as well as any internal PID control from roadrunner (if any)
+    private static boolean LEFT_SHOULDER_RECALIBRATES_ROTATION = true;  // Whether or not the gamepad 1 left shoulder will reset the pose estimate rotation to the initial pose rotation. Only applies if MOVEMENT_ROTATION_CORRECTION is enabled
 
     private static boolean NATURAL_CLAW_CONTROL = false;  // Whether or not the manual control for the claw should be a toggle. If this is true, holding the claw button will keep the claw closed, and releasing it will open the claw. If this is false, the claw button will toggle the state of the claw opened or closed
     private static boolean INVERT_NATURAL_CLAW_CONTROL = false;  // Only applies if NATURAL_CLAW_CONTROL is used. If this is true, holding the claw button with keep the claw open rather than closed. Likewise releasing the button will close the claw instead of opening it
@@ -56,11 +57,9 @@ public class TeleOp99Mark2 extends OpMode {
     private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
     private static int ARM_UP_POSITION;  // The absolute position (in motor encoder units) of the arm's up position. Set on init
 
-    private static double LIFT_POWER_MULTIPLIER = 0.35;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
-
     private static int RING_ELEVATOR_UP_POSITION;  // The position of the Ring Elevator when it is in the UP state
     private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
-    private static double RING_ELEVATOR_POWER = 0.3;  // The power for the motor to use when running to its target position
+    private static double RING_ELEVATOR_POWER = 0.3;  // The power for the motor to use when running to its target position TODO: We might increase this
 
     private static double RING_FINGER_IN_POSITION = 0.23;  // The position of the ring finger when it's in
     private static double RING_FINGER_OUT_POSITION = 0.75;  // The position of the ring finger when it's out
@@ -72,6 +71,10 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static boolean FULLAXIS_CONTROL = true;  // Whether or not fullaxis mode is used. With this enabled, both thumb axes contribute equally (half power maximum on each joystick) to the final robot speed. In this mode, the gamepad 1 triggers are used for rotation, which also yields more movement and thus more overall control
 
+    private static boolean RIGHT_SHOULDER_RESETS_CURRENT_TARGET = true;  // Whether or not the gamepad 1 right shoulder will reset the target pose for the trajectory linked to the current target (the one last followed via gamepad 1 ABXY buttons). Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
+
+    private static double GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE = 0.1;  // The threshold over which any movement axes will immediately take back manual control. Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
+
     private static int PMODE = 0;  // PMODE, for problems
 
     private long time;  // The current time, used to measure delta time. Set at init and every loop iteration
@@ -81,7 +84,6 @@ public class TeleOp99Mark2 extends OpMode {
     private double clawPosition;  // The current target position of the claw. setPosition is called using this value at the very end of the loop, only once
     private double fingerPosition;  // The current target position of the ring finger. setPosition is called using this value at the very end of the loop, only once
     private int armPosition;  // The current target position of the arm. runToPosition is called using this value at the very end of the loop, only once
-    private double liftPower;  // The current target power of the lift. setPower is called using this value at the very end of the loop, only once
 
     private boolean clawState;  // Whether the claw is closed (true) or open (false). Used as a toggle for user control of the claw
 
@@ -230,7 +232,9 @@ public class TeleOp99Mark2 extends OpMode {
     double horizontal = 0.0;
     double rotation = 0.0;
 
-    private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));  // TODO: SYNC THIS WITH AUTONOMOUS ASAP. PoseStorage should come in handy here
+    //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));  // TODO: SYNC THIS WITH AUTONOMOUS ASAP. PoseStorage should come in handy here
+    private Pose2d currentPose = PoseStorage.currentPose;
+    private final Pose2d initialPose = currentPose;
     private SampleMecanumDrive drive;
 
     private int autoPoseIndex = -1;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
@@ -325,10 +329,14 @@ public class TeleOp99Mark2 extends OpMode {
             inputAdjustVariableSpeedCurves();  // If we're using variable speed curves and they can be adjusted by user input, handle user input to adjust them if necessary
         }
 
-        estimateServoPositions();  // Estimate the actual servo positions for impossible position checks or the lift operation check. FIXME: This might belong lower down or further up, or maybe even run multiple times. Shouldn't affect anything yet though
+        estimateServoPositions();  // Estimate the actual servo positions for impossible position checks. FIXME: This might belong lower down or further up, or maybe even run multiple times. Shouldn't affect anything yet though
 
         if (!(currentlyDeploying || currentlyUndeploying) || !AUTO_PRIORITY) {
             applyManualServoControls();  // Run manual control on the wobble goal-related servos if there aren't automatic tasks that conflict with them
+        }
+
+        if (GAMEPAD_XY_TOGGLES_AUTO_DRIVE && autoDrive) {  // If we're currently driving automatically
+            checkAutoMovementInterrupts();  // Disable automatic driving if any manaul movement is detected that should override it
         }
 
         if (!GAMEPAD_XY_TOGGLES_AUTO_DRIVE || !autoDrive) {  // If we're not automatically driving the robot, apply manual movement controls
@@ -419,7 +427,6 @@ public class TeleOp99Mark2 extends OpMode {
         backLeftDrivePower = Math.max(-1, Math.min(1, backLeftDrivePower));
         backRightDrivePower = Math.max(-1, Math.min(1, backRightDrivePower));
 
-        liftPower = Math.max(-1, Math.min(1, liftPower));
         intakeDrivePower = Math.max(-1, Math.min(1, intakeDrivePower));
 
         clawPosition = Math.max(0, Math.min(1, clawPosition));
@@ -427,12 +434,45 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void getAutoPoseIndex() {
-        // FIXME: Benjamin needs to program this. Tip: you can rely on the current pose and target pose in case one pose should automatically lead to another. Just wait until we're not currently following a trajectory before switching to the next one
-        if (currentPose == targetPose){
-            if (gamepad1APressed) autoPoseIndex = 0;
-            else if (gamepad1XPressed) autoPoseIndex = 1;
-            else if (gamepad1YPressed) autoPoseIndex = 2;
-            else if (gamepad1BPressed) autoPoseIndex = 3;
+        if (gamepad1APressed) {
+            autoPoseIndex = 0;  // High goal
+            currentlyFollowingAutoTrajectory = true;
+        }
+        else if (gamepad1XPressed) {
+            autoPoseIndex = 1;  // Power shot 1
+            currentlyFollowingAutoTrajectory = true;
+        }
+        else if (gamepad1YPressed) {
+            autoPoseIndex = 2;  // Power shot 2
+            currentlyFollowingAutoTrajectory = true;
+        }
+        else if (gamepad1BPressed) {
+            autoPoseIndex = 3;  // Power shot 3
+            currentlyFollowingAutoTrajectory = true;
+        }
+
+        if (RIGHT_SHOULDER_RESETS_CURRENT_TARGET && gamepad1RightShoulderPressed) {
+            // Reset the current target pose to our current pose
+            switch (autoPoseIndex) {
+                case (0):
+                    highGoalShootPose = currentPose;  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
+                    telemetry.addLine("Updated high goal shoot pose to current pose");
+                    break;
+                case (1):
+                    powerShotPose1 = currentPose;
+                    telemetry.addLine("Updated power shot 1 pose to current pose");
+                    break;
+                case (2):
+                    powerShotPose2 = currentPose;
+                    telemetry.addLine("Updated power shot 2 pose to current pose");
+                    break;
+                case (3):
+                    powerShotPose3 = currentPose;
+                    telemetry.addLine("Updated power shot 3 pose to current pose");
+                    break;
+            }
+
+            currentlyFollowingAutoTrajectory = false;  // If we were following this target, stop; now we've already reached it. This is probably redundant
         }
     }
 
@@ -538,7 +578,7 @@ public class TeleOp99Mark2 extends OpMode {
                 }
 
                 if (currentPose != targetPose && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
-                    targetTrajectory = drive.trajectoryBuilder(PoseStorage.currentPose).lineToLinearHeading(targetPose).build();
+                    targetTrajectory = drive.trajectoryBuilder(currentPose).lineToLinearHeading(targetPose).build();
                     drive.followTrajectoryAsync(targetTrajectory);  // This would be path continuity exception after the first iteration if this code were accessible while currentlyFollowingAutoTrajectory were true
                     currentlyFollowingAutoTrajectory = true;
                 }
@@ -621,10 +661,16 @@ public class TeleOp99Mark2 extends OpMode {
         }
     }
 
+    private void checkAutoMovementInterrupts() {  // Checks to see if any manual input will interfere with an automatic trajectory
+        if (Math.abs(gamepad1LeftStickX) + Math.abs(gamepad1LeftStickY) + Math.abs(gamepad1RightStickX) + Math.abs(gamepad1RightStickY) + Math.abs(gamepad1LeftTrigger) + Math.abs(gamepad1RightTrigger) >= GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE*6) {
+            // One or more of the axes exceeds the deadzone (FIXME: I know that this could be computed in a more tedious, albeit possibly more accurate way by testing each axis individually. We'll see how it works and change it if necessary)
+            autoDrive = false;  // We're overriding auto control
+            currentlyFollowingAutoTrajectory = false;  // Yes, this line is important
+        }
+    }
+
     private void applyManualServoControls() {
-        // Lift movement
         // FIXME: This may need to be rewritten
-        liftPower = LIFT_POWER_MULTIPLIER * -gamepad2LeftStickY;
 
         // Claw state
         if (!NATURAL_CLAW_CONTROL) {
@@ -671,8 +717,8 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Ring Elevator movement
         if (gamepad2APressed) {
-            ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
             ringElevatorUp = !ringElevatorUp;
+            ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
         }
     }
 
@@ -738,7 +784,17 @@ public class TeleOp99Mark2 extends OpMode {
             drive.update();
 
             // Read pose
-            currentPose = drive.getPoseEstimate();  // We don't currently use this for anything, but roadrunner should automatically correct our rotation
+
+            currentPose = drive.getPoseEstimate();
+
+            // Reset pose estimate rotation if needed
+            if (LEFT_SHOULDER_RECALIBRATES_ROTATION && gamepad1LeftShoulderPressed) {  // Reset the current pose estimate rotation to the initial pose rotation
+                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), initialPose.getHeading());
+                telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
+            }
+
+            PoseStorage.currentPose = currentPose;  // Sync in case autonomous runs after this? Likely necessary but won't hurt anything
+
             telemetry.addData("Current position x:", currentPose.getX());
             telemetry.addData("Current position y: ", currentPose.getY());
             telemetry.addData("Current heading: ", currentPose.getHeading());

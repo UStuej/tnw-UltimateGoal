@@ -16,6 +16,22 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 // It's actually closer to "What The Golf" if you've played that
 
 public class SlingshotControl extends OpMode {
+    final double fieldTopA = 0;
+    final double fieldTopB = 1;
+    final double fieldTopC = -72;
+
+    final double fieldBottomA = 0;
+    final double fieldBottomB = 1;
+    final double fieldBottomC = 72;
+
+    final double fieldLeftA = 1;
+    final double fieldLeftB = 0;
+    final double fieldLeftC = 72;
+
+    final double fieldRightA = 1;
+    final double fieldRightB = 0;
+    final double fieldRightC = -72;
+
     double vertical = 0.0;  // Offset axes for the robot control
     double horizontal = 0.0;
     double rotation = 0.0;
@@ -49,7 +65,26 @@ public class SlingshotControl extends OpMode {
         deltaTime = (long) (1000 * (1.0/60.0));
     }
 
-    public void handleInput() {
+    private Vector2d intersectionPoint(double a1, double b1, double c1, double a2, double b2, double c2) {
+        return new Vector2d(b1 * c2 - b2 * c1);  // Not finished
+    }
+
+    private Vector2d checkWallCollision() {
+        double positionX = currentPose.getX();
+        double positionY = currentPose.getY();
+        double targetX = positionX + drive.getPoseVelocity().getX();
+        double targetY = positionY + drive.getPoseVelocity().getY();
+
+        double a = targetY - positionY;
+        double b = positionX - targetX;
+        double c = a * positionX + b * positionY;
+
+        //double fieldTopDistance = Math.abs(fieldTopA*x + fieldTopB*y + fieldTopC) / Math.sqrt(fieldTopA * fieldTopA + fieldTopB * fieldTopB);
+
+        return new Vector2d();  // Placeholder (TODO)
+    }
+
+    private void handleInput() {
         lastTime = currentTime;
         currentTime = System.currentTimeMillis();
         deltaTime = lastTime - currentTime;
@@ -91,6 +126,6 @@ public class SlingshotControl extends OpMode {
 
     @Override
     public void loop() {
-
+        handleInput();
     }
 }
