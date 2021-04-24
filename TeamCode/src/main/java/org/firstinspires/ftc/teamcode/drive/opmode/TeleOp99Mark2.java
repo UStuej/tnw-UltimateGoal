@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
+import com.acmerobotics.roadrunner.drive.DriveSignal;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -28,7 +29,7 @@ public class TeleOp99Mark2 extends OpMode {
     private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled. The name is currently misleading (FIXME)
 
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
-    private static boolean BUTTONS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
+    private static boolean BUTTONS_CYCLE_SPEED_CURVES = false;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
     private static boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
     private static int DEFAULT_SPEED_CURVE = 0;  // Only applies if using variable speed curves. The index of the speed curve to use by default (from 0-7 inclusive), and when reset. See above comments for speed curve list
     private static int DEFAULT_SPEED_CURVE_MODE = 0;  // Only applies if using variable speed curves. The index of the speed curve mode to use by default (from 0-2) inclusive. See above comments for mode list
@@ -59,7 +60,7 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static int RING_ELEVATOR_UP_POSITION;  // The position of the Ring Elevator when it is in the UP state
     private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
-    private static double RING_ELEVATOR_POWER = 0.3;  // The power for the motor to use when running to its target position TODO: We might increase this
+    private static double RING_ELEVATOR_POWER = 0.5;  // The power for the motor to use when running to its target position TODO: We might increase this
 
     private static double RING_FINGER_IN_POSITION = 0.23;  // The position of the ring finger when it's in
     private static double RING_FINGER_OUT_POSITION = 0.75;  // The position of the ring finger when it's out
@@ -74,6 +75,9 @@ public class TeleOp99Mark2 extends OpMode {
     private static boolean RIGHT_SHOULDER_RESETS_CURRENT_TARGET = true;  // Whether or not the gamepad 1 right shoulder will reset the target pose for the trajectory linked to the current target (the one last followed via gamepad 1 ABXY buttons). Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
 
     private static double GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE = 0.1;  // The threshold over which any movement axes will immediately take back manual control. Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
+
+    private static double AUTO_DISTANCE_THRESHOLD = 0.5;  // 0.5 inches maximum error
+    private static double AUTO_ANGULAR_DISTANCE_THRESHOLD = Math.toRadians(5);  // 5 degrees maximum error
 
     private static int PMODE = 0;  // PMODE, for problems
 
@@ -338,7 +342,7 @@ public class TeleOp99Mark2 extends OpMode {
         getAutoPoseIndex();  // Use user input changes to determine what pose index we should be at, and whether we should be driving automatically or not
 
         if (GAMEPAD_XY_TOGGLES_AUTO_DRIVE && autoDrive) {  // If we're currently driving automatically
-            checkAutoMovementInterrupts();  // Disable automatic driving if any manaul movement is detected that should override it
+            checkAutoMovementInterrupts();  // Disable automatic driving if any manual movement is detected that should override it
         }
 
         if (!GAMEPAD_XY_TOGGLES_AUTO_DRIVE || !autoDrive) {  // If we're not automatically driving the robot, apply manual movement controls
@@ -437,26 +441,25 @@ public class TeleOp99Mark2 extends OpMode {
     private void getAutoPoseIndex() {
         if (gamepad1APressed) {
             autoPoseIndex = 0;  // High goal
-            currentlyFollowingAutoTrajectory = true;
+            currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
         else if (gamepad1XPressed) {
             autoPoseIndex = 1;  // Power shot 1
-            currentlyFollowingAutoTrajectory = true;
+            currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
         else if (gamepad1YPressed) {
             autoPoseIndex = 2;  // Power shot 2
-            currentlyFollowingAutoTrajectory = true;
+            currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
         else if (gamepad1BPressed) {
             autoPoseIndex = 3;  // Power shot 3
-            currentlyFollowingAutoTrajectory = true;
+            currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
         else if (gamepad1RightStickPressed) {  // Cancel auto following if the right stick is pressed
-            currentlyFollowingAutoTrajectory = false;
             autoDrive = false;
         }
 
@@ -464,19 +467,19 @@ public class TeleOp99Mark2 extends OpMode {
             // Reset the current target pose to our current pose
             switch (autoPoseIndex) {
                 case (0):
-                    highGoalShootPose = currentPose;  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
+                    highGoalShootPose = drive.getPoseEstimate();  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
                     telemetry.addLine("Updated high goal shoot pose to current pose");
                     break;
                 case (1):
-                    powerShotPose1 = currentPose;
+                    powerShotPose1 = drive.getPoseEstimate();
                     telemetry.addLine("Updated power shot 1 pose to current pose");
                     break;
                 case (2):
-                    powerShotPose2 = currentPose;
+                    powerShotPose2 = drive.getPoseEstimate();
                     telemetry.addLine("Updated power shot 2 pose to current pose");
                     break;
                 case (3):
-                    powerShotPose3 = currentPose;
+                    powerShotPose3 = drive.getPoseEstimate();
                     telemetry.addLine("Updated power shot 3 pose to current pose");
                     break;
             }
@@ -586,12 +589,17 @@ public class TeleOp99Mark2 extends OpMode {
                         break;
                 }
 
-                if (currentPose != targetPose && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
-                    targetTrajectory = drive.trajectoryBuilder(currentPose).lineToLinearHeading(targetPose).build();
+                double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX(), 2) - Math.pow(targetPose.getX(), 2));
+                double angularDistance = Math.abs(drive.getPoseEstimate().getHeading() - targetPose.getHeading());
+
+                boolean areWeThereYet = (distance <= AUTO_DISTANCE_THRESHOLD && angularDistance <= AUTO_ANGULAR_DISTANCE_THRESHOLD);
+
+                if (!areWeThereYet && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
+                    targetTrajectory = drive.trajectoryBuilder(drive.getPoseEstimate()).lineToLinearHeading(targetPose).build();
                     drive.followTrajectoryAsync(targetTrajectory);  // This would be path continuity exception after the first iteration if this code were accessible while currentlyFollowingAutoTrajectory were true
                     currentlyFollowingAutoTrajectory = true;
                 }
-                else if (currentPose == targetPose) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
+                else if (areWeThereYet) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
                     currentlyFollowingAutoTrajectory = false;
                 }
             }
@@ -661,7 +669,7 @@ public class TeleOp99Mark2 extends OpMode {
         backRightDrivePower = vertical + horizontal - rotation;
 
         // Set intake speed
-        intakeDrivePower = gamepad2RightTrigger - gamepad2LeftTrigger;
+        intakeDrivePower = gamepad2LeftTrigger - gamepad2RightTrigger;
     }
 
     private void checkAutoInterrupts() {  // Checks to see if any manual input will interfere with an automatic task, if manual input takes priority (AUTO_PRIORITY is false). If so, it disables the automatic overrides using a flag for each servo involved
@@ -723,8 +731,8 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Ring Elevator movement
         if (gamepad2APressed) {
-            ringElevatorUp = !ringElevatorUp;
             ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
+            ringElevatorUp = !ringElevatorUp;
         }
     }
 
@@ -777,14 +785,24 @@ public class TeleOp99Mark2 extends OpMode {
             //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
             //telemetry.update();
 
-            if (!autoDrive || !GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're NOT currently automatic driving
-                drive.setDrivePower(
+            if (!(autoDrive || currentlyFollowingAutoTrajectory) || !GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're NOT currently automatic driving
+                //drive.setDrivePower(
+                //        new Pose2d(
+                //                directionalVector.getX(),
+                //                directionalVector.getY(),
+                //                -rotation
+                //        )
+                //);
+
+                if (drive.mode != SampleMecanumDrive.Mode.IDLE) {
+                    drive.mode = SampleMecanumDrive.Mode.IDLE;
+                }
+
+                drive.setDriveSignal(new DriveSignal(
                         new Pose2d(
-                                directionalVector.getX(),
-                                directionalVector.getY(),
-                                -rotation
-                        )
-                );
+                                directionalVector.getX() * 48.8,
+                                directionalVector.getY() * 48.8,
+                                -rotation * 5)));
             }
 
             // Update all roadrunner stuff (odometry, etc.)
@@ -792,12 +810,12 @@ public class TeleOp99Mark2 extends OpMode {
             drive.update();
 
             // Read pose
-
             currentPose = drive.getPoseEstimate();
 
             // Reset pose estimate rotation if needed
             if (LEFT_SHOULDER_RECALIBRATES_ROTATION && gamepad1LeftShoulderPressed) {  // Reset the current pose estimate rotation to the initial pose rotation
                 currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), initialPose.getHeading());
+                drive.setPoseEstimate(currentPose);
                 telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
             }
 
@@ -806,6 +824,10 @@ public class TeleOp99Mark2 extends OpMode {
             telemetry.addData("Current position x:", currentPose.getX());
             telemetry.addData("Current position y: ", currentPose.getY());
             telemetry.addData("Current heading: ", currentPose.getHeading());
+            telemetry.addData("Currently following trajectory: ", currentlyFollowingAutoTrajectory);
+            telemetry.addData("Currently auto-driving: ", autoDrive);
+            telemetry.addData("Currently busy: ", drive.isBusy());
+            telemetry.addData("Currently idle: ", drive.mode == SampleMecanumDrive.Mode.IDLE);
             telemetry.update();
 
             intakeDrive.setPower(intakeDrivePower);
