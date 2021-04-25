@@ -26,6 +26,7 @@ public class MotorPositionFinder extends OpMode {
     private byte servoSelect = 0;
     private byte dcMotorSelect = 0;
     private double[] servoPositions = new double[SERVO_NAMES.length];
+    //private int[] motorPositions = new int[DCMOTOR_NAMES.length];
     private double variablePosition = STARTING_POSITION;
     private double variablePower = 0.0;
 
@@ -79,6 +80,7 @@ public class MotorPositionFinder extends OpMode {
         }
 
         variablePower = (gamepad1.right_trigger - gamepad1.left_trigger) * DCMOTOR_PWR_FACTOR;
+        //motorPositions[dcMotorSelect] = dcMotors[dcMotorSelect].getCurrentPosition();
 
         if (gamepad1APressed) {
             if (servoSelect == 0)
@@ -114,6 +116,7 @@ public class MotorPositionFinder extends OpMode {
 
         telemetry.addData("Selected DC Motor: ", DCMOTOR_NAMES[dcMotorSelect]);
         telemetry.addData("DC Motor Power: ", variablePower);
+        telemetry.addData("DC Motor Position: ", dcMotors[dcMotorSelect].getCurrentPosition());
 
         servos[servoSelect].setPosition(variablePosition);
         dcMotors[dcMotorSelect].setPower(variablePower);
