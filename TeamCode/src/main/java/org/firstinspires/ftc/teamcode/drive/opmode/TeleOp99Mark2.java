@@ -470,19 +470,19 @@ public class TeleOp99Mark2 extends OpMode {
             // Reset the current target pose to our current pose
             switch (autoPoseIndex) {
                 case (0):
-                    drive.setPoseEstimate(highGoalShootPose);  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
+                    drive.setPoseEstimate(new Pose2d(highGoalShootPose.getX(), highGoalShootPose.getY(), drive.getPoseEstimate().getHeading()));  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
                     telemetry.addLine("Updated current pose to high goal shoot pose");
                     break;
                 case (1):
-                    powerShotPose1 = drive.getPoseEstimate();
+                    drive.setPoseEstimate(new Pose2d(powerShotPose1.getX(), powerShotPose1.getY(), drive.getPoseEstimate().getHeading()));
                     telemetry.addLine("Updated current pose to power shot 1 pose");
                     break;
                 case (2):
-                    powerShotPose2 = drive.getPoseEstimate();
+                    drive.setPoseEstimate(new Pose2d(powerShotPose2.getX(), powerShotPose2.getY(), drive.getPoseEstimate().getHeading()));
                     telemetry.addLine("Updated current pose to power shot 2 pose");
                     break;
                 case (3):
-                    powerShotPose3 = drive.getPoseEstimate();
+                    drive.setPoseEstimate(new Pose2d(powerShotPose3.getX(), powerShotPose3.getY(), drive.getPoseEstimate().getHeading()));
                     telemetry.addLine("Updated current pose to power shot 3 pose");
                     break;
             }
