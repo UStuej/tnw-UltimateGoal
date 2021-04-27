@@ -49,11 +49,11 @@ public class TeleOp99Mark2 extends OpMode {
     // FIXME: Are these the limits of the actual servo, or are they outside the existing range limit?
     // TODO: Sanity check should check using these if they're accurate
 
-    private static double CLAW_OPENED_POSITION = 0.66;  // The position of the claw when it is open
-    private static double CLAW_CLOSED_POSITION = 0.13;  // The position of the claw when it is closed
+    private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
+    private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
 
-    private static int ARM_DOWN_POSITION_DELTA = 144;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down (TODO: Set this value)
-    private static int ARM_UP_POSITION_DELTA = 48;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up (TODO: Set this value)
+    private static int ARM_DOWN_POSITION_DELTA = 402;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down (TODO: Set this value)
+    private static int ARM_UP_POSITION_DELTA = 221;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up (TODO: Set this value)
 
     private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
     private static int ARM_UP_POSITION;  // The absolute position (in motor encoder units) of the arm's up position. Set on init
@@ -89,7 +89,7 @@ public class TeleOp99Mark2 extends OpMode {
     private double fingerPosition;  // The current target position of the ring finger. setPosition is called using this value at the very end of the loop, only once
     private int armPosition;  // The current target position of the arm. runToPosition is called using this value at the very end of the loop, only once
 
-    private boolean clawState;  // Whether the claw is closed (true) or open (false). Used as a toggle for user control of the claw
+    private boolean clawState = true;  // Whether the claw is closed (true) or open (false). Used as a toggle for user control of the claw
 
     private boolean shooterState;  // Whether or not the shooter is currently active
 
@@ -373,21 +373,21 @@ public class TeleOp99Mark2 extends OpMode {
         intakeDrive.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Initialize servo positions
-        wobbleClaw.setPosition(CLAW_OPENED_POSITION);
+        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
         fingerServo.setPosition(RING_FINGER_OUT_POSITION);
 
         // Use the arm's current position to find the (relative) up and down positions to set the arm's encoder to later
         armPosition = wobbleArm.getCurrentPosition();
         wobbleArm.setTargetPosition(armPosition);
-        wobbleArm.setPower(0.25);
+        wobbleArm.setPower(0.5);
         wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armEstimatedPosition = armPosition;
-        ARM_UP_POSITION = armPosition + ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta instead
-        ARM_DOWN_POSITION = armPosition + ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta insted
+        ARM_UP_POSITION = armPosition - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta instead
+        ARM_DOWN_POSITION = armPosition - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta insted
 
         // Set Ring Elevator motor...
         ringElevator.setTargetPosition(ringElevator.getCurrentPosition());
-        ringElevator.setPower(0.25);
+        ringElevator.setPower(0.8);
         ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
         RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2017;
@@ -524,7 +524,7 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Rewrite these for the new Mark 2 sequence
         //if (currentlyDeploying) {  // Currently disabled to prevent undesired behavior (FIXME: Write the actual code)
-        if (false) {
+       /* if (false) {
             long elapsedTime = time - deploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
             telemetry.addData("Deployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
@@ -541,11 +541,11 @@ public class TeleOp99Mark2 extends OpMode {
                 telemetry.addLine("Finished wobble goal deployment sequence");
                 currentlyDeploying = false;
             }
-        }
+        }*/
 
         // Rewrite this for Mark 2 as well
         //if (currentlyUndeploying) {  // Currently disabled to prevent undesired behavior (FIXME: Write the actual code)
-        if (false) {
+       /* if (false) {
             long elapsedTime = time - undeploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
             telemetry.addData("Undeployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
@@ -567,7 +567,7 @@ public class TeleOp99Mark2 extends OpMode {
                 telemetry.addLine("Finished wobble goal undeployment sequence");
                 currentlyUndeploying = false;
             }
-        }
+        }*/
     }
 
     private void applyAutomaticMovementControls() {
@@ -722,7 +722,8 @@ public class TeleOp99Mark2 extends OpMode {
         }
 
         // Finger state
-        fingerPosition = gamepad2XHeld ? RING_FINGER_IN_POSITION : RING_FINGER_OUT_POSITION;
+        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 20) fingerPosition = gamepad2XHeld ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION; // Inverts ringFinger controls if ringElevator is near the down position to avoid accidental damage to the ringFinger
+        else fingerPosition = gamepad2XHeld ? RING_FINGER_IN_POSITION : RING_FINGER_OUT_POSITION;
 
         if (!(currentlyDeploying || currentlyUndeploying) || clawUserControl) {  // clawUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
             // Claw movement

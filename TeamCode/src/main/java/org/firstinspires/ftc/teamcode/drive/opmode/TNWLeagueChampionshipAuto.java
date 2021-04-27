@@ -7,6 +7,9 @@ import com.acmerobotics.roadrunner.trajectory.MarkerCallback;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -21,27 +24,21 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-/*
- * Main autonomous for iteration 1 of the robot. It scans a section of pixels in an image taken
- * by the phone camera for ring colors, counts those pixels, converts that to a number of rings,
- * then finally runs a preset trajectory based on the size of the ring stack, delivering the
- * wobble goals to the correct target
- */
 @Config
 @Autonomous(group = "drive")
 public class TNWLeagueChampionshipAuto extends LinearOpMode {
     OpenCvCamera webcam;
     TNWLeagueChampionshipAuto.imageFeedPipeline pipeline = new TNWLeagueChampionshipAuto.imageFeedPipeline();
 
-    final boolean MANUAL_CURRENT_CASE = false;
-    final double JOYSTICK_DEADZONE = 0.1;
-
-    double RING_SCAN_CROP_PERCENT_X1 = 0.0;  // 0.0
-    double RING_SCAN_CROP_PERCENT_X2 = 0.3;  // 1.0
-    double RING_SCAN_CROP_PERCENT_Y1 = 0.3;  // .49
-    double RING_SCAN_CROP_PERCENT_Y2 = 1.0;  // .75
+// STARTER STACK DETECTION VALUES:
+    public static double RING_SCAN_CROP_PERCENT_X1 = 0.4;  // 0.0
+    public static double RING_SCAN_CROP_PERCENT_X2 = 0.8;  // 1.0
+    public static double RING_SCAN_CROP_PERCENT_Y1 = 0.1;  // .49
+    public static double RING_SCAN_CROP_PERCENT_Y2 = 0.6;  // .75
 
     double ringImagePercent = 0.0;
+    double oneRingPercentageMinimum = .005; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
+    double fourRingPercentageMinimum = .10; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
 
     private static final int RING_COLOR_H_START = 13;  // 15
     private static final int RING_COLOR_S_START = 45;  // 51
@@ -50,62 +47,65 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
     private static final int RING_COLOR_S_END = 92;  // 89
     private static final int RING_COLOR_V_END = 100;  // 100
 
-    Pose2d powerShotStartingPose = new Pose2d(-4, -4, Math.toRadians(356));
-
     char autoCase = 'X';
 
-    final Pose2d initialPose = new Pose2d(-63, -24, Math.toRadians(0));
 
-    private Servo wgPickup;
-    private Servo ringDump;
+// ROADRUNNER VALUES:
+    //Constant Roadrunner Pose Values
+    final Pose2d initialPose = new Pose2d(-63, -32, Math.toRadians(0));
+    final Pose2d powerShotShoot1 = new Pose2d(-4, -4, Math.toRadians(356));
+    final int distanceBetweenPowerShots = 8; // inches
+    final Pose2d targetZoneA1 = new Pose2d(22, -50, Math.toRadians(90));
+
+
+// MOTOR AND SERVO DECLARATION:
+    // Intake motor
+    private DcMotor intakeDrive;
+
+    // Wobble Goal manipulation motors and servos
+    private Servo wobbleClaw;  // Wobble goal claw servo
+    private Servo fingerServo;  // Ring finger servo
+    private DcMotor wobbleArm;  // Wobble goal arm motor (used with encoders and runToPosition, so it acts like a servo)
+
+    // Ring shooter motor
+    private DcMotorEx ringShooter;
+
+    // Ring Elevator motor
+    private DcMotor ringElevator;
+
+    // MOTOR AND SERVO POSITION CONSTANTS:
+    private static int highGoalTPS = 57 * 28;  // Ticks per second of the shooter when active and aiming for the high goal
+    private static int powerShotTPS = 50 * 28; // Ticks per second of the shooter when active and aiming for the power shots
+
+    private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
+    private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
+
+    private static int ARM_DOWN_POSITION_DELTA = 402;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
+    private static int ARM_UP_POSITION_DELTA = 221;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
+    private static int ARM_HOVER_POSITION_DELTA = 300;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
+
+    private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
+    private static int ARM_UP_POSITION;  // The absolute position (in motor encoder units) of the arm's up position. Set on init
+    private static int ARM_HOVER_POSITION;  // The absolute position (in motor encoder units) of the arm's hover position. Set on init
+
+    private static int RING_ELEVATOR_UP_POSITION;  // The position of the Ring Elevator when it is in the UP state
+    private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
+    private static double RING_ELEVATOR_POWER = 0.7;  // The power for the motor to use when running to its target position
+
+    private static double RING_FINGER_IN_POSITION = 0.23;  // The position of the ring finger when it's in
+    private static double RING_FINGER_OUT_POSITION = 0.75;  // The position of the ring finger when it's out
+
 
     @Override
     public void runOpMode() throws InterruptedException {
-        /*
-         * Instantiate an OpenCvCamera object for the camera we'll be using.
-         * In this sample, we're using the phone's internal camera. We pass it a
-         * CameraDirection enum indicating whether to use the front or back facing
-         * camera, as well as the view that we wish to use for camera monitor (on
-         * the RC phone). If no camera monitor is desired, use the alternate
-         * single-parameter constructor instead (commented out below)
-         */
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
-
-        // OR...  Do Not Activate the Camera Monitor View
-        //webcam = OpenCvCameraFactory.getInstance().createInternalCamera(OpenCvInternalCamera.CameraDirection.BACK);
-
-        /*
-         * Specify the image processing pipeline we wish to invoke upon receipt
-         * of a frame from the camera. Note that switching pipelines on-the-fly
-         * (while a streaming session is in flight) *IS* supported.
-         */
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         webcam.setPipeline(pipeline);
-        /*
-         * Open the connection to the camera device. New in v1.4.0 is the ability
-         * to open the camera asynchronously, and this is now the recommended way
-         * to do it. The benefits of opening async include faster init time, and
-         * better behavior when pressing stop during init (i.e. less of a chance
-         * of tripping the stuck watchdog)
-         *
-         * If you really want to open synchronously, the old method is still available.
-         */
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
             @Override
             public void onOpened()
             {
-                /*
-                 * Tell the camera to start streaming images to us! Note that you must make sure
-                 * the resolution you specify is supported by the camera. If it is not, an exception
-                 * will be thrown.
-                 *
-                 * Also, we specify the rotation that the camera is used in. This is so that the image
-                 * from the camera sensor can be rotated such that it is always displayed with the image upright.
-                 * For a front facing camera, rotation is defined assuming the user is looking at the screen.
-                 * For a rear facing camera or a webcam, rotation is defined assuming the camera is facing
-                 * away from the user.
-                 */
                 webcam.startStreaming(320, 240, OpenCvCameraRotation.UPSIDE_DOWN);
             }
         });
@@ -114,113 +114,163 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
 
         drive.setPoseEstimate(initialPose);
 
-        // Initialize the wobble goal pickup
-        wgPickup = hardwareMap.get(Servo.class, "WGPickup");
-        ringDump = hardwareMap.get(Servo.class, "ringDump");
-
         telemetry.addData("Status: ", "Building Trajectories...");
 
-        telemetry.addData("Status: ", "Ready");
-        telemetry.update();
+// ROADRUNNER AUTONOMOUS TRAJECTORIES:
 
         // Case A
-
-        Trajectory toPowerShots = drive.trajectoryBuilder(initialPose)
-                .lineToLinearHeading(new Pose2d(-4, -4, Math.toRadians(357)))
+        Trajectory toPowerShotsA = drive.trajectoryBuilder(initialPose) // Drives to first power shots while initialising necessary motors
+                .lineToLinearHeading(powerShotShoot1)
                 .addSpatialMarker(new Vector2d(-30, -30), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        //move ringFinger to out position
-                        //move ringElevator to up position
-                        //spin up flywheel
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // set ring finger to out position
+                        ringElevator.setTargetPosition(RING_ELEVATOR_UP_POSITION); // raise ring bucket
+                        ringShooter.setVelocity(powerShotTPS);
+                    }
+                })
+                .addDisplacementMarker(new MarkerCallback() {  // When destination reached, shoot first power shot
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot first power shot
+                        pause(500); // pause to allow servo to move
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger to allow rings on top to drop into place
                     }
                 })
                 .build();
 
-        //Trajectory shootPowerShots = drive.trajectoryBuilder(toPowerShots.end())
-          //      .lineTo(new Vector2d())
+        Trajectory shootSecondPowerShotA = drive.trajectoryBuilder(toPowerShotsA.end()) // Shoots first power shot
+                .lineToConstantHeading(new Vector2d(powerShotShoot1.getX(), powerShotShoot1.getY() - distanceBetweenPowerShots))
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot second power shot
+                        pause(500); // pause to allow servo to move
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger to allow rings on top to drop into place
+                    }
+                })
+                .build();
 
-        // Servo Init Positions:
-        wgPickup.setPosition(.32); // Raise wobble goal pickup
-        ringDump.setPosition(.48); // Move ring dump to collect position
+        Trajectory shootLastPowerShotA = drive.trajectoryBuilder(shootSecondPowerShotA.end())
+                .lineToConstantHeading(new Vector2d(powerShotShoot1.getX(), powerShotShoot1.getY() - distanceBetweenPowerShots * 2))
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot last power shot
+                        wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // begin rotating wobble arm ahead of time to save time
+                        pause(500); // pause to allow servo to move
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger to allow ring bucket to be dropped
+                    }
+                })
+                .build();
 
+        Trajectory deliverWobbleGoal1A = drive.trajectoryBuilder(shootLastPowerShotA.end()) // Drives to Target Zone A and delivers first wobble goal
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // begin dropping ring elevator
+                    }
+                })
+                .lineToLinearHeading(targetZoneA1)
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleClaw.setPosition(CLAW_OPENED_POSITION); // release and score first wobble goal
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // retract ring finger to prevent accidental damage
+                        pause(500);
+                    }
+                })
+                .build();
+
+        Trajectory backFromWobbleGoal1A = drive.trajectoryBuilder(deliverWobbleGoal1A.end()) // Backs up from the first wobble goal to allow resetting of the arm
+                /*.addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleArm.setTargetPosition(ARM_HOVER_POSITION); // raise wobble goal arm
+                    }
+                })*/
+                .lineToLinearHeading(new Pose2d(targetZoneA1.getX(), targetZoneA1.getY() + 14, targetZoneA1.getHeading()))
+                .build();
+
+        Trajectory collectWobbleGoal2A = drive.trajectoryBuilder(backFromWobbleGoal1A.end()) // Drives to and collects second wobble goal for scoring
+                .lineToLinearHeading(new Pose2d(-36, -52, Math.toRadians(0)))
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
+                        pause(500);
+                        wobbleArm.setTargetPosition(ARM_HOVER_POSITION);
+                    }
+                })
+                .build();
+
+
+// INITIALIZE HARDWARE:
+        // Initialize intake motor
+        intakeDrive = hardwareMap.get(DcMotor.class, "intakeDrive");
+
+        // Initialize flywheel motor
+        ringShooter = hardwareMap.get(DcMotorEx.class, "shoot");
+
+        // Initialize Wobble Goal manipulation motors
+        wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
+        wobbleArm = hardwareMap.get(DcMotor.class, "WGArm");
+        fingerServo = hardwareMap.get(Servo.class, "ringFinger");
+
+        // Initialize ring elevator motor
+        ringElevator = hardwareMap.get(DcMotor.class, "ringElevator");
+
+        // Initialize motor and servo Positions
+        // Set Motor Directions
+        intakeDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // Set servo initialization positions
+        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
+
+        // Apply motor power
+        // Apply power and set mode for wobble arm motor
+        wobbleArm.setTargetPosition(wobbleArm.getCurrentPosition());
+        wobbleArm.setPower(.5);
+        wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Apply power and set mode for ring elevator motor
+        ringElevator.setTargetPosition(ringElevator.getCurrentPosition());
+        ringElevator.setPower(0.8);
+        ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
+
+        // Obtain encoder positions based on starting position and deltas
+        // Obtain wobble arm position values
+        ARM_UP_POSITION = wobbleArm.getCurrentPosition() - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed.
+        ARM_DOWN_POSITION = wobbleArm.getCurrentPosition() - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed.
+        ARM_HOVER_POSITION = wobbleArm.getCurrentPosition() - ARM_HOVER_POSITION_DELTA;  // Get the hover position of the arm with respect to the current position of the arm at init time, which is assumed.
+
+        // Obtain ring elevator position values
+        RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2017;
+
+        // Set flywheel PIDF coefficients
+        ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
+
+// WAIT FOR AUTONOMOUS TO BEGIN:
         telemetry.addLine("Waiting for start...");
         telemetry.update();
         waitForStart();
 
-        /*
-         * Send some stats to the telemetry
-         */
-        if (ringImagePercent >= .002 && ringImagePercent < .01) { autoCase = 'B'; }
-        else if (ringImagePercent >= .01) { autoCase = 'C'; }
-        else {autoCase = 'A'; }
-
-        int pixels = pipeline.getRingPixels();
-        telemetry.addData("Auto Case: ", (char) (autoCase));
-        telemetry.addData("Ring Percentage: ", ringImagePercent);
-        telemetry.addData("Frame Count", webcam.getFrameCount());
-        telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
-        telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
-        telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
-        telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
-        telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
-        telemetry.addData("Ring-Colored Pixels: ", pixels);
-        telemetry.addData("Ring crop region X1", RING_SCAN_CROP_PERCENT_X1);
-        telemetry.addData("Ring crop region Y1", RING_SCAN_CROP_PERCENT_Y1);
-        telemetry.addData("Ring crop region X2", RING_SCAN_CROP_PERCENT_X2);
-        telemetry.addData("Ring crop region Y2", RING_SCAN_CROP_PERCENT_Y2);
-        telemetry.addData("Total pixels", pipeline.totalPixels);
-        telemetry.update();
-
-        //if (isStopRequested()) return;
-
-        //int currentCase = getCase();
-
-        int currentCase = 0;
-
-        if (MANUAL_CURRENT_CASE) {
-            if (gamepad1.a) {  // A is case A
-                currentCase = 1;
-            } else if (gamepad1.b) {  // B is case B
-                currentCase = 2;
-            } else if (gamepad1.x) {  // X is case C
-                currentCase = 3;
-            } else {
-                currentCase = 2;  // Default to case A
-            }
+        if (autoCase == 'A') {
+            drive.followTrajectory(toPowerShotsA);
+            drive.followTrajectory(shootSecondPowerShotA);
+            drive.followTrajectory(shootLastPowerShotA);
+            drive.followTrajectory(deliverWobbleGoal1A);
+            drive.followTrajectory(backFromWobbleGoal1A);
+            drive.followTrajectory(collectWobbleGoal2A);
         }
-        else {
-            if (autoCase == 'A') {
-                currentCase = 1;
-            }
-            else if (autoCase == 'B') {
-                currentCase = 2;
-            }
-            else if (autoCase == 'C') {
-                currentCase = 3;
-            }
-        }
-
-        if (currentCase != 1 && currentCase != 2 && currentCase != 3) {
-            telemetry.addLine("WARNING: No valid case detected");
-            telemetry.addLine("Pausing one second before proceeding");
-            telemetry.update();
-
-            pause(1000);
-        }
-
-        if (currentCase == 1) {
+        else if (autoCase == 'B') {
 
         }
-        else if (currentCase == 2) {
+        else if (autoCase == 'C') {
 
         }
-        else if (currentCase == 3) {
-
-        }
-        else {
-            // Error here
-        }
+        else telemetry.addLine("Error: Check auto case determination in program.");
     }
 
     int pixelCountToRings(int numPixels) {
@@ -252,11 +302,12 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
         double[] pixel;
         double[] setpixel;
         Point setpixelPoint;
-        double greenValue, blueValue;
+        double redValue, greenValue, blueValue;
         final int resolutionTuner = 5; // One pixel sampled every # pixels.  Raise for speed, lower for reliability.
-        final double orangeGBRatioLowThreshold = 1.5;
-        double oneRingPercentageMinimum = .001; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
-        double fourRingPercentageMinimum = .004; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
+        final int RED_VALUE_MIN = 100;
+        final double ORANGE_GB_LOW_THRESHOLD = 1.5;
+        final double ORANGE_RG_LOW_THRESHOLD = 1.25;
+        final double ORANGE_RB_LOW_THRESHOLD = 5.0;
         public int totalPixels = 0;
 
 
@@ -279,21 +330,20 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
             setpixelPoint = new Point(0, 0);
 
             totalPixels = ((RING_SECTION_CROP_Y2 - RING_SECTION_CROP_Y1) * (RING_SECTION_CROP_X2 - RING_SECTION_CROP_X1) / resolutionTuner);
-            int oneRingPixelsMinimum = (int) (totalPixels / resolutionTuner * oneRingPercentageMinimum); // Where maxXResolution is the number of pixels in a row
-            int fourRingPixelsMinimum = (int) (totalPixels / resolutionTuner * fourRingPercentageMinimum); // Where maxXResolution is the number of pixels in a row
 
             ringPixels = 0;
             for(int x = RING_SECTION_CROP_X1; x <= RING_SECTION_CROP_X2; x += resolutionTuner) {
                 for (int y = RING_SECTION_CROP_Y1; y <= RING_SECTION_CROP_Y2; y += resolutionTuner) {
                     pixel = imageFeed.get(y, x);
+                    redValue = pixel[0];
                     greenValue = pixel[1];
                     blueValue = pixel[2];
-                    if (greenValue >= blueValue * orangeGBRatioLowThreshold) {
+                    if (/*redValue >= blueValue * ORANGE_RB_LOW_THRESHOLD && */redValue >= greenValue * ORANGE_RG_LOW_THRESHOLD && greenValue >= blueValue * ORANGE_GB_LOW_THRESHOLD) {
                         ringPixels++;
                         // imageFeed.set(y, x, setpixel)
                         setpixelPoint.x = (int) x;
                         setpixelPoint.y = (int) y;
-                        //Imgproc.circle(imageFeed, setpixelPoint, 5, ringVisualizeColor, Imgproc.FILLED);
+                        Imgproc.circle(imageFeed, setpixelPoint, resolutionTuner / 2, ringVisualizeColor, Imgproc.FILLED);
                     }
                 }
             }
@@ -309,7 +359,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                     new Scalar(0, 255, 0), 4);
 
 
-            ringImagePercent = (double) ringPixels / (double) totalPixels;
+            ringImagePercent = (double) ringPixels / ((double) totalPixels / resolutionTuner);
 
             /**
              * NOTE: to see how to get data from your pipeline to your OpMode as well as how
@@ -323,12 +373,12 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
 
             char autoCase_ = 'X';
 
-            if (ringImagePercent >= .002 && ringImagePercent < .01) { autoCase_ = 'B'; }
-            else if (ringImagePercent >= .01) { autoCase_ = 'C'; }
-            else {autoCase_ = 'A'; }
+            if (ringImagePercent >= oneRingPercentageMinimum && ringImagePercent < fourRingPercentageMinimum) { autoCase = 'B'; }
+            else if (ringImagePercent >= fourRingPercentageMinimum) { autoCase = 'C'; }
+            else {autoCase = 'A'; }
 
             int pixels = pipeline.getRingPixels();
-            telemetry.addData("Auto Case: ", (char) (autoCase_));
+            telemetry.addData("Auto Case: ", (char) (autoCase));
             telemetry.addData("Ring Percentage: ", ringImagePercent);
             telemetry.addData("Frame Count", webcam.getFrameCount());
             telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));

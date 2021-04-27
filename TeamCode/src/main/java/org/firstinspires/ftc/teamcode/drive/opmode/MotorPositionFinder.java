@@ -79,7 +79,7 @@ public class MotorPositionFinder extends OpMode {
             rBumperReleased = false;
         }
 
-        variablePower = (gamepad1.right_trigger - gamepad1.left_trigger) * DCMOTOR_PWR_FACTOR;
+        variablePower = (gamepad1.right_trigger - gamepad1.left_trigger + gamepad1.left_stick_y) * DCMOTOR_PWR_FACTOR;
         //motorPositions[dcMotorSelect] = dcMotors[dcMotorSelect].getCurrentPosition();
 
         if (gamepad1APressed) {
