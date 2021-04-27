@@ -34,7 +34,8 @@ public class TeleOp99Mark2 extends OpMode {
     private static int DEFAULT_SPEED_CURVE = 0;  // Only applies if using variable speed curves. The index of the speed curve to use by default (from 0-7 inclusive), and when reset. See above comments for speed curve list
     private static int DEFAULT_SPEED_CURVE_MODE = 0;  // Only applies if using variable speed curves. The index of the speed curve mode to use by default (from 0-2) inclusive. See above comments for mode list
 
-    private static int highGoalTPS = 57*28;  // Ticks per second of the shooter when active and aiming for the high goal
+    private static int highGoalTPS = 55 * 28;  // Ticks per second of the shooter when active and aiming for the high goal
+    private static int powerShotTPS = 50 * 28;  // Ticks per second of the shooter when active and aiming for the power shots
 
     private static boolean FOOLPROOF_IMPOSSIBLE_POSITIONS = false;  // Whether or not servo position combinations which are impossible to reach physically will be prevented through software rather than servo gear-grinding, fire or accidental destruction of other parts. This only works to the point that such positions are predicted and tweaked accurately, and may be disabled under careful operation. TODO: This
 
@@ -244,13 +245,15 @@ public class TeleOp99Mark2 extends OpMode {
     private int autoPoseIndex = -1;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
 
     // The possible target positions for automatic driving
-    public static Pose2d highGoalShootPose = new Pose2d();  // Index 0
-    public static Pose2d powerShotPose1 = new Pose2d();  // Index 1
-    public static Pose2d powerShotPose2 = new Pose2d();  // Index 2
-    public static Pose2d powerShotPose3 = new Pose2d();  // Index 3
+    public static Pose2d highGoalShootPose = PoseStorage.highGoalShootPose;  // Index 0
+    public static Pose2d powerShotPose1 = PoseStorage.powerShot1Pose;  // Index 1
+    public static Pose2d powerShotPose2 = PoseStorage.powerShot2Pose;  // Index 2
+    public static Pose2d powerShotPose3 = PoseStorage.powerShot3Pose;  // Index 3
 
     // The trajectory we're currently following, if we're following a trajectory
     private Trajectory targetTrajectory;
+
+    private int currentShooterTPS = 0;  // The current TPS of the ring shooter, if active
 
     // The pose that we're currently targeting, extracted from the current index
     private Pose2d targetPose;
@@ -467,20 +470,20 @@ public class TeleOp99Mark2 extends OpMode {
             // Reset the current target pose to our current pose
             switch (autoPoseIndex) {
                 case (0):
-                    highGoalShootPose = drive.getPoseEstimate();  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
-                    telemetry.addLine("Updated high goal shoot pose to current pose");
+                    drive.setPoseEstimate(new Pose2d(highGoalShootPose.getX(), highGoalShootPose.getY(), drive.getPoseEstimate().getHeading()));  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
+                    telemetry.addLine("Updated current pose to high goal shoot pose");
                     break;
                 case (1):
-                    powerShotPose1 = drive.getPoseEstimate();
-                    telemetry.addLine("Updated power shot 1 pose to current pose");
+                    drive.setPoseEstimate(new Pose2d(powerShotPose1.getX(), powerShotPose1.getY(), drive.getPoseEstimate().getHeading()));
+                    telemetry.addLine("Updated current pose to power shot 1 pose");
                     break;
                 case (2):
-                    powerShotPose2 = drive.getPoseEstimate();
-                    telemetry.addLine("Updated power shot 2 pose to current pose");
+                    drive.setPoseEstimate(new Pose2d(powerShotPose2.getX(), powerShotPose2.getY(), drive.getPoseEstimate().getHeading()));
+                    telemetry.addLine("Updated current pose to power shot 2 pose");
                     break;
                 case (3):
-                    powerShotPose3 = drive.getPoseEstimate();
-                    telemetry.addLine("Updated power shot 3 pose to current pose");
+                    drive.setPoseEstimate(new Pose2d(powerShotPose3.getX(), powerShotPose3.getY(), drive.getPoseEstimate().getHeading()));
+                    telemetry.addLine("Updated current pose to power shot 3 pose");
                     break;
             }
 
@@ -708,7 +711,8 @@ public class TeleOp99Mark2 extends OpMode {
         shooterState = gamepad2LeftShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
 
         if (shooterState) {
-            ringShooter.setVelocity(highGoalTPS);  // When the shooter is active, set the velocity to the target rate of the shooter for the high goal
+            currentShooterTPS = autoPoseIndex == 0 ? highGoalTPS : powerShotTPS;  // Get the desired shooter TPS from the selected auto target index
+            ringShooter.setVelocity(currentShooterTPS);  // When the shooter is active, set the velocity to the target rate of the shooter for the high goal
         }
         else {
             ringShooter.setPower(0.0);  // If the shooter is inactive, zero its power
@@ -801,8 +805,8 @@ public class TeleOp99Mark2 extends OpMode {
 
                 drive.setDriveSignal(new DriveSignal(
                         new Pose2d(
-                                directionalVector.getX() * 48.8,
-                                directionalVector.getY() * 48.8,
+                                directionalVector.getX() * 40.0,
+                                directionalVector.getY() * 40.0,
                                 -rotation * 5)));
             }
 
