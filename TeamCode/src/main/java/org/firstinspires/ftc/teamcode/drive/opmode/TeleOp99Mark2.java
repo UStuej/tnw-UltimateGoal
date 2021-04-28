@@ -53,7 +53,7 @@ public class TeleOp99Mark2 extends OpMode {
     private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
     private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
 
-    private static int ARM_DOWN_POSITION_DELTA = 402;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down (TODO: Set this value)
+    private static int ARM_DOWN_POSITION_DELTA = 430;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down (TODO: Set this value)
     private static int ARM_UP_POSITION_DELTA = 221;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up (TODO: Set this value)
 
     private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
@@ -624,7 +624,7 @@ public class TeleOp99Mark2 extends OpMode {
                 if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
                     vertical = easeNormalized((-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
                     horizontal = easeNormalized((gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
-                    rotation = easeNormalized(gamepad1RightTrigger - gamepad1LeftTrigger, currentSpeedCurve, currentSpeedCurveMode);
+                    rotation = easeNormalized(gamepad1RightTrigger * gamepad1RightTrigger - gamepad1LeftTrigger * gamepad1LeftTrigger, currentSpeedCurve, currentSpeedCurveMode);
                 } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
                     vertical = (-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT);
                     horizontal = (gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT);

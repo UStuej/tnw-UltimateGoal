@@ -38,7 +38,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
     public static double RING_SCAN_CROP_PERCENT_Y2 = 0.6;  // .75
 
     double ringImagePercent = 0.0;
-    double oneRingPercentageMinimum = .005; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
+    double oneRingPercentageMinimum = .007; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
     double fourRingPercentageMinimum = .10; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
 
     private static final int RING_COLOR_H_START = 13;  // 15
@@ -58,20 +58,22 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
 
     // Target zone poses
     final int DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING = 10; // inches
-    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION = new Pose2d(-36, -52, Math.toRadians(0));
-    final Pose2d SECOND_WOBBLE_GOAL_ALIGN_POSITION = new Pose2d(SECOND_WOBBLE_GOAL_PICKUP_POSITION.getX() + 8, SECOND_WOBBLE_GOAL_PICKUP_POSITION.getY(), SECOND_WOBBLE_GOAL_PICKUP_POSITION.getHeading());
-    final Pose2d TARGET_ZONE_A1 = new Pose2d(22, -50, Math.toRadians(90));
+    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_A = new Pose2d(-37, -53, Math.toRadians(0));
+    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_B = new Pose2d(-36, -52, Math.toRadians(0));
+    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_C = new Pose2d(-36, -53, Math.toRadians(0));
+    final Pose2d SECOND_WOBBLE_GOAL_ALIGN_POSITION = new Pose2d(SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getX() + 8, SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getY(), SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getHeading());
+    final Pose2d TARGET_ZONE_A1 = new Pose2d(24, -51, Math.toRadians(90));
     final Pose2d TARGET_ZONE_A2 = new Pose2d(TARGET_ZONE_A1.getX(), TARGET_ZONE_A1.getY() + DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_A1.getHeading());
-    final Pose2d TARGET_ZONE_B1 = new Pose2d(36, -36, Math.toRadians(180));
-    final Pose2d TARGET_ZONE_B2 = new Pose2d(TARGET_ZONE_B1.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1.getY(), TARGET_ZONE_B1.getHeading());
-    final Pose2d TARGET_ZONE_C1 = new Pose2d(56, -48, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_B1 = new Pose2d(30, -34, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_B2 = new Pose2d(TARGET_ZONE_B1.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1.getY() + 2, TARGET_ZONE_B1.getHeading());
+    final Pose2d TARGET_ZONE_C1 = new Pose2d(53, -50, Math.toRadians(180));
     final Pose2d TARGET_ZONE_C2 = new Pose2d(TARGET_ZONE_C1.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_C1.getY(), TARGET_ZONE_C1.getHeading());
     // Starter stack related poses
     final Vector2d STARTER_STACK = new Vector2d(-24, -36);
     final Pose2d LONG_SHOT_POSE = new Pose2d(-37, -36, Math.toRadians(356));
     // Power shot related poses
-    final Pose2d POWER_SHOT_SHOOT_1 = new Pose2d(-4, -4, Math.toRadians(356));
-    final int DISTANCE_BETWEEN_POWER_SHOTS = 8; // inches
+    final Pose2d POWER_SHOT_SHOOT_1 = new Pose2d(-3, -5, Math.toRadians(356));
+    final double DISTANCE_BETWEEN_POWER_SHOTS = 8; // inches
     // Parking pose
     final Pose2d PARKING_POSE = new Pose2d(12, -24, Math.toRadians(0));
 
@@ -91,15 +93,15 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
     private DcMotor ringElevator;
 
     // MOTOR AND SERVO POSITION CONSTANTS:
-    private static int highGoalTPS = 57 * 28;  // Ticks per second of the shooter when active and aiming for the high goal
-    private static int powerShotTPS = 50 * 28; // Ticks per second of the shooter when active and aiming for the power shots
+    private static double highGoalTPS = 57.5 * 28;  // Ticks per second of the shooter when active and aiming for the high goal
+    private static double powerShotTPS = 50 * 28; // Ticks per second of the shooter when active and aiming for the power shots
 
     private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
     private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
 
-    private static int ARM_DOWN_POSITION_DELTA = 402;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
+    private static int ARM_DOWN_POSITION_DELTA = 430;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
     private static int ARM_UP_POSITION_DELTA = 221;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
-    private static int ARM_HOVER_POSITION_DELTA = 300;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
+    private static int ARM_HOVER_POSITION_DELTA = 330;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
 
     private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
     private static int ARM_UP_POSITION;  // The absolute position (in motor encoder units) of the arm's up position. Set on init
@@ -113,7 +115,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
     private static double RING_FINGER_IN_POSITION = 0.23;  // The position of the finger servo when it's in
     private static double RING_FINGER_OUT_POSITION = 0.75;  // The position of the finger servo when it's out
 
-    private static double INTAKE_IN_POWER = 1;  // The power set to intake drive for collecting rings
+    private static double INTAKE_IN_POWER = -1;  // The power set to intake drive for collecting rings
     private static double INTAKE_OUT_POWER = INTAKE_IN_POWER * -1;  // The power set to intake drive for ejecting rings
 
 
@@ -142,7 +144,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
 // Case A Trajectories
         Trajectory toPowerShotsA = drive.trajectoryBuilder(STARTING_POSE) // Drives to and scores first power shots while initialising necessary motors
                 .lineToLinearHeading(POWER_SHOT_SHOOT_1)
-                .addSpatialMarker(new Vector2d(-30, -30), new MarkerCallback() {
+                .addSpatialMarker(new Vector2d(-40, -40), new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // set finger servo to out position
@@ -190,6 +192,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                     @Override
                     public void onMarkerReached() {
                         ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // begin dropping ring elevator
+                        ringShooter.setPower(0); // turn flywheel off
                     }
                 })
                 .lineToLinearHeading(TARGET_ZONE_A1)
@@ -204,7 +207,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .build();
 
         Trajectory backFromWobbleGoal1A = drive.trajectoryBuilder(deliverWobbleGoal1A.end()) // Backs up from the first wobble goal to allow resetting of the arm
-                .lineToLinearHeading(new Pose2d(TARGET_ZONE_A1.getX(), TARGET_ZONE_A1.getY() + 14, TARGET_ZONE_A1.getHeading()))
+                .lineToLinearHeading(new Pose2d(TARGET_ZONE_A1.getX(), TARGET_ZONE_A1.getY() + 14, TARGET_ZONE_A1.getHeading() - Math.toRadians(45)))
                 .build();
 
         Trajectory driveToCollectWobbleGoal2A = drive.trajectoryBuilder(backFromWobbleGoal1A.end()) // Aligns to collect second wobble goal
@@ -212,7 +215,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .build();
 
         Trajectory collectWobbleGoal2A = drive.trajectoryBuilder(driveToCollectWobbleGoal2A.end()) // Drives to and collects second wobble goal for scoring
-                .lineToLinearHeading(SECOND_WOBBLE_GOAL_PICKUP_POSITION)
+                .lineToLinearHeading(SECOND_WOBBLE_GOAL_PICKUP_POSITION_A)
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -241,10 +244,10 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        wobbleArm.setTargetPosition(ARM_UP_POSITION); // raise wobble arm to prevent accidental damage
+                        wobbleArm.setTargetPosition(ARM_STARTING_POSITION); // raise wobble arm to prevent accidental damage
                     }
                 })
-                .lineToLinearHeading(new Pose2d(TARGET_ZONE_A2.getX(), TARGET_ZONE_A2.getY() + 14, TARGET_ZONE_A2.getHeading()))
+                .lineToLinearHeading(new Pose2d(TARGET_ZONE_A2.getX(), TARGET_ZONE_A2.getY() + 14, TARGET_ZONE_A2.getHeading() - Math.toRadians(45)))
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -307,7 +310,8 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // set finger servo to out position
                         ringElevator.setTargetPosition(RING_ELEVATOR_UP_POSITION); // raise ring bucket
-                        ringShooter.setVelocity(powerShotTPS);
+                        ringShooter.setVelocity(powerShotTPS); // spin up flywheel to score power shots
+                        intakeDrive.setPower(0); // power intake off
                     }
                 })
                 .addDisplacementMarker(new MarkerCallback() {  // When destination reached, shoot first power shot
@@ -350,6 +354,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                     @Override
                     public void onMarkerReached() {
                         ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // begin dropping ring elevator
+                        ringShooter.setPower(0); // turn flywheel off
                     }
                 })
                 .lineToLinearHeading(TARGET_ZONE_B1)
@@ -364,7 +369,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .build();
 
         Trajectory backFromWobbleGoal1B = drive.trajectoryBuilder(deliverWobbleGoal1B.end()) // Backs up from the first wobble goal to avoid tipping it
-                .lineToLinearHeading(new Pose2d(TARGET_ZONE_B1.getX() - 14, TARGET_ZONE_B1.getY(), TARGET_ZONE_B1.getHeading()))
+                .lineToLinearHeading(new Pose2d(TARGET_ZONE_B1.getX() - 14, TARGET_ZONE_B1.getY(), TARGET_ZONE_B1.getHeading() - Math.toRadians(45)))
                 .build();
 
         Trajectory driveToCollectWobbleGoal2B = drive.trajectoryBuilder(backFromWobbleGoal1B.end()) // Aligns to collect second wobble goal
@@ -372,7 +377,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .build();
 
         Trajectory collectWobbleGoal2B = drive.trajectoryBuilder(driveToCollectWobbleGoal2B.end()) // Drives to and collects second wobble goal for scoring
-                .lineToLinearHeading(SECOND_WOBBLE_GOAL_PICKUP_POSITION)
+                .lineToLinearHeading(SECOND_WOBBLE_GOAL_PICKUP_POSITION_B)
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -401,10 +406,10 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        wobbleArm.setTargetPosition(ARM_UP_POSITION); // raise wobble arm to prevent accidental damage
+                        wobbleArm.setTargetPosition(ARM_STARTING_POSITION); // raise wobble arm to prevent accidental damage
                     }
                 })
-                .lineToLinearHeading(new Pose2d(TARGET_ZONE_B2.getX() - 10, TARGET_ZONE_B2.getY(), TARGET_ZONE_B2.getHeading()))
+                .lineToLinearHeading(new Pose2d(TARGET_ZONE_B2.getX() - 10, TARGET_ZONE_B2.getY(), TARGET_ZONE_B2.getHeading() - Math.toRadians(45)))
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -419,7 +424,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
 
 
 // Case C Trajectories
-        Trajectory shootStartingRingsC = drive.trajectoryBuilder(STARTING_POSE) // Drives shooting pose while initialising necessary motors
+        /*Trajectory shootStartingRingsC = drive.trajectoryBuilder(STARTING_POSE) // Drives shooting pose while initialising necessary motors
                 .lineToLinearHeading(LONG_SHOT_POSE) // Approach starter stack to score in high goal
                 .addSpatialMarker(new Vector2d(-58, -32), new MarkerCallback() {
                     @Override
@@ -519,9 +524,9 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                         pause(1000); // allow intake time to feed rings into ring elevator
                     }
                 })
-                .build();
+                .build();*/
 
-        Trajectory toPowerShotsC = drive.trajectoryBuilder(collectStarterStackRings2C.end()) // Drives to and scores first power shots while initialising necessary motors
+        Trajectory toPowerShotsC = drive.trajectoryBuilder(STARTING_POSE) // Drives to and scores first power shots while initialising necessary motors
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -570,6 +575,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
+                        ringShooter.setPower(0); // turn flywheel off
                         ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // begin dropping ring elevator
                         wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // begin rotating wobble arm ahead of time to save time
                     }
@@ -586,7 +592,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .build();
 
         Trajectory backFromWobbleGoal1C = drive.trajectoryBuilder(deliverWobbleGoal1C.end()) // Backs up from the first wobble goal to avoid tipping it
-                .lineToLinearHeading(new Pose2d(TARGET_ZONE_C1.getX() - 14, TARGET_ZONE_C1.getY() + 5, Math.toRadians(5)))
+                .lineToLinearHeading(new Pose2d(TARGET_ZONE_C1.getX() - 14, TARGET_ZONE_C1.getY() + 5, Math.toRadians(135)))
                 .build();
 
         Trajectory driveToCollectWobbleGoal2C = drive.trajectoryBuilder(backFromWobbleGoal1C.end()) // Aligns to collect second wobble goal
@@ -594,7 +600,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .build();
 
         Trajectory collectWobbleGoal2C = drive.trajectoryBuilder(driveToCollectWobbleGoal2C.end()) // Drives to and collects second wobble goal for scoring
-                .lineToLinearHeading(SECOND_WOBBLE_GOAL_PICKUP_POSITION)
+                .lineToLinearHeading(SECOND_WOBBLE_GOAL_PICKUP_POSITION_C)
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -623,10 +629,10 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        wobbleArm.setTargetPosition(ARM_UP_POSITION); // raise wobble arm to prevent accidental damage
+                        wobbleArm.setTargetPosition(ARM_STARTING_POSITION); // raise wobble arm to prevent accidental damage
                     }
                 })
-                .lineToLinearHeading(new Pose2d(TARGET_ZONE_C2.getX() - 10, TARGET_ZONE_C2.getY(), 5))
+                .lineToLinearHeading(new Pose2d(TARGET_ZONE_C2.getX() - 10, TARGET_ZONE_C2.getY(), Math.toRadians(135)))
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -677,10 +683,10 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
 
         // Obtain encoder positions based on starting position and deltas
         // Obtain wobble arm position values
-        ARM_STARTING_POSITION = wobbleArm.getCurrentPosition();  // Get the starting position of the arm based on the current position of the arm at init time, which is assumed.
-        ARM_UP_POSITION = ARM_STARTING_POSITION - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed.
-        ARM_DOWN_POSITION = ARM_STARTING_POSITION - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed.
-        ARM_HOVER_POSITION = ARM_STARTING_POSITION - ARM_HOVER_POSITION_DELTA;  // Get the hover position of the arm with respect to the current position of the arm at init time, which is assumed.
+        ARM_STARTING_POSITION = wobbleArm.getCurrentPosition() + 20;  // Get the starting position of the arm based on the current position of the arm at init time, which is assumed.
+        ARM_UP_POSITION = wobbleArm.getCurrentPosition() - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed.
+        ARM_DOWN_POSITION = wobbleArm.getCurrentPosition() - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed.
+        ARM_HOVER_POSITION = wobbleArm.getCurrentPosition() - ARM_HOVER_POSITION_DELTA;  // Get the hover position of the arm with respect to the current position of the arm at init time, which is assumed.
 
         // Obtain ring elevator position values
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
@@ -721,11 +727,11 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
             drive.followTrajectory(parkB);
         }
         else if (autoCase == 'C') { // follow paths for autonomous case C
-            drive.followTrajectory(shootStartingRingsC);
+            /*drive.followTrajectory(shootStartingRingsC);
             drive.followTrajectory(displaceStarterStackRingsC);
             drive.followTrajectory(collectStarterStackRings1C);
             drive.followTrajectory(shootStarterStackRingsC);
-            drive.followTrajectory(collectStarterStackRings2C);
+            drive.followTrajectory(collectStarterStackRings2C);*/
             drive.followTrajectory(toPowerShotsC);
             drive.followTrajectory(shootSecondPowerShotC);
             drive.followTrajectory(shootLastPowerShotC);
