@@ -382,7 +382,7 @@ public class TeleOp99Mark2 extends OpMode {
         // Use the arm's current position to find the (relative) up and down positions to set the arm's encoder to later
         armPosition = wobbleArm.getCurrentPosition();
         wobbleArm.setTargetPosition(armPosition);
-        wobbleArm.setPower(0.5);
+        wobbleArm.setPower(1.0);
         wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armEstimatedPosition = armPosition;
         ARM_UP_POSITION = armPosition - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta instead
@@ -438,7 +438,7 @@ public class TeleOp99Mark2 extends OpMode {
         intakeDrivePower = Math.max(-1, Math.min(1, intakeDrivePower));
 
         clawPosition = Math.max(0, Math.min(1, clawPosition));
-        armPosition = Math.max(0, Math.min(1, armPosition));
+        //armPosition = Math.max(0, Math.min(1, armPosition));
     }
 
     private void getAutoPoseIndex() {
@@ -682,10 +682,35 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void checkAutoMovementInterrupts() {  // Checks to see if any manual input will interfere with an automatic trajectory
-        if (Math.abs(gamepad1LeftStickX) + Math.abs(gamepad1LeftStickY) + Math.abs(gamepad1RightStickX) + Math.abs(gamepad1RightStickY) + Math.abs(gamepad1LeftTrigger) + Math.abs(gamepad1RightTrigger) >= GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE*6) {
-            // One or more of the axes exceeds the deadzone (FIXME: I know that this could be computed in a more tedious, albeit possibly more accurate way by testing each axis individually. We'll see how it works and change it if necessary)
-            autoDrive = false;  // We're overriding auto control
-            currentlyFollowingAutoTrajectory = false;  // Yes, this line is important
+        //if (Math.abs(gamepad1LeftStickX) + Math.abs(gamepad1LeftStickY) + Math.abs(gamepad1RightStickX) + Math.abs(gamepad1RightStickY) + Math.abs(gamepad1LeftTrigger) + Math.abs(gamepad1RightTrigger) >= GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE*6) {
+        //    // One or more of the axes exceeds the deadzone (FIXME: I know that this could be computed in a more tedious, albeit possibly more accurate way by testing each axis individually. We'll see how it works and change it if necessary)
+        //    autoDrive = false;  // We're overriding auto control
+        //    currentlyFollowingAutoTrajectory = false;  // Yes, this line is important
+        //}
+
+        if (Math.abs(gamepad1LeftStickX) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1LeftStickY) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1RightStickX) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1RightStickY) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1LeftTrigger) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1RightTrigger) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
         }
     }
 
@@ -708,22 +733,46 @@ public class TeleOp99Mark2 extends OpMode {
         }
 
         // Shooter state
-        shooterState = gamepad2LeftShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
+        shooterState = gamepad2LeftShoulderHeld || gamepad2RightShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
 
-        if (shooterState) {
-            currentShooterTPS = autoPoseIndex == 0 ? highGoalTPS : powerShotTPS;  // Get the desired shooter TPS from the selected auto target index
-            ringShooter.setVelocity(currentShooterTPS);  // When the shooter is active, set the velocity to the target rate of the shooter for the high goal
+        if (gamepad2LeftShoulderHeld) {
+            currentShooterTPS = highGoalTPS;
+        }
+        else if (gamepad2RightShoulderHeld) {
+            currentShooterTPS = powerShotTPS;
         }
         else {
-            ringShooter.setPower(0.0);  // If the shooter is inactive, zero its power
+            currentShooterTPS = 0;
         }
 
-        // Arm state
+        //if (shooterState) {
+        //    currentShooterTPS = autoPoseIndex == 0 ? highGoalTPS : powerShotTPS;  // Get the desired shooter TPS from the selected auto target index
+        //    ringShooter.setVelocity(currentShooterTPS);  // When the shooter is active, set the velocity to the target rate of the shooter for the high goal
+        //}
+        //else {
+        //    ringShooter.setPower(0.0);  // If the shooter is inactive, zero its power
+        //}
+
+        if (shooterState) {
+            ringShooter.setVelocity(currentShooterTPS);
+        }
+        else {
+            ringShooter.setPower(0.0);
+        }
+
+        // Arm state toggle
         if (gamepad2YPressed) {  // FIXME: Is this in use somewhere else
             armUp = !armUp;
             armPosition = armUp ? ARM_DOWN_POSITION : ARM_UP_POSITION;
-            wobbleArm.setTargetPosition(armPosition);
+            //wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
+
+        // Arm position (fine tuning via manual control if needed)
+        //if (Math.abs(gamepad2LeftStickY) > 0.1) {
+        //    armPosition += gamepad2LeftStickY * deltaTime/1000.0 * 10;
+        //}
+
+        wobbleArm.setTargetPosition(armPosition);
 
         // Finger state
         if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 20) fingerPosition = gamepad2XHeld ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION; // Inverts ringFinger controls if ringElevator is near the down position to avoid accidental damage to the ringFinger
@@ -790,7 +839,7 @@ public class TeleOp99Mark2 extends OpMode {
             //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
             //telemetry.update();
 
-            if (!(autoDrive || currentlyFollowingAutoTrajectory) || !GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're NOT currently automatic driving
+            if (!(autoDrive && currentlyFollowingAutoTrajectory) || !GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're NOT currently automatic driving
                 //drive.setDrivePower(
                 //        new Pose2d(
                 //                directionalVector.getX(),

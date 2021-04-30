@@ -67,10 +67,11 @@ public class FieldPoseEstimation {
         boolean success = Calib3d.findCirclesGrid(grayscalePrintout, new Size(gridWidth, gridHeight), objectPoints, asymmetricGrid ? Calib3d.CALIB_CB_ASYMMETRIC_GRID : Calib3d.CALIB_CB_SYMMETRIC_GRID);  // FIXME Boolean 'success' may not be necessary.
 
         List<Point3> objectPoints3d = new ArrayList<>((int) objectPoints.total());
-        for (Point point : objectPoints) {  // FIXME Convert MatOfPoint 'objectPoints' to an iterable object (likely a List).
-            objectPoints3d.add(new Point3(point.x, point.y, z));
-        }
+        //for (Point point : objectPoints) {  // FIXME Convert MatOfPoint 'objectPoints' to an iterable object (likely a List).
+        //    objectPoints3d.add(new Point3(point.x, point.y, z));
+        //}
 
+        return new Pose2d();  // Dummy
     }
     /**
      * Given a list of images of a flat sheet of circles width*height large taken by an external camera and a copy of the circle grid printout, computes and returns camera intrinsics from calibration.
