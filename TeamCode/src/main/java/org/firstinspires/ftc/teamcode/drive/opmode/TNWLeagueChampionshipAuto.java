@@ -38,7 +38,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
     public static double RING_SCAN_CROP_PERCENT_Y2 = 0.6;  // .75
 
     double ringImagePercent = 0.0;
-    double oneRingPercentageMinimum = .007; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
+    double oneRingPercentageMinimum = .01; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
     double fourRingPercentageMinimum = .10; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
 
     private static final int RING_COLOR_H_START = 13;  // 15
@@ -58,9 +58,9 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
 
     // Target zone poses
     final int DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING = 10; // inches
-    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_A = new Pose2d(-37, -53, Math.toRadians(0));
-    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_B = new Pose2d(-36, -52, Math.toRadians(0));
-    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_C = new Pose2d(-36, -53, Math.toRadians(0));
+    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_A = new Pose2d(-37, -53, Math.toRadians(30));
+    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_B = new Pose2d(-36, -52, Math.toRadians(30));
+    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_C = new Pose2d(-36, -53, Math.toRadians(30));
     final Pose2d SECOND_WOBBLE_GOAL_ALIGN_POSITION = new Pose2d(SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getX() + 8, SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getY(), SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getHeading());
     final Pose2d TARGET_ZONE_A1 = new Pose2d(24, -51, Math.toRadians(90));
     final Pose2d TARGET_ZONE_A2 = new Pose2d(TARGET_ZONE_A1.getX(), TARGET_ZONE_A1.getY() + DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_A1.getHeading());
