@@ -13,9 +13,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
-@TeleOp(name = "TeleOp99Mark2")
+@TeleOp(name = "Test Mode")
 
-public class TeleOp99Mark2 extends OpMode {
+public class TemporaryTestOpmode extends OpMode {
     private static boolean AXIS_MOVEMENT = true;  // Whether or not rotation, horizontal, and vertical movement across the field should be controlled by joystick axes rather than dpad buttons
 
     private static double MOVEMENT_FACTOR = 1.0;  // Floating-point number from 0 to 1 multiplied by all movement motor powers directly before application. Use this to limit the maximum power for ALL movement-related motors evenly
@@ -50,18 +50,18 @@ public class TeleOp99Mark2 extends OpMode {
     // FIXME: Are these the limits of the actual servo, or are they outside the existing range limit?
     // TODO: Sanity check should check using these if they're accurate
 
-    private static double CLAW_OPENED_POSITION = 0.0;  // The position of the claw when it is open
-    private static double CLAW_CLOSED_POSITION = 0.48;  // The position of the claw when it is closed
+    private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
+    private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
 
-    private static int ARM_DOWN_POSITION_DELTA = 422;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down (TODO: Set this value)
-    private static int ARM_UP_POSITION_DELTA = 222;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up (TODO: Set this value)
+    private static int ARM_DOWN_POSITION_DELTA = 430;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down (TODO: Set this value)
+    private static int ARM_UP_POSITION_DELTA = 221;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up (TODO: Set this value)
 
     private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
     private static int ARM_UP_POSITION;  // The absolute position (in motor encoder units) of the arm's up position. Set on init
 
     private static int RING_ELEVATOR_UP_POSITION;  // The position of the Ring Elevator when it is in the UP state
     private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
-    private static double RING_ELEVATOR_POWER = 0.5;  // The power for the motor to use when running to its target position TODO: We might increase this
+    private static double RING_ELEVATOR_VELOCITY = 6000;  // The power for the motor to use when running to its target position TODO: We might increase this
 
     private static double RING_FINGER_IN_POSITION = 0.23;  // The position of the ring finger when it's in
     private static double RING_FINGER_OUT_POSITION = 0.75;  // The position of the ring finger when it's out
@@ -133,7 +133,7 @@ public class TeleOp99Mark2 extends OpMode {
     private DcMotorEx ringShooter;
 
     // Ring Elevator motor
-    private DcMotor ringElevator;
+    private DcMotorEx ringElevator;
 
     private boolean slowMode;  // Whether or not we're currently going slower
 
@@ -297,7 +297,7 @@ public class TeleOp99Mark2 extends OpMode {
         fingerServo = hardwareMap.get(Servo.class, "ringFinger");
 
         // Initialize Ring Elevator motor
-        ringElevator = hardwareMap.get(DcMotor.class, "ringElevator");
+        ringElevator = hardwareMap.get(DcMotorEx.class, "ringElevator");
 
         telemetry.addLine("Initializing servo/motor positions/powers");  // Debug message
 
@@ -306,11 +306,12 @@ public class TeleOp99Mark2 extends OpMode {
         time = System.currentTimeMillis();
         lastTime = time;  // Initialize the last tick time so that deltas can be properly calculated
         ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
+        ringElevator.setVelocityPIDFCoefficients(5, 3, 3, 0);
     }
 
     @Override
     public void start() {
-        ringElevator.setPower(RING_ELEVATOR_POWER);
+        ringElevator.setVelocity(RING_ELEVATOR_VELOCITY);
     }
 
     @Override
@@ -442,7 +443,7 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void getAutoPoseIndex() {
-        if (gamepad1APressed) {
+        /*if (gamepad1APressed) {
             autoPoseIndex = 0;  // High goal
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
@@ -489,7 +490,7 @@ public class TeleOp99Mark2 extends OpMode {
 
             currentlyFollowingAutoTrajectory = false;  // If we were following this target, stop; now we've already reached it. This is probably redundant
         }
-    }
+    */}
 
     private void autoServoControl() {
         if (gamepad2LeftStickPressed) {  // Cancel auto controls if the driver's left stick was pressed
@@ -672,7 +673,7 @@ public class TeleOp99Mark2 extends OpMode {
         backRightDrivePower = vertical + horizontal - rotation;
 
         // Set intake speed
-        intakeDrivePower = gamepad2LeftTrigger - gamepad2RightTrigger;
+        intakeDrivePower = gamepad2LeftTrigger - gamepad2RightTrigger + gamepad2RightStickY - 1;
     }
 
     private void checkAutoInterrupts() {  // Checks to see if any manual input will interfere with an automatic task, if manual input takes priority (AUTO_PRIORITY is false). If so, it disables the automatic overrides using a flag for each servo involved
