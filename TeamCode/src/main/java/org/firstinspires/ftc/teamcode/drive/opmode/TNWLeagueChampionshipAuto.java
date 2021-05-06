@@ -60,7 +60,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
     final int DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING = 10; // inches
     final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_A = new Pose2d(-35, -52, Math.toRadians(15));
     final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_B = new Pose2d(-35, -52, Math.toRadians(15));
-    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_C = new Pose2d(-35, -55, Math.toRadians(330));
+    final Pose2d SECOND_WOBBLE_GOAL_PICKUP_POSITION_C = new Pose2d(-35-4, -55-4, Math.toRadians(330));
     final Pose2d SECOND_WOBBLE_GOAL_ALIGN_POSITION = new Pose2d(SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getX() + 12, SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getY() + 12, SECOND_WOBBLE_GOAL_PICKUP_POSITION_B.getHeading());
     final Pose2d SECOND_WOBBLE_GOAL_ALIGN_POSITION_C = new Pose2d(SECOND_WOBBLE_GOAL_PICKUP_POSITION_C.getX() + 12, SECOND_WOBBLE_GOAL_PICKUP_POSITION_C.getY(), SECOND_WOBBLE_GOAL_PICKUP_POSITION_C.getHeading());
     final Pose2d TARGET_ZONE_A1 = new Pose2d(24, -51, Math.toRadians(90));
@@ -100,7 +100,7 @@ public class TNWLeagueChampionshipAuto extends LinearOpMode {
     private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
     private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
 
-    private static int ARM_DOWN_POSITION_DELTA = 422;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
+    private static int ARM_DOWN_POSITION_DELTA = 415;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
     private static int ARM_UP_POSITION_DELTA = 221;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
     private static int ARM_HOVER_POSITION_DELTA = 330;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
 

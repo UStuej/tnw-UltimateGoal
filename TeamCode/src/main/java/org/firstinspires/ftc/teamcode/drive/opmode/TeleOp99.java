@@ -250,10 +250,10 @@ public class TeleOp99 extends OpMode {
     private int autoPoseIndex = -1;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
 
     // The possible target positions for automatic driving
-    public static Pose2d highGoalShootPose = new Pose2d();  // Index 0
-    public static Pose2d powerShotPose1 = new Pose2d();  // Index 1
-    public static Pose2d powerShotPose2 = new Pose2d();  // Index 2
-    public static Pose2d powerShotPose3 = new Pose2d();  // Index 3
+    public static Pose2d highGoalShootPose = PoseStorage.highGoalShootPose;  // Index 0
+    public static Pose2d powerShotPose1 = PoseStorage.powerShot1Pose;  // Index 1
+    public static Pose2d powerShotPose2 = PoseStorage.powerShot2Pose;  // Index 2
+    public static Pose2d powerShotPose3 = PoseStorage.powerShot3Pose;  // Index 3
 
     // The trajectory we're currently following, if we're following a trajectory
     private Trajectory targetTrajectory;
