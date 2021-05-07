@@ -71,7 +71,7 @@ public class FieldPoseEstimation {
         //    objectPoints3d.add(new Point3(point.x, point.y, z));
         //}
 
-        return new Pose2d();  // Dummy
+        return new Pose2d();  // FIXME Dummy
     }
     /**
      * Given a list of images of a flat sheet of circles width*height large taken by an external camera and a copy of the circle grid printout, computes and returns camera intrinsics from calibration.
