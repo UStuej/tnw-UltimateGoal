@@ -61,10 +61,10 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static int RING_ELEVATOR_UP_POSITION;  // The position of the Ring Elevator when it is in the UP state
     private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
-    private static double RING_ELEVATOR_POWER = 0.5;  // The power for the motor to use when running to its target position TODO: We might increase this
+    private static int RING_ELEVATOR_VELOCITY = 6000;  // The velocity of the motor to use when running to its target position TODO: We might increase this
 
-    private static double RING_FINGER_IN_POSITION = 0.23;  // The position of the ring finger when it's in
-    private static double RING_FINGER_OUT_POSITION = 0.75;  // The position of the ring finger when it's out
+    private static double RING_FINGER_IN_POSITION = 0.05;  // The position of the ring finger when it's in
+    private static double RING_FINGER_OUT_POSITION = 0.4;  // The position of the ring finger when it's out
 
     private static double FULLAXIS_LEFT_WEIGHT = 0.75;  // The weighting of the left joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_RIGHT_WEIGHT to equal exactly 1
     private static double FULLAXIS_RIGHT_WEIGHT = 0.25;  // The weighting of the right joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_LEFT_WEIGHT to equal 1
@@ -133,7 +133,7 @@ public class TeleOp99Mark2 extends OpMode {
     private DcMotorEx ringShooter;
 
     // Ring Elevator motor
-    private DcMotor ringElevator;
+    private DcMotorEx ringElevator;
 
     private boolean slowMode;  // Whether or not we're currently going slower
 
@@ -147,7 +147,7 @@ public class TeleOp99Mark2 extends OpMode {
     private boolean clawUserControl = false;  // Whether or not the user has claimed control of the claw during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment.
 
     // States for the servos/motors that can be controlled via toggles
-    private boolean ringElevatorUp = false;  // Boolean representing whether or not the ring elevator is currently at (or running to) the up position
+    private boolean ringElevatorUp = true;  // Boolean representing whether or not the ring elevator is currently at (or running to) the up position
     private boolean armUp = false;  // Boolean representing whether or not the wobble goal arm is currently at (or running to) the up position
     private boolean fingerIn = false;  // Boolean representing whether or not the ring finger's target position is currently in
 
@@ -297,7 +297,8 @@ public class TeleOp99Mark2 extends OpMode {
         fingerServo = hardwareMap.get(Servo.class, "ringFinger");
 
         // Initialize Ring Elevator motor
-        ringElevator = hardwareMap.get(DcMotor.class, "ringElevator");
+        ringElevator = hardwareMap.get(DcMotorEx.class, "ringElevator");
+        ringElevator.setVelocityPIDFCoefficients(5, 3, 3, 0);
 
         telemetry.addLine("Initializing servo/motor positions/powers");  // Debug message
 
@@ -310,7 +311,7 @@ public class TeleOp99Mark2 extends OpMode {
 
     @Override
     public void start() {
-        ringElevator.setPower(RING_ELEVATOR_POWER);
+        // Moved setPower out of here
     }
 
     @Override
@@ -390,6 +391,7 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Set Ring Elevator motor...
         ringElevator.setTargetPosition(ringElevator.getCurrentPosition());
+        //ringElevator.setPower(RING_ELEVATOR_VELOCITY);
         ringElevator.setPower(0.8);
         ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
@@ -775,7 +777,7 @@ public class TeleOp99Mark2 extends OpMode {
         wobbleArm.setTargetPosition(armPosition);
 
         // Finger state
-        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 20) fingerPosition = gamepad2XHeld ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION; // Inverts ringFinger controls if ringElevator is near the down position to avoid accidental damage to the ringFinger
+        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 200) fingerPosition = gamepad2XHeld ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION; // Inverts ringFinger controls if ringElevator is near the down position to avoid accidental damage to the ringFinger
         else fingerPosition = gamepad2XHeld ? RING_FINGER_IN_POSITION : RING_FINGER_OUT_POSITION;
 
         if (!(currentlyDeploying || currentlyUndeploying) || clawUserControl) {  // clawUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
@@ -785,8 +787,8 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Ring Elevator movement
         if (gamepad2APressed) {
-            ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
             ringElevatorUp = !ringElevatorUp;
+            ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
         }
     }
 
