@@ -1,24 +1,22 @@
-package org.firstinspires.ftc.teamcode.drive.opmode;
+package org.firstinspires.ftc.teamcode.test;
 
 import com.acmerobotics.roadrunner.drive.DriveSignal;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
 
-@TeleOp(name = "TeleOp99")
+@TeleOp(name = "Test Mode")
 
-public class TeleOp99 extends OpMode {
+public class TemporaryTestOpmode extends OpMode {
     private static boolean AXIS_MOVEMENT = true;  // Whether or not rotation, horizontal, and vertical movement across the field should be controlled by joystick axes rather than dpad buttons
 
     private static double MOVEMENT_FACTOR = 1.0;  // Floating-point number from 0 to 1 multiplied by all movement motor powers directly before application. Use this to limit the maximum power for ALL movement-related motors evenly
@@ -29,60 +27,59 @@ public class TeleOp99 extends OpMode {
 
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
-    private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not the X and Y buttons on the driver gamepad should toggle Roadrunner-powered automatic driving. If this is true, X will enable and Y will disable automatic control
+    private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled. The name is currently misleading (FIXME)
 
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
-    private static boolean BUTTONS_CYCLE_SPEED_CURVES = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
+    private static boolean BUTTONS_CYCLE_SPEED_CURVES = false;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
     private static boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
     private static int DEFAULT_SPEED_CURVE = 0;  // Only applies if using variable speed curves. The index of the speed curve to use by default (from 0-7 inclusive), and when reset. See above comments for speed curve list
     private static int DEFAULT_SPEED_CURVE_MODE = 0;  // Only applies if using variable speed curves. The index of the speed curve mode to use by default (from 0-2) inclusive. See above comments for mode list
+
+    private static int highGoalTPS = 55 * 28;  // Ticks per second of the shooter when active and aiming for the high goal
+    private static int powerShotTPS = 50 * 28;  // Ticks per second of the shooter when active and aiming for the power shots
 
     private static boolean FOOLPROOF_IMPOSSIBLE_POSITIONS = false;  // Whether or not servo position combinations which are impossible to reach physically will be prevented through software rather than servo gear-grinding, fire or accidental destruction of other parts. This only works to the point that such positions are predicted and tweaked accurately, and may be disabled under careful operation. TODO: This
 
     private static double ACCELERATION_CAP = 1.33333;  // The max allowed acceleration of any movement motor in units per second per second. This is included because max acceleration might tip the robot, but use with care as very low accelerations will make the robot sluggish. If the cap is reached, velocity will be incremented at this acceleration rather than the alternative. This value should be set to 1 divided by the number of seconds it should take for the motors to increment to maximum velocity. May be set above 1 for accelerations faster than 1 unit per second per second. 1.33333... (the default value) means it should take 0.75 seconds to go from 0 to full. Set to 0 to disable
 
     private static boolean MOVEMENT_ROTATION_CORRECTION = true;  // Whether or not we should attempt to adjust the robot's movement based on an accumulated rotation offset, which, if accurately maintained, would allow for rotating the robot without affecting movement from the driver's perspective. Disable this if steering seems to drift clockwise or counterclockwise after some amounts of rotation. DO NOTE THAT THIS OPTION EVADES ACCELERATION CHECKS. It does, however, respect all direct power limitations as well as any internal PID control from roadrunner (if any)
-
-    private static boolean RESTRICT_LIFT_MOVEMENT = true;  // Whether or not the lift's movement should be disabled when the shoulder is in
+    private static boolean LEFT_SHOULDER_RECALIBRATES_ROTATION = true;  // Whether or not the gamepad 1 left shoulder will reset the pose estimate rotation to the initial pose rotation. Only applies if MOVEMENT_ROTATION_CORRECTION is enabled
 
     private static boolean NATURAL_CLAW_CONTROL = false;  // Whether or not the manual control for the claw should be a toggle. If this is true, holding the claw button will keep the claw closed, and releasing it will open the claw. If this is false, the claw button will toggle the state of the claw opened or closed
     private static boolean INVERT_NATURAL_CLAW_CONTROL = false;  // Only applies if NATURAL_CLAW_CONTROL is used. If this is true, holding the claw button with keep the claw open rather than closed. Likewise releasing the button will close the claw instead of opening it
 
-    private static boolean NATURAL_SHOULDER_CONTROL = false;  // Whether or not the manual control for the shoulder should be a toggle. If this is true, holding the shoulder button will keep the shoulder out, and releasing it will swing the shoulder in. If this is false, the shoulder button will toggle the state of the shoulder in or out
-    private static boolean INVERT_NATURAL_SHOULDER_CONTROL = false;  // Only applies if NATURAL_SHOULDER_CONTROL is used. If this is true, holding the shoulder button with keep the shoulder in rather than out. Likewise releasing the button will swing the shoulder out rather than in
-
     // FIXME: Are these the limits of the actual servo, or are they outside the existing range limit?
     // TODO: Sanity check should check using these if they're accurate
-    private static double SHOULDER_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
-    private static double SHOULDER_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
 
-    private static double CLAW_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
-    private static double CLAW_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
+    private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
+    private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
 
-    private static double PICKUP_MINIMUM = 0.0;  // The minimum position for the wobble goal shoulder servo
-    private static double PICKUP_MAXIMUM = 1.0;  // The maximum position for the wobble goal shoulder servo
+    private static int ARM_DOWN_POSITION_DELTA = 430;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down (TODO: Set this value)
+    private static int ARM_UP_POSITION_DELTA = 221;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up (TODO: Set this value)
 
-    private static double SHOULDER_OUT_POSITION = 0.24;  // The position of the shoulder when it is out
-    private static double SHOULDER_IN_POSITION = 0.68;  // The position of the shoulder when it is in
-
-    private static double CLAW_OPENED_POSITION = 0.66;  // The position of the claw when it is open
-    private static double CLAW_CLOSED_POSITION = 0.13;  // The position of the claw when it is closed
-
-    private static double PICKUP_UP_POSITION = 0.32;  // The position of the pickup when it is up
-    private static double PICKUP_DOWN_POSITION = 0.70;  // The position of the pickup when it is down
-
-    private static double RING_DUMP_DUMP_POSITION = 0.83;  // The position of the ring dump when it's dumping
-    private static double RING_DUMP_COLLECT_POSITION = 0.5;  // The position of the ring dump when it's collecting
-
-    private static double LIFT_POWER_MULTIPLIER = 0.35;  // The value multiplied to lift motor values to prevent snapping the line. Currently set to 25% of full power
+    private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
+    private static int ARM_UP_POSITION;  // The absolute position (in motor encoder units) of the arm's up position. Set on init
 
     private static int RING_ELEVATOR_UP_POSITION;  // The position of the Ring Elevator when it is in the UP state
     private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
-    private static double RING_ELEVATOR_POWER = 0.3;  // The power for the motor to use when running to its target position
+    private static double RING_ELEVATOR_VELOCITY = 6000;  // The power for the motor to use when running to its target position TODO: We might increase this
+
+    private static double RING_FINGER_IN_POSITION = 0.23;  // The position of the ring finger when it's in
+    private static double RING_FINGER_OUT_POSITION = 0.75;  // The position of the ring finger when it's out
+
+    private static double FULLAXIS_LEFT_WEIGHT = 0.75;  // The weighting of the left joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_RIGHT_WEIGHT to equal exactly 1
+    private static double FULLAXIS_RIGHT_WEIGHT = 0.25;  // The weighting of the right joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_LEFT_WEIGHT to equal 1
 
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
     private static boolean FULLAXIS_CONTROL = true;  // Whether or not fullaxis mode is used. With this enabled, both thumb axes contribute equally (half power maximum on each joystick) to the final robot speed. In this mode, the gamepad 1 triggers are used for rotation, which also yields more movement and thus more overall control
+
+    private static boolean RIGHT_SHOULDER_RESETS_CURRENT_TARGET = true;  // Whether or not the gamepad 1 right shoulder will reset the target pose for the trajectory linked to the current target (the one last followed via gamepad 1 ABXY buttons). Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
+
+    private static double GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE = 0.1;  // The threshold over which any movement axes will immediately take back manual control. Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
+
+    private static double AUTO_DISTANCE_THRESHOLD = 0.5;  // 0.5 inches maximum error
+    private static double AUTO_ANGULAR_DISTANCE_THRESHOLD = Math.toRadians(5);  // 5 degrees maximum error
 
     private static int PMODE = 0;  // PMODE, for problems
 
@@ -90,18 +87,16 @@ public class TeleOp99 extends OpMode {
     private long lastTime;  // The time of the LAST tick, used to measure delta time. Set at init and every loop iteration
     private long deltaTime;  // The delta time between ticks in milliseconds. Set at init and every loop iteration
 
-    private double shoulderPosition;  // The current target position of the shoulder. setPosition is called using this value at the very end of the loop, only once
     private double clawPosition;  // The current target position of the claw. setPosition is called using this value at the very end of the loop, only once
-    private double pickupPosition;  // The current target position of the pickup. setPosition is called using this value at the very end of the loop, only once
-    private double liftPower;  // The current target power of the lift. setPower is called using this value at the very end of the loop, only once
-    private double ringDumpPosition;  // The current target position of the ring dump. setPosition is called using this value at the very end of the loop, only once
+    private double fingerPosition;  // The current target position of the ring finger. setPosition is called using this value at the very end of the loop, only once
+    private int armPosition;  // The current target position of the arm. runToPosition is called using this value at the very end of the loop, only once
 
-    private boolean shoulderState;  // Whether the shoulder is out (true) or in (false). Used as a toggle for user control of the shoulder
-    private boolean clawState;  // Whether the claw is closed (true) or open (false). Used as a toggle for user control of the claw
+    private boolean clawState = true;  // Whether the claw is closed (true) or open (false). Used as a toggle for user control of the claw
 
-    private double shoulderEstimatedPosition;  // The actual estimated position of the shoulder (as opposed to the target position). Any inaccuracy here should be quickly corrected when the shoulder target is changed, and wouldn't cause major issues anyway (only bugs I can think of are the lift operation being temporarily affected if RESTRICT_LIFT_MOVEMENT is true or impossible positions being inaccurately checked if FOOLPROOF_IMPOSSIBLE_POSITIONS is true). Managed by estimateServoPositions
+    private boolean shooterState;  // Whether or not the shooter is currently active
+
     private double clawEstimatedPosition;  // The actual estimated position of the claw (as opposed to the target position). Any inaccuracy here should be quickly corrected when the claw target is changed, and wouldn't cause major issues anyway (only bug I can think of is an impossible position check if FOOLPROOF_IMPOSSIBLE_POSITIONS is true). Managed by estimateServoPositions
-    private double pickupEstimatedPosition;  // The actual estimated position of the pickup (as opposed to the target position). Any inaccuracy here should be quickly corrected when the lift target is changed, and wouldn't cause major issues anyway (only bug I can think of is an impossible position check if FOOLPROOF_IMPOSSIBLE_POSITIONS is true). Managed by estimateServoPositions.
+    private double armEstimatedPosition;  // The actual estimated position (as opposed to the target position. This value is likely very close to the real position thanks to encoders). Managed by estimateServoPositions (yes, I know that this is a motor, but we're treating it like a servo here because we're using a set position rather than set power or velocity)
 
     private int currentSpeedCurve = DEFAULT_SPEED_CURVE;  // The speed curve and speed curve modes we're currently applying to user input, if enabled via USE_VARIABLE_SPEED_CURVES
     private int currentSpeedCurveMode = DEFAULT_SPEED_CURVE_MODE;
@@ -131,32 +126,31 @@ public class TeleOp99 extends OpMode {
     private double intakeDrivePower;
 
     // Wobble Goal manipulation motors and servos
-    private DcMotor wobbleLift;
-    private Servo wobblePickup;
-    private Servo wobbleShoulder;
-    private Servo wobbleClaw;
+    private Servo wobbleClaw;  // Wobble goal claw servo
+    private Servo fingerServo;  // Ring finger servo
+    private DcMotor wobbleArm;  // Wobble goal arm motor (used with encoders and runToPosition, so it acts like a servo)
 
-    // Ring manipulation servo
-    private Servo ringDump;
+    // Ring shooter motor
+    private DcMotorEx ringShooter;
 
     // Ring Elevator motor
-    private DcMotor ringElevator;
+    private DcMotorEx ringElevator;
 
     private boolean slowMode;  // Whether or not we're currently going slower
 
     // Variables relating to wobble goal manipulation
-    private boolean currentlyDeploying = false;  // Whether or not we're deploying the full wobble goal mechanism (claw, pickup, and shoulder)
-    private boolean currentlyUndeploying = false;  // Whether or not we're undeploying the full wobble goal mechanism (claw, pickup, and shoulder)
+    private boolean currentlyDeploying = false;  // Whether or not we're deploying the full wobble goal mechanism (claw, arm)
+    private boolean currentlyUndeploying = false;  // Whether or not we're undeploying the full wobble goal mechanism (claw, arm)
 
     private long deploymentStartTime;  // The start time of the wobble goal deployment sequence to determine when to set servo positions (in milliseconds)
     private long undeploymentStartTime;  // The start time of the wobble goal undeployment sequence to determine when to set servo positions (in millseconds)
 
     private boolean clawUserControl = false;  // Whether or not the user has claimed control of the claw during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment.
-    private boolean shoulderUserControl = false;  // Whether or not the user has claimed control of the shoulder during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment
-    private boolean pickupUserControl = false;  // Whether or not the user has claimed control of the pickup during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment
 
-    // Ring Elevator motor position
-    private boolean ringElevatorUp = false;
+    // States for the servos/motors that can be controlled via toggles
+    private boolean ringElevatorUp = false;  // Boolean representing whether or not the ring elevator is currently at (or running to) the up position
+    private boolean armUp = false;  // Boolean representing whether or not the wobble goal arm is currently at (or running to) the up position
+    private boolean fingerIn = false;  // Boolean representing whether or not the ring finger's target position is currently in
 
     // Automatic robot scoring states TODO: Remove if Unused
     private boolean autoMedGoalScore = false;
@@ -244,7 +238,9 @@ public class TeleOp99 extends OpMode {
     double horizontal = 0.0;
     double rotation = 0.0;
 
-    private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));  // TODO: SYNC THIS WITH AUTONOMOUS ASAP. PoseStorage should come in handy here
+    //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));  // TODO: SYNC THIS WITH AUTONOMOUS ASAP. PoseStorage should come in handy here
+    private Pose2d currentPose = PoseStorage.currentPose;
+    private final Pose2d initialPose = currentPose;
     private SampleMecanumDrive drive;
 
     private int autoPoseIndex = -1;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
@@ -257,6 +253,8 @@ public class TeleOp99 extends OpMode {
 
     // The trajectory we're currently following, if we're following a trajectory
     private Trajectory targetTrajectory;
+
+    private int currentShooterTPS = 0;  // The current TPS of the ring shooter, if active
 
     // The pose that we're currently targeting, extracted from the current index
     private Pose2d targetPose;
@@ -285,18 +283,22 @@ public class TeleOp99 extends OpMode {
         telemetry.addLine("Initializing ring dump servo");  // Debug message
 
         // Initialize ring dump servo
-        ringDump = hardwareMap.get(Servo.class, "ringDump");
+        //ringDump = hardwareMap.get(Servo.class, "ringDump");
+
+        // Initialize flywheel motor
+        ringShooter = hardwareMap.get(DcMotorEx.class, "shoot");
 
         telemetry.addLine("Initializing wobble goal manipulation motors");  // Debug message
 
         // Initialize Wobble Goal manipulation motors
-        wobbleLift = hardwareMap.get(DcMotor.class, "WGLift");
-        wobblePickup = hardwareMap.get(Servo.class, "WGPickup");
-        wobbleShoulder = hardwareMap.get(Servo.class, "WGShoulder");
+        //wobbleLift = hardwareMap.get(DcMotor.class, "WGLift");
+        //wobblePickup = hardwareMap.get(Servo.class, "WGPickup");
         wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
+        wobbleArm = hardwareMap.get(DcMotor.class, "WGArm");
+        fingerServo = hardwareMap.get(Servo.class, "ringFinger");
 
         // Initialize Ring Elevator motor
-        ringElevator = hardwareMap.get(DcMotor.class, "ringElevator");
+        ringElevator = hardwareMap.get(DcMotorEx.class, "ringElevator");
 
         telemetry.addLine("Initializing servo/motor positions/powers");  // Debug message
 
@@ -304,11 +306,13 @@ public class TeleOp99 extends OpMode {
 
         time = System.currentTimeMillis();
         lastTime = time;  // Initialize the last tick time so that deltas can be properly calculated
+        ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
+        ringElevator.setVelocityPIDFCoefficients(5, 3, 3, 0);
     }
 
     @Override
     public void start() {
-        ringElevator.setPower(RING_ELEVATOR_POWER);
+        ringElevator.setVelocity(RING_ELEVATOR_VELOCITY);
     }
 
     @Override
@@ -326,14 +330,6 @@ public class TeleOp99 extends OpMode {
             if (clawUserControl) {
                 clawUserControl = false;
             }
-
-            if (shoulderUserControl) {
-                shoulderUserControl = false;
-            }
-
-            if (pickupUserControl) {
-                pickupUserControl = false;
-            }
         }
 
         autoServoControl();  // Run automatic servo control (wobble goal mechanism deployment or undeployment) on whatever motors are "free" from manual control if such deployment is enabled (which it also checks for through the user input variables). DO NOT move this function call into a conditional. Without this function, timekeeping for the deployment and undeployment would act really weird if any manual control interrupted it (it would act really weird in a number of circumstances for that matter. Don't do it.)
@@ -342,17 +338,22 @@ public class TeleOp99 extends OpMode {
             inputAdjustVariableSpeedCurves();  // If we're using variable speed curves and they can be adjusted by user input, handle user input to adjust them if necessary
         }
 
-        estimateServoPositions();  // Estimate the actual servo positions for impossible position checks or the lift operation check. FIXME: This might belong lower down or further up, or maybe even run multiple times. Shouldn't affect anything yet though
+        estimateServoPositions();  // Estimate the actual servo positions for impossible position checks. FIXME: This might belong lower down or further up, or maybe even run multiple times. Shouldn't affect anything yet though
 
         if (!(currentlyDeploying || currentlyUndeploying) || !AUTO_PRIORITY) {
             applyManualServoControls();  // Run manual control on the wobble goal-related servos if there aren't automatic tasks that conflict with them
+        }
+
+        getAutoPoseIndex();  // Use user input changes to determine what pose index we should be at, and whether we should be driving automatically or not
+
+        if (GAMEPAD_XY_TOGGLES_AUTO_DRIVE && autoDrive) {  // If we're currently driving automatically
+            checkAutoMovementInterrupts();  // Disable automatic driving if any manual movement is detected that should override it
         }
 
         if (!GAMEPAD_XY_TOGGLES_AUTO_DRIVE || !autoDrive) {  // If we're not automatically driving the robot, apply manual movement controls
             applyManualMovementControls();  // The wobble-goal tasks don't prevent any manual movement, which is applied separately in this function
         }
         else {  // If we're using automatic (Roadrunner powered) controls, apply those
-            getAutoPoseIndex();  // Use user input changes to determine what pose index we should be at
             applyAutomaticMovementControls();  // Make any changes necessary to get to that previous selected pose
         }
 
@@ -377,14 +378,24 @@ public class TeleOp99 extends OpMode {
         intakeDrive.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Initialize servo positions
-        wobblePickup.setPosition(PICKUP_UP_POSITION);
-        wobbleShoulder.setPosition(SHOULDER_IN_POSITION);
-        wobbleClaw.setPosition(CLAW_OPENED_POSITION);
+        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
+        fingerServo.setPosition(RING_FINGER_OUT_POSITION);
+
+        // Use the arm's current position to find the (relative) up and down positions to set the arm's encoder to later
+        armPosition = wobbleArm.getCurrentPosition();
+        wobbleArm.setTargetPosition(armPosition);
+        wobbleArm.setPower(1.0);
+        wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armEstimatedPosition = armPosition;
+        ARM_UP_POSITION = armPosition - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta instead
+        ARM_DOWN_POSITION = armPosition - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta insted
 
         // Set Ring Elevator motor...
+        ringElevator.setTargetPosition(ringElevator.getCurrentPosition());
+        ringElevator.setPower(0.8);
         ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
-        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION - 2017;
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2017;
     }
 
     private void inputAdjustVariableSpeedCurves() {
@@ -426,24 +437,61 @@ public class TeleOp99 extends OpMode {
         backLeftDrivePower = Math.max(-1, Math.min(1, backLeftDrivePower));
         backRightDrivePower = Math.max(-1, Math.min(1, backRightDrivePower));
 
-        liftPower = Math.max(-1, Math.min(1, liftPower));
         intakeDrivePower = Math.max(-1, Math.min(1, intakeDrivePower));
 
-        pickupPosition = Math.max(0, Math.min(1, pickupPosition));
-        shoulderPosition = Math.max(0, Math.min(1, shoulderPosition));
         clawPosition = Math.max(0, Math.min(1, clawPosition));
-        ringDumpPosition = Math.max(0, Math.min(1, ringDumpPosition));
+        //armPosition = Math.max(0, Math.min(1, armPosition));
     }
 
     private void getAutoPoseIndex() {
-        // FIXME: Benjamin needs to program this. Tip: you can rely on the current pose and target pose in case one pose should automatically lead to another. Just wait until we're not currently following a trajectory before switching to the next one
-        if (currentPose == targetPose){
-            if (gamepad1APressed) autoPoseIndex = 0;
-            else if (gamepad1XPressed) autoPoseIndex = 1;
-            else if (gamepad1YPressed) autoPoseIndex = 2;
-            else if (gamepad1BPressed) autoPoseIndex = 3;
+        /*if (gamepad1APressed) {
+            autoPoseIndex = 0;  // High goal
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = true;
         }
-    }
+        else if (gamepad1XPressed) {
+            autoPoseIndex = 1;  // Power shot 1
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = true;
+        }
+        else if (gamepad1YPressed) {
+            autoPoseIndex = 2;  // Power shot 2
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = true;
+        }
+        else if (gamepad1BPressed) {
+            autoPoseIndex = 3;  // Power shot 3
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = true;
+        }
+        else if (gamepad1RightStickPressed) {  // Cancel auto following if the right stick is pressed
+            autoDrive = false;
+        }
+
+        if (RIGHT_SHOULDER_RESETS_CURRENT_TARGET && gamepad1RightShoulderPressed) {
+            // Reset the current target pose to our current pose
+            switch (autoPoseIndex) {
+                case (0):
+                    drive.setPoseEstimate(new Pose2d(highGoalShootPose.getX(), highGoalShootPose.getY(), drive.getPoseEstimate().getHeading()));  // FIXME: These might be off by one tick. This is probably the least important "bug" in the code at any decent tick rate
+                    telemetry.addLine("Updated current pose to high goal shoot pose");
+                    break;
+                case (1):
+                    drive.setPoseEstimate(new Pose2d(powerShotPose1.getX(), powerShotPose1.getY(), drive.getPoseEstimate().getHeading()));
+                    telemetry.addLine("Updated current pose to power shot 1 pose");
+                    break;
+                case (2):
+                    drive.setPoseEstimate(new Pose2d(powerShotPose2.getX(), powerShotPose2.getY(), drive.getPoseEstimate().getHeading()));
+                    telemetry.addLine("Updated current pose to power shot 2 pose");
+                    break;
+                case (3):
+                    drive.setPoseEstimate(new Pose2d(powerShotPose3.getX(), powerShotPose3.getY(), drive.getPoseEstimate().getHeading()));
+                    telemetry.addLine("Updated current pose to power shot 3 pose");
+                    break;
+            }
+
+            currentlyFollowingAutoTrajectory = false;  // If we were following this target, stop; now we've already reached it. This is probably redundant
+        }
+    */}
 
     private void autoServoControl() {
         if (gamepad2LeftStickPressed) {  // Cancel auto controls if the driver's left stick was pressed
@@ -479,7 +527,9 @@ public class TeleOp99 extends OpMode {
             currentlyDeploying = false;  // If we're deploying, stop
         }
 
-        if (currentlyDeploying) {
+        // Rewrite these for the new Mark 2 sequence
+        //if (currentlyDeploying) {  // Currently disabled to prevent undesired behavior (FIXME: Write the actual code)
+       /* if (false) {
             long elapsedTime = time - deploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
             telemetry.addData("Deployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
@@ -492,25 +542,15 @@ public class TeleOp99 extends OpMode {
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
             }
 
-            if (elapsedTime < 1000 && elapsedTime > 500 && (!shoulderUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of it and we're supposed to continue
-                shoulderPosition = SHOULDER_OUT_POSITION;  // Extend it
-                shoulderState = false;
-            }
-            else if (elapsedTime < 1000 && elapsedTime > 500 && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
-                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;  // Only continue if we're supposed to in this case
-            }
-
-            if (elapsedTime < 1000 && elapsedTime > 500 && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been extended fully and we have control of the pickup and we're supposed to continue
-                pickupPosition = PICKUP_DOWN_POSITION;  // Lower the pickup (its movement is tied into the shoulder movement)
-            }
-
             if (elapsedTime > 1000) {  // The deployment has finished
                 telemetry.addLine("Finished wobble goal deployment sequence");
                 currentlyDeploying = false;
             }
-        }
+        }*/
 
-        if (currentlyUndeploying) {
+        // Rewrite this for Mark 2 as well
+        //if (currentlyUndeploying) {  // Currently disabled to prevent undesired behavior (FIXME: Write the actual code)
+       /* if (false) {
             long elapsedTime = time - undeploymentStartTime;  // Get the elapsed time to keep track of which servos should be moving
             telemetry.addData("Undeployment elapsed time: ", elapsedTime);
             boolean canContinue = true;  // Whether or not we should continue attempting auto servo control
@@ -523,21 +563,6 @@ public class TeleOp99 extends OpMode {
                 canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
             }
 
-            if (elapsedTime < 800 && elapsedTime > 300 && (!shoulderUserControl || AUTO_PRIORITY)) {  // If the shoulder hasn't been retracted fully and we have control of it
-                shoulderPosition = SHOULDER_IN_POSITION;  // Retract it
-                shoulderState = true;
-            }
-            else if (elapsedTime < 800 && elapsedTime > 300 && (shoulderUserControl && !AUTO_PRIORITY)) {  // If the user is preventing us from moving the shoulder
-                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
-            }
-
-            if (elapsedTime < 800 && elapsedTime > 300 && (!pickupUserControl || AUTO_PRIORITY) && canContinue) {  // If the shoulder hasn't been retracted fully and we have control of the pickup and we're supposed to continue
-                pickupPosition = PICKUP_UP_POSITION;  // Raise the pickup (its movement is tied into the shoulder movement)
-            }
-            else if (elapsedTime < 800 && elapsedTime > 300 && (!pickupUserControl && !AUTO_PRIORITY)) {
-                canContinue = CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES;
-            }
-
             if (elapsedTime < 1300 && elapsedTime > 800 && (!clawUserControl || AUTO_PRIORITY) && canContinue) {  // If the claw hasn't been closed fully and we have control of it and we're supposed to continue
                 clawPosition = CLAW_CLOSED_POSITION;  // Close it
                 clawState = true;
@@ -547,7 +572,7 @@ public class TeleOp99 extends OpMode {
                 telemetry.addLine("Finished wobble goal undeployment sequence");
                 currentlyUndeploying = false;
             }
-        }
+        }*/
     }
 
     private void applyAutomaticMovementControls() {
@@ -569,12 +594,17 @@ public class TeleOp99 extends OpMode {
                         break;
                 }
 
-                if (currentPose != targetPose && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
-                    targetTrajectory = drive.trajectoryBuilder(PoseStorage.currentPose).lineToLinearHeading(targetPose).build();
+                double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX(), 2) - Math.pow(targetPose.getX(), 2));
+                double angularDistance = Math.abs(drive.getPoseEstimate().getHeading() - targetPose.getHeading());
+
+                boolean areWeThereYet = (distance <= AUTO_DISTANCE_THRESHOLD && angularDistance <= AUTO_ANGULAR_DISTANCE_THRESHOLD);
+
+                if (!areWeThereYet && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
+                    targetTrajectory = drive.trajectoryBuilder(drive.getPoseEstimate()).lineToLinearHeading(targetPose).build();
                     drive.followTrajectoryAsync(targetTrajectory);  // This would be path continuity exception after the first iteration if this code were accessible while currentlyFollowingAutoTrajectory were true
                     currentlyFollowingAutoTrajectory = true;
                 }
-                else if (currentPose == targetPose) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
+                else if (areWeThereYet) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
                     currentlyFollowingAutoTrajectory = false;
                 }
             }
@@ -594,13 +624,13 @@ public class TeleOp99 extends OpMode {
         if (AXIS_MOVEMENT) {  // If we're using axis movement
             if (FULLAXIS_CONTROL) {  // We're using the fullaxis movement scheme
                 if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
-                    vertical = easeNormalized((-gamepad1LeftStickY - gamepad1RightStickY) / 2.0, currentSpeedCurve, currentSpeedCurveMode);
-                    horizontal = easeNormalized((gamepad1LeftStickX + gamepad1RightStickX) / 2.0, currentSpeedCurve, currentSpeedCurveMode);
-                    rotation = easeNormalized(gamepad1LeftTrigger - gamepad1RightTrigger, currentSpeedCurve, currentSpeedCurveMode);
+                    vertical = easeNormalized((-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
+                    horizontal = easeNormalized((gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
+                    rotation = easeNormalized(gamepad1RightTrigger * gamepad1RightTrigger - gamepad1LeftTrigger * gamepad1LeftTrigger, currentSpeedCurve, currentSpeedCurveMode);
                 } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
-                    vertical = (-gamepad1LeftStickY - gamepad1RightStickY) / 2.0;
-                    horizontal = (gamepad1LeftStickX + gamepad1RightStickX) / 2.0;
-                    rotation = (gamepad1LeftTrigger - gamepad1RightTrigger);
+                    vertical = (-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT);
+                    horizontal = (gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT);
+                    rotation = (gamepad1RightTrigger - gamepad1LeftTrigger);
                 }
             }
             else {
@@ -644,55 +674,50 @@ public class TeleOp99 extends OpMode {
         backRightDrivePower = vertical + horizontal - rotation;
 
         // Set intake speed
-        intakeDrivePower = gamepad2RightTrigger - gamepad2LeftTrigger;
+        intakeDrivePower = gamepad2LeftTrigger - gamepad2RightTrigger + gamepad2RightStickY - 1;
     }
 
     private void checkAutoInterrupts() {  // Checks to see if any manual input will interfere with an automatic task, if manual input takes priority (AUTO_PRIORITY is false). If so, it disables the automatic overrides using a flag for each servo involved
-        if (gamepad2APressed) {  // This adjusts the shoulderState, which means that a user should take control rather than auto fighting him
-            shoulderUserControl = true;
-        }
-
         if (gamepad2BPressed) {  // This adjusts the clawState, which means that a user should take control rather than auto fighting him
             clawUserControl = true;
         }
+    }
 
-        if (pickupPosition != (gamepad1RightTrigger >= JOYSTICK_INPUT_THRESHOLD ? PICKUP_DOWN_POSITION : PICKUP_UP_POSITION)) {  // If manual control would change the pickup position, allow it by letting the user take control instead of fighting him
-            pickupUserControl = true;
+    private void checkAutoMovementInterrupts() {  // Checks to see if any manual input will interfere with an automatic trajectory
+        //if (Math.abs(gamepad1LeftStickX) + Math.abs(gamepad1LeftStickY) + Math.abs(gamepad1RightStickX) + Math.abs(gamepad1RightStickY) + Math.abs(gamepad1LeftTrigger) + Math.abs(gamepad1RightTrigger) >= GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE*6) {
+        //    // One or more of the axes exceeds the deadzone (FIXME: I know that this could be computed in a more tedious, albeit possibly more accurate way by testing each axis individually. We'll see how it works and change it if necessary)
+        //    autoDrive = false;  // We're overriding auto control
+        //    currentlyFollowingAutoTrajectory = false;  // Yes, this line is important
+        //}
+
+        if (Math.abs(gamepad1LeftStickX) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1LeftStickY) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1RightStickX) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1RightStickY) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1LeftTrigger) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
+        }
+        else if (Math.abs(gamepad1RightTrigger) > GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE) {
+            autoDrive = false;
+            currentlyFollowingAutoTrajectory = false;
         }
     }
 
     private void applyManualServoControls() {
-        // Lift movement
-        if (!RESTRICT_LIFT_MOVEMENT || (shoulderEstimatedPosition == SHOULDER_OUT_POSITION)) {  // Only allow the lift to move when the wobble goal shoulder is rotated out or RESTRICT_LIFT_MOVEMENT is false
-            liftPower = LIFT_POWER_MULTIPLIER * -gamepad2LeftStickY;
-        } else {  // If we've restricted the movement, make sure that the lift is either out of the way or getting there
-            liftPower = 0.0;
-        }
-
-        if (!(currentlyDeploying || currentlyUndeploying) || shoulderUserControl) {  // shoulderUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
-            // Pickup movement, controlled by a gamepad trigger
-            pickupPosition = gamepad1RightTrigger >= JOYSTICK_INPUT_THRESHOLD ? PICKUP_DOWN_POSITION : PICKUP_UP_POSITION;
-        }
-
-        // Shoulder state
-        if (!NATURAL_SHOULDER_CONTROL) {
-            // Shoulder state adjustment based on user input toggle
-            if (gamepad2APressed) {
-                shoulderState = !shoulderState;
-            }
-        } else {
-            // Shoulder state adjustment based on consistent user input (holding the button)
-            if (INVERT_NATURAL_SHOULDER_CONTROL) {  // Holding the button keeps the shoulder in
-                shoulderState = gamepad2AHeld;
-            } else {  // Holding the button keeps the shoulder out
-                shoulderState = !gamepad2AHeld;
-            }
-        }
-
-        if (!(currentlyDeploying || currentlyUndeploying) || shoulderUserControl) {  // shoulderUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
-            // Shoulder movement
-            shoulderPosition = shoulderState ? SHOULDER_IN_POSITION : SHOULDER_OUT_POSITION;
-        }
+        // FIXME: This may need to be rewritten
 
         // Claw state
         if (!NATURAL_CLAW_CONTROL) {
@@ -709,13 +734,56 @@ public class TeleOp99 extends OpMode {
             }
         }
 
+        // Shooter state
+        shooterState = gamepad2LeftShoulderHeld || gamepad2RightShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
+
+        if (gamepad2LeftShoulderHeld) {
+            currentShooterTPS = highGoalTPS;
+        }
+        else if (gamepad2RightShoulderHeld) {
+            currentShooterTPS = powerShotTPS;
+        }
+        else {
+            currentShooterTPS = 0;
+        }
+
+        //if (shooterState) {
+        //    currentShooterTPS = autoPoseIndex == 0 ? highGoalTPS : powerShotTPS;  // Get the desired shooter TPS from the selected auto target index
+        //    ringShooter.setVelocity(currentShooterTPS);  // When the shooter is active, set the velocity to the target rate of the shooter for the high goal
+        //}
+        //else {
+        //    ringShooter.setPower(0.0);  // If the shooter is inactive, zero its power
+        //}
+
+        if (shooterState) {
+            ringShooter.setVelocity(currentShooterTPS);
+        }
+        else {
+            ringShooter.setPower(0.0);
+        }
+
+        // Arm state toggle
+        if (gamepad2YPressed) {  // FIXME: Is this in use somewhere else
+            armUp = !armUp;
+            armPosition = armUp ? ARM_DOWN_POSITION : ARM_UP_POSITION;
+            //wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        // Arm position (fine tuning via manual control if needed)
+        //if (Math.abs(gamepad2LeftStickY) > 0.1) {
+        //    armPosition += gamepad2LeftStickY * deltaTime/1000.0 * 10;
+        //}
+
+        wobbleArm.setTargetPosition(armPosition);
+
+        // Finger state
+        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 20) fingerPosition = gamepad2XHeld ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION; // Inverts ringFinger controls if ringElevator is near the down position to avoid accidental damage to the ringFinger
+        else fingerPosition = gamepad2XHeld ? RING_FINGER_IN_POSITION : RING_FINGER_OUT_POSITION;
+
         if (!(currentlyDeploying || currentlyUndeploying) || clawUserControl) {  // clawUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
             // Claw movement
             clawPosition = clawState ? CLAW_CLOSED_POSITION : CLAW_OPENED_POSITION;
         }
-
-        // Ring dump movement
-        ringDumpPosition = gamepad2LeftShoulderHeld ? RING_DUMP_DUMP_POSITION : RING_DUMP_COLLECT_POSITION;
 
         // Ring Elevator movement
         if (gamepad2APressed) {
@@ -726,9 +794,8 @@ public class TeleOp99 extends OpMode {
 
     private void estimateServoPositions() {
         // Currently a dummy function. Should share timekeeping with the auto control function somehow and try to figure out where the servos really are. This might require VERY precise tweaking of automatic servo start/end times to work well and should probably stay as-is until we do that
-        pickupEstimatedPosition = pickupPosition;
         clawEstimatedPosition = clawPosition;
-        shoulderEstimatedPosition = shoulderPosition;
+        armEstimatedPosition = wobbleArm.getCurrentPosition();
     }
 
     private void limitAcceleration() {
@@ -774,23 +841,49 @@ public class TeleOp99 extends OpMode {
             //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
             //telemetry.update();
 
-            drive.setDrivePower(
-                    new Pose2d(
-                            directionalVector.getX(),
-                            directionalVector.getY(),
-                            -rotation
-                    )
-            );
+            if (!(autoDrive && currentlyFollowingAutoTrajectory) || !GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're NOT currently automatic driving
+                //drive.setDrivePower(
+                //        new Pose2d(
+                //                directionalVector.getX(),
+                //                directionalVector.getY(),
+                //                -rotation
+                //        )
+                //);
+
+                if (drive.mode != SampleMecanumDrive.Mode.IDLE) {
+                    drive.mode = SampleMecanumDrive.Mode.IDLE;
+                }
+
+                drive.setDriveSignal(new DriveSignal(
+                        new Pose2d(
+                                directionalVector.getX() * 40.0,
+                                directionalVector.getY() * 40.0,
+                                -rotation * 5)));
+            }
 
             // Update all roadrunner stuff (odometry, etc.)
             // Do not that this method completely evades acceleration checks and the like, leaving all calculations to roadrunner
             drive.update();
 
             // Read pose
-            currentPose = drive.getPoseEstimate();  // We don't currently use this for anything, but roadrunner should automatically correct our rotation
+            currentPose = drive.getPoseEstimate();
+
+            // Reset pose estimate rotation if needed
+            if (LEFT_SHOULDER_RECALIBRATES_ROTATION && gamepad1LeftShoulderPressed) {  // Reset the current pose estimate rotation to the initial pose rotation
+                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), initialPose.getHeading());
+                drive.setPoseEstimate(currentPose);
+                telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
+            }
+
+            PoseStorage.currentPose = currentPose;  // Sync in case autonomous runs after this? Likely necessary but won't hurt anything
+
             telemetry.addData("Current position x:", currentPose.getX());
             telemetry.addData("Current position y: ", currentPose.getY());
             telemetry.addData("Current heading: ", currentPose.getHeading());
+            telemetry.addData("Currently following trajectory: ", currentlyFollowingAutoTrajectory);
+            telemetry.addData("Currently auto-driving: ", autoDrive);
+            telemetry.addData("Currently busy: ", drive.isBusy());
+            telemetry.addData("Currently idle: ", drive.mode == SampleMecanumDrive.Mode.IDLE);
             telemetry.update();
 
             intakeDrive.setPower(intakeDrivePower);
@@ -811,11 +904,8 @@ public class TeleOp99 extends OpMode {
         }
 
         // Apply all servo values
-        wobbleLift.setPower(liftPower);
         wobbleClaw.setPosition(clawPosition);
-        wobblePickup.setPosition(pickupPosition);
-        wobbleShoulder.setPosition(shoulderPosition);
-        ringDump.setPosition(ringDumpPosition);
+        fingerServo.setPosition(fingerPosition);
     }
 
     private void handleInput() {
@@ -1148,20 +1238,11 @@ public class TeleOp99 extends OpMode {
                     ACCELERATION_CAP += (gamepad2RightShoulderHeld) ? 1 : -1;
                     ACCELERATION_CAP = Math.max(0, Math.min(1, ACCELERATION_CAP));
                 }
-                else if (pmode == 515) {
-                    RESTRICT_LIFT_MOVEMENT = gamepad2RightShoulderHeld;
-                }
                 else if (pmode == 516) {
                     NATURAL_CLAW_CONTROL = gamepad2RightShoulderHeld;
                 }
                 else if (pmode == 769) {
                     INVERT_NATURAL_CLAW_CONTROL = gamepad2RightShoulderHeld;
-                }
-                else if (pmode == 770) {
-                    NATURAL_SHOULDER_CONTROL = gamepad2RightShoulderHeld;
-                }
-                else if (pmode == 771) {
-                    INVERT_NATURAL_SHOULDER_CONTROL = gamepad2RightShoulderHeld;
                 }
                 else if (pmode == 772) {
                     JOYSTICK_INPUT_THRESHOLD += (gamepad2RightShoulderHeld) ? 0.1 : -0.1;
