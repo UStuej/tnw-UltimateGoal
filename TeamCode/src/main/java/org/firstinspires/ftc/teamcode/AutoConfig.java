@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.tnwutil.Settings;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,15 +20,6 @@ import java.util.Map;
 @TeleOp(name = "AutoConfig", group = "config")
 
 public class AutoConfig extends LinearOpMode {
-
-    public static class Settings implements Serializable {
-
-        // Unique long which specifies which version this class is
-        public static final long serialVersionUID = 9145306921234518589L;
-
-        // Settings to be stored as fields, and their default values
-
-    }
 
     private boolean gamepad1AHeld = false;
     private boolean gamepad1APressed = false;
@@ -66,10 +58,10 @@ public class AutoConfig extends LinearOpMode {
 
         // START
 
-        // Current config preset being modified
-        Settings cfg;
-
         while (!isStopRequested()) {
+
+            // Current config preset being modified
+            Settings cfg = null;
 
             // Select or create new preset to modify
             if (cfgs != null) {
@@ -77,25 +69,25 @@ public class AutoConfig extends LinearOpMode {
                 telemetry.addLine("Modify existing config preset <A>, or create new config <B>?");
                 telemetry.update();
 
-                // Wait for A or B to be pressed
+                // Wait for A or B to be pressed, or for the opmode to be stopped (resulting in saving the configurations)
                 do {
                     handleInput();
-                } while (!gamepad1APressed && !gamepad1BPressed);
+                } while (!isStopRequested() && !gamepad1APressed && !gamepad1BPressed);
 
-                if (gamepad1APressed) {
+                if (isStopRequested()) {
+                    break;
+                } else if (gamepad1APressed) {
 
                     // Convert the unordered key Set of cfgs Map to an ordered array
                     String[] presets = (String[]) cfgs.keySet().toArray();
 
-                    telemetry.clearAll();
-                    telemetry.setAutoClear(false);
-
-                    int presetIdx = 0;
+                    short presetIdx = 0;
 
                     {
                         telemetry.addLine("Select <B> a preset to modify...");
                         Telemetry.Item selector = telemetry.addData("<LB | RB>", presets[presetIdx]);
                         telemetry.update();
+                        telemetry.setAutoClear(false);
 
                         while (true) {
 
@@ -107,22 +99,22 @@ public class AutoConfig extends LinearOpMode {
                             if (gamepad1BHeld) {  // Finish selection when B is pressed
                                 break;
                             } else if (gamepad1LBPressed) {
-                                presetIdx = presetIdx > 0
+                                presetIdx = (short) (presetIdx > 0
                                         ? presetIdx - 1
-                                        : presets.length - 1;
+                                        : presets.length - 1);
                             } else if (gamepad1RBPressed) {
-                                presetIdx = presetIdx < presets.length - 1
+                                presetIdx = (short) (presetIdx < presets.length - 1
                                         ? presetIdx + 1
-                                        : 0;
+                                        : 0);
                             }
 
                             selector.setValue(presets[presetIdx]);
                             telemetry.update();
 
                         }
-                    }
 
-                    telemetry.setAutoClear(true);
+                        telemetry.setAutoClear(true);
+                    }
 
                     cfg = cfgs.get(presets[presetIdx]);
 
@@ -134,19 +126,75 @@ public class AutoConfig extends LinearOpMode {
                 cfg = new Settings();
             }
 
-        }
+            {
 
-        {
-            int selectIdx = 0;
+                telemetry.addLine("Select a setting <LB | RB> and modify its value <UP | DOWN>, then exit <A> when finished...");
+                Telemetry.Item setting = telemetry.addData("Setting", "");
+                Telemetry.Item description = telemetry.addData("Description", "");
+                Telemetry.Item value = telemetry.addData("Value", "");
+                telemetry.setAutoClear(false);
 
-            // Select option and modify it
-            while (true) {
+                short optionIdx = 0;
 
-                do {
-                    handleInput();
-                } while (!gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
+                // Controls to select an option and modify its value
+                while (true) {
+
+                    // Wait until a button is pressed
+                    do {
+                        handleInput();
+                    } while (!gamepad1AHeld && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
+
+                    if (gamepad1AHeld) {  // Finish selection when A is pressed
+                        break;
+                    } else if (gamepad1LBPressed) {
+                        optionIdx = (short) (optionIdx > 0
+                                ? optionIdx - 1
+                                : 2);  // Number of settings (option fields within Settings class)
+                    } else if (gamepad1RBPressed) {
+                        optionIdx = (short) (optionIdx < 2  // Number of settings (option fields within Settings class)
+                                ? optionIdx + 1
+                                : 0);
+                    }
+
+                    // Change to a new option to set, or modify the current one's value
+                    switch (optionIdx) {
+
+                        case 0:
+                            cfg.testBool = (gamepad1UPPressed || gamepad1DOWNPressed) != cfg.testBool;  // Flip the state of the boolean if either up or down is pressed
+
+                            setting.setValue("Test Bool");
+                            description.setValue("booooooollelanena");
+                            value.setValue(cfg.testBool);
+                        break;
+
+                        case 1:
+                            cfg.testByte = (byte) (
+                                    gamepad1DOWNPressed
+                                        ? cfg.testByte > 0
+                                            ? cfg.testByte - 1
+                                            : 3  // Max value allowed for byte
+                                    : gamepad1UPPressed
+                                        ? cfg.testByte < 3  // Max value allowed for byte
+                                            ? cfg.testByte + 1
+                                            : 0
+                                    : cfg.testByte
+                            );
+
+                            setting.setValue("Test Byte");
+                            description.setValue("btetrbyetytyb");
+                            value.setValue(cfg.testByte);
+                        break;
+
+                    }
+
+                    telemetry.update();
+
+                }
 
             }
+
+            // TODO Ask for a name to save the preset as if new, and put the preset into the cfgs Map
+
         }
 
         // STOP
