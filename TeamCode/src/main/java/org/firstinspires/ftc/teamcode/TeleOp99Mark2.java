@@ -259,6 +259,9 @@ public class TeleOp99Mark2 extends OpMode {
     // The pose that we're currently targeting, extracted from the current index
     private Pose2d targetPose;
 
+    private long fingerCooldown;  // Amount of time remaining until the finger will automatically go back inward to push another ring. Reset whenever the finger is used manually
+    private boolean fingerAttemptingIntake;
+
     private boolean currentlyFollowingAutoTrajectory = false;  // Whether or not we're currently following an automatic trajectory. This should be set to false whenever we switch back to manual control
 
     @Override
@@ -777,9 +780,36 @@ public class TeleOp99Mark2 extends OpMode {
 
         wobbleArm.setTargetPosition(armPosition);
 
-        // Finger state
-        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 200) fingerPosition = gamepad2XHeld ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION; // Inverts ringFinger controls if ringElevator is near the down position to avoid accidental damage to the ringFinger
-        else fingerPosition = gamepad2XHeld ? RING_FINGER_IN_POSITION : RING_FINGER_OUT_POSITION;
+        if (gamepad2XPressed) {  // Manual control of the finger; moves it inward when pressed
+            fingerAttemptingIntake = true;
+            fingerCooldown = 0;  // Reset finger cooldown on manual input
+        }
+        else if (gamepad2XHeld) {  // Attempt to cycle the finger inward and outward based on a cooldown and whether or not the button is continually held
+            if (fingerCooldown <= 0) {  // If the cooldown has counted down to zero, it's time to (attempt to) intake the finger
+                fingerAttemptingIntake = true;
+            }
+            else if (fingerCooldown <= 500-150) {  // If the cooldown has counted down to 300, but not zero, it's time to (attempt to) move the finger out again
+                fingerAttemptingIntake = false;  // Reset the intake flag if we're outtaking
+            }
+        }
+        else {  // The button is released; attempt to move the finger outward
+            fingerAttemptingIntake = false;  // Reset the intake flag if the button is released
+        }
+
+        if (fingerCooldown > 0) {
+            fingerCooldown -= deltaTime;  // Decrement the finger cooldown unless it's below or equal to 0
+        }
+        else {
+            fingerCooldown = 500;  // At 150 milliseconds, the finger is moved out. At 0 (500 from now) it's moved in again
+        }
+
+        // Adjust finger state based on whether it's attempting to move inward and whether it's possible without damaging the ring elevator
+        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 200) {
+            fingerPosition = fingerAttemptingIntake ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION;  // Move the finger inward if it's currently attempting to and the elevator position allows it
+        }
+        else {
+            fingerPosition = fingerAttemptingIntake ? RING_FINGER_IN_POSITION : RING_FINGER_OUT_POSITION;  // Invert finger goals when the bucket
+        }
 
         if (!(currentlyDeploying || currentlyUndeploying) || clawUserControl) {  // clawUserControl will be set if we've changed this claw state, so this never locks us out of input unless auto has priority
             // Claw movement
