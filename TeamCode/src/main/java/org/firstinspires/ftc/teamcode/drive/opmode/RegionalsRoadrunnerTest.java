@@ -12,7 +12,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -174,6 +176,8 @@ public class RegionalsRoadrunnerTest extends LinearOpMode {
     // Driver Input Variables
     boolean nextStep = false; // if nextStep is true, driver input will continue to the next step
     int driveFieldTiles = 0; // field tiles to be driven, indicated by drivers in init
+    boolean blueAlliance = false;
+    boolean buttonsReleased = true;
 
     private void handleInput() {
         // Cache previous gamepad 1 inputs
@@ -223,31 +227,75 @@ public class RegionalsRoadrunnerTest extends LinearOpMode {
         gamepad2DpadRightHeld = gamepad2.dpad_right;
     }
 
+    Pose2d selInvertPose(Pose2d inputPose) {
+        if (blueAlliance) {
+            return new Pose2d(inputPose.getX(), -inputPose.getY(), Math.toRadians(360) - inputPose.getHeading());
+        }
+        else { return inputPose; }
+    }
+    Vector2d selInvertPose(Vector2d inputVector) {
+        if (blueAlliance) {
+            return new Vector2d(inputVector.getX(), -inputVector.getY());
+        }
+        else { return inputVector; }
+    }
+    double selInvertPose(double inputEndTangent) {
+        if (blueAlliance) return 360 - inputEndTangent;
+        else return inputEndTangent;
+    }
+
     @Override
     public void runOpMode() throws InterruptedException {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        drive.setPoseEstimate(STARTING_POSE);
-
         telemetry.addData("Status: ", "Obtaining user input...");
 
         while (!nextStep) {
             handleInput();
-            if (gamepad1DpadRightPressed) driveFieldTiles++;
-            else if (gamepad1DpadLeftPressed) driveFieldTiles--;
-            else if (gamepad1APressed) nextStep = true;
-            telemetry.addData("Obtaining ", "field tiles to drive = " + driveFieldTiles);
-            telemetry.update();
+            if (!gamepad1APressed && !gamepad1BPressed && !gamepad1XPressed) buttonsReleased = true;
+            if (buttonsReleased) {
+                if (gamepad1DpadRightPressed) driveFieldTiles++;
+                else if (gamepad1DpadLeftPressed) driveFieldTiles--;
+                else if (gamepad1APressed) nextStep = true;
+                telemetry.addData("Obtaining ", "field tiles to drive = " + driveFieldTiles);
+                telemetry.update();
+            }
         }
+        nextStep = false;
+        while (!nextStep) {
+            handleInput();
+            if (!gamepad1APressed && !gamepad1BPressed && !gamepad1XPressed) buttonsReleased = true;
+            if (buttonsReleased) {
+                if (gamepad1APressed) { blueAlliance = false; nextStep = true; }
+                else if (gamepad1BPressed) { blueAlliance = true; nextStep = true; }
+                telemetry.addData("Obtaining ", "Red Alliance? (A for yes, B for no)");
+                telemetry.update();
+            }
+        }
+
+        drive.setPoseEstimate(selInvertPose(STARTING_POSE)); // set this after alliance color is specified by drivers
 
         telemetry.addData("Status: ", "Building Trajectories...");
 
 // ROADRUNNER AUTONOMOUS TRAJECTORIES:
 
-        Trajectory driveStraight = drive.trajectoryBuilder(STARTING_POSE)
-                .lineTo(new Vector2d(STARTING_POSE.getX() + driveFieldTiles * 24, STARTING_POSE.getY()))
+        Trajectory spline = drive.trajectoryBuilder(selInvertPose(STARTING_POSE))
+                .splineTo(selInvertPose(new Vector2d(STARTING_POSE.getX() + driveFieldTiles * 24, STARTING_POSE.getY() + 36)), Math.toRadians(selInvertPose(90)))
                 .build();
+
+        Trajectory spline1 = drive.trajectoryBuilder(selInvertPose(STARTING_POSE))
+                .splineTo(selInvertPose(new Vector2d(STARTING_POSE.getX() + driveFieldTiles * 24, STARTING_POSE.getY() + 36)), Math.toRadians(selInvertPose(90)), // slowly intake rings to avoid jamming the intake
+                        SampleMecanumDrive.getVelocityConstraint(10, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .build();
+
+        Trajectory hardCodeBlue = drive.trajectoryBuilder(new Pose2d(-63, -32, 0))
+                .splineTo(new Vector2d(-63 + driveFieldTiles * 24, -32 - 36), Math.toRadians(270))
+                .build();
+
+        Vector2d driveToVector = selInvertPose(new Vector2d(STARTING_POSE.getX() + driveFieldTiles * 24, STARTING_POSE.getY() + 36));
+        double driveToAngle = Math.toDegrees(Math.toRadians(selInvertPose(90)));
 
 
 // INITIALIZE HARDWARE:
@@ -284,10 +332,17 @@ public class RegionalsRoadrunnerTest extends LinearOpMode {
 
 // WAIT FOR AUTONOMOUS TO BEGIN:
         telemetry.addLine("Waiting for start...");
+        telemetry.addLine("Starting Pose: " + selInvertPose(STARTING_POSE).getX() + "  " + selInvertPose(STARTING_POSE).getY() + "  " + Math.toDegrees(selInvertPose(STARTING_POSE).getHeading()));
+        telemetry.addLine("Drive To: " + driveToVector.getX() + "  " + driveToVector.getY() + "  " + driveToAngle);
         telemetry.update();
         waitForStart();
 
-        drive.followTrajectory(driveStraight);
+        //if (!blueAlliance)
+        drive.followTrajectory(spline1);
 
+        /*else {
+            drive.setPoseEstimate(new Pose2d(-63, -32, 0));
+            drive.followTrajectory(hardCodeBlue);
+        }*/
     }
 }
