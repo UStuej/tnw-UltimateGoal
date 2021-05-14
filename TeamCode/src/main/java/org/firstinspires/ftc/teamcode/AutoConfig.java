@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ public class AutoConfig extends LinearOpMode {
                 } else if (gamepad1LBPressed) {
 
                     // Convert the unordered key Set of cfgs Map to an ordered array
-                    String[] presets = (String[]) cfgs.keySet().toArray();
+                    String[] presets = Arrays.copyOf(cfgs.keySet().toArray(), cfgs.size(), String[].class);
 
                     short presetIdx = 0;
 
@@ -131,7 +132,6 @@ public class AutoConfig extends LinearOpMode {
             }
 
             {
-
                 telemetry.clearAll();
                 telemetry.addLine("Select a setting <LB | RB>, modify its value <UP | DOWN>, then save <A> when finished...");
                 Telemetry.Item setting = telemetry.addData("Setting", "");
@@ -153,9 +153,9 @@ public class AutoConfig extends LinearOpMode {
                     } else if (gamepad1LBPressed) {
                         optionIdx = (short) (optionIdx > 0
                                 ? optionIdx - 1
-                                : 2);  // Number of settings (option fields within Settings class)
+                                : 1);  // Number of settings (option fields within Settings class) minus 1
                     } else if (gamepad1RBPressed) {
-                        optionIdx = (short) (optionIdx < 2  // Number of settings (option fields within Settings class)
+                        optionIdx = (short) (optionIdx < 1  // Number of settings (option fields within Settings class) minus 1
                                 ? optionIdx + 1
                                 : 0);
                     }
@@ -196,7 +196,6 @@ public class AutoConfig extends LinearOpMode {
                     telemetry.update();
 
                 }
-
             }
 
             // Ask for a name to save the preset as if a new one was created
@@ -218,10 +217,10 @@ public class AutoConfig extends LinearOpMode {
                     for (short i = 0; i < CFG_NAME_LENGTH; i++) {
                         if (i == digitIdx) {
                             displayName.append("|");
-                            displayName.append(digits[digitIdx]);
+                            displayName.append(digits[i]);
                             displayName.append("|");
                         } else {
-                            displayName.append(digits[digitIdx]);
+                            displayName.append(digits[i]);
                         }
                     }
 
