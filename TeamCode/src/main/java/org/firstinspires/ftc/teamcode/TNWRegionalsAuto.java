@@ -35,10 +35,10 @@ public class TNWRegionalsAuto extends LinearOpMode {
     public static double[] RING_SCAN_CROP_PERCENTS = new double[4];  // X1, X2, Y1, and Y2, respectively
 
     // Starting position 1 camera crop values
-    public static double[] RING_SCAN_CROP_PERCENTS_1_R = {0.4, 0.8, 0.1, 0.6};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
-    public static double[] RING_SCAN_CROP_PERCENTS_2_R = {0.0, 0.0, 0.0, 0.0};  // X1, X2, Y1, and Y2, respectively for the second starting position on red TODO: set these
-    public static double[] RING_SCAN_CROP_PERCENTS_1_B = {0.4, 0.8, 0.1, 0.6};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue TODO: set these
-    public static double[] RING_SCAN_CROP_PERCENTS_2_B = {0.0, 0.0, 0.0, 0.0};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue TODO: set these
+    public static double[] RING_SCAN_CROP_PERCENTS_1_RED = {0.4, 0.8, 0.1, 0.6};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
+    public static double[] RING_SCAN_CROP_PERCENTS_2_RED = {0.4, 0.8, 0.1, 0.6};  // X1, X2, Y1, and Y2, respectively for the second starting position on red TODO: set these
+    public static double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.4, 0.8, 0.1, 0.6};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue TODO: set these
+    public static double[] RING_SCAN_CROP_PERCENTS_2_BLUE = {0.0, 0.0, 0.0, 0.0};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue TODO: set these
 
     double ringImagePercent = 0.0;
     double oneRingPercentageMinimum = .01; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
@@ -58,162 +58,69 @@ public class TNWRegionalsAuto extends LinearOpMode {
     // Constant Roadrunner Pose Values
     // Starting poses
     final Pose2d STARTING_POSE_1 = new Pose2d(-63, -32, Math.toRadians(0)); // TODO: set this to allow more room for alliance partner and elements
-    final Pose2d STARTING_POSE_2 = new Pose2d(0, 0, 0); // TODO: set these
+    final Pose2d STARTING_POSE_2 = new Pose2d(-63, -52, 0); // TODO: set these
 
     // Wobble goal poses
     final int DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING = 10; // inches
 
     // Alliance Partner Element pickup positions
-    Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION; // used by the autonomous. to be set in initializeElementPositions() function
-    Pose2d PARTNER_RING_PICKUP_POSITION; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C; // used by the autonomous. to be set in initializeElementPositions() function
 
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_R = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_R = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_R = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
-    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_R = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_R.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_R.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_R.getHeading()); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_R = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_R = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_R = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
-    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_ABSENT_R = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_R.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_R.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_R.getHeading()); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_RED = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_RED = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_RED = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
+    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_RED = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_RED.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_RED.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_RED.getHeading()); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_RED = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_RED = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_RED = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
+    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_ABSENT_RED = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_RED.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_RED.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_RED.getHeading()); // TODO: set these
 
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_B = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_B = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_B = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
-    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_B = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_B.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_B.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_B.getHeading()); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_B = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_B = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
-    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_B = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
-    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_ABSENT_B = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_B.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_B.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_B.getHeading()); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_BLUE = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_BLUE = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_BLUE = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
+    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_BLUE = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_BLUE.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_BLUE.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_BLUE.getHeading()); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_BLUE = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE = new Pose2d(-35, -52, Math.toRadians(15)); // TODO: set these
+    final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_BLUE = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
+    final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_ABSENT_BLUE = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE.getHeading()); // TODO: set these
 
-    final Pose2d PARTNER_RINGS_POSITION = new Pose2d(0, 0, 0); // TODO: set these
+    Pose2d PARTNER_RINGS_POSITION; // used by the autonomous. to be set in initializeElementPositions() function
+
+    final Pose2d PARTNER_RINGS_POSITION_PRESENT = new Pose2d(-37, -23, 0); // TODO: set these
     final Pose2d PARTNER_RINGS_POSITION_ABSENT = new Pose2d(0, 0, 0); // TODO: set these
 
     // Target zone positions
-    Pose2d TARGET_ZONE_1; // used by the autonomous. to be set in initializeElementPositions() function
-    Pose2d TARGET_ZONE_2; // used by the autonomous. to be set in initializeElementPositions() function
-    Pose2d TARGET_ZONE_1_APPROACH; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d TARGET_ZONE_A1; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d TARGET_ZONE_A2; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d TARGET_ZONE_B1; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d TARGET_ZONE_B2; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d TARGET_ZONE_C1; // used by the autonomous. to be set in initializeElementPositions() function
+    Pose2d TARGET_ZONE_C2; // used by the autonomous. to be set in initializeElementPositions() function
 
-    final Pose2d TARGET_ZONE_A1_DEFAULT_R = new Pose2d(24, -51, Math.toRadians(90));
-    final Pose2d TARGET_ZONE_A2_DEFAULT_R = new Pose2d(TARGET_ZONE_A1_DEFAULT_R.getX(), TARGET_ZONE_A1_DEFAULT_R.getY() + DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_A1_DEFAULT_R.getHeading());
-    final Pose2d TARGET_ZONE_B1_DEFAULT_R = new Pose2d(30, -34, Math.toRadians(180));
-    final Pose2d TARGET_ZONE_B2_DEFAULT_R = new Pose2d(TARGET_ZONE_B1_DEFAULT_R.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1_DEFAULT_R.getY() + 2, TARGET_ZONE_B1_DEFAULT_R.getHeading());
-    final Pose2d TARGET_ZONE_C1_DEFAULT_R = new Pose2d(53, -50, Math.toRadians(180));
-    final Pose2d TARGET_ZONE_C2_DEFAULT_R = new Pose2d(TARGET_ZONE_C1_DEFAULT_R.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_C1_DEFAULT_R.getY(), TARGET_ZONE_C1_DEFAULT_R.getHeading());
-    final Pose2d TARGET_ZONE_A1_DEFAULT_B = new Pose2d(24, -51, Math.toRadians(90));
-    final Pose2d TARGET_ZONE_A2_DEFAULT_B = new Pose2d(TARGET_ZONE_A1_DEFAULT_B.getX(), TARGET_ZONE_A1_DEFAULT_B.getY() + DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_A1_DEFAULT_B.getHeading());
-    final Pose2d TARGET_ZONE_B1_DEFAULT_B = new Pose2d(30, -34, Math.toRadians(180));
-    final Pose2d TARGET_ZONE_B2_DEFAULT_B = new Pose2d(TARGET_ZONE_B1_DEFAULT_B.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1_DEFAULT_B.getY() + 2, TARGET_ZONE_B1_DEFAULT_B.getHeading());
-    final Pose2d TARGET_ZONE_C1_DEFAULT_B = new Pose2d(53, -50, Math.toRadians(180));
-    final Pose2d TARGET_ZONE_C2_DEFAULT_B = new Pose2d(TARGET_ZONE_C1_DEFAULT_B.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_C1_DEFAULT_B.getY(), TARGET_ZONE_C1_DEFAULT_B.getHeading());
+    final Pose2d TARGET_ZONE_A1_RED = new Pose2d(25, -49, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_A2_RED = new Pose2d(TARGET_ZONE_A1_RED.getX(), TARGET_ZONE_A1_RED.getY() + DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_A1_RED.getHeading());
+    final Pose2d TARGET_ZONE_B1_RED = new Pose2d(30, -34, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_B2_RED = new Pose2d(TARGET_ZONE_B1_RED.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1_RED.getY() + 2, TARGET_ZONE_B1_RED.getHeading());
+    final Pose2d TARGET_ZONE_C1_RED = new Pose2d(53, -50, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_C2_RED = new Pose2d(TARGET_ZONE_C1_RED.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_C1_RED.getY(), TARGET_ZONE_C1_RED.getHeading());
+    final Pose2d TARGET_ZONE_A1_BLUE = new Pose2d(24, -51, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_A2_BLUE = new Pose2d(TARGET_ZONE_A1_BLUE.getX(), TARGET_ZONE_A1_BLUE.getY() + DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_A1_BLUE.getHeading());
+    final Pose2d TARGET_ZONE_B1_BLUE = new Pose2d(30, -34, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_B2_BLUE = new Pose2d(TARGET_ZONE_B1_BLUE.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1_BLUE.getY() + 2, TARGET_ZONE_B1_BLUE.getHeading());
+    final Pose2d TARGET_ZONE_C1_BLUE = new Pose2d(53, -50, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_C2_BLUE = new Pose2d(TARGET_ZONE_C1_BLUE.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_C1_BLUE.getY(), TARGET_ZONE_C1_BLUE.getHeading());
 
-    // Red alliance target zone values
-    final Pose2d TARGET_ZONE_A_SIDE_Q1_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q2_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q3_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q4_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q1_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q2_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q3_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q4_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q1_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q2_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q3_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q4_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q1_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q2_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q3_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q4_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q1_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q2_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q3_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q4_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q1_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q2_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q3_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q4_R = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q1_APPROACH_R = new Pose2d(TARGET_ZONE_A_SIDE_Q1_R.getX(), TARGET_ZONE_A_SIDE_Q1_R.getY() + 14, TARGET_ZONE_A_SIDE_Q1_R.getHeading());
-    final Pose2d TARGET_ZONE_A_SIDE_Q2_APPROACH_R = new Pose2d(TARGET_ZONE_A_SIDE_Q2_R.getX(), TARGET_ZONE_A_SIDE_Q2_R.getY() + 14, TARGET_ZONE_A_SIDE_Q2_R.getHeading());
-    final Pose2d TARGET_ZONE_A_SIDE_Q3_APPROACH_R = new Pose2d(TARGET_ZONE_A_SIDE_Q3_R.getX(), TARGET_ZONE_A_SIDE_Q3_R.getY() + 14, TARGET_ZONE_A_SIDE_Q3_R.getHeading());
-    final Pose2d TARGET_ZONE_A_SIDE_Q4_APPROACH_R = new Pose2d(TARGET_ZONE_A_SIDE_Q4_R.getX(), TARGET_ZONE_A_SIDE_Q4_R.getY() + 14, TARGET_ZONE_A_SIDE_Q4_R.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q1_APPROACH_R = new Pose2d(TARGET_ZONE_B_SIDE_Q1_R.getX(), TARGET_ZONE_B_SIDE_Q1_R.getY() + 14, TARGET_ZONE_B_SIDE_Q1_R.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q2_APPROACH_R = new Pose2d(TARGET_ZONE_B_SIDE_Q2_R.getX(), TARGET_ZONE_B_SIDE_Q2_R.getY() + 14, TARGET_ZONE_B_SIDE_Q2_R.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q3_APPROACH_R = new Pose2d(TARGET_ZONE_B_SIDE_Q3_R.getX(), TARGET_ZONE_B_SIDE_Q3_R.getY() + 14, TARGET_ZONE_B_SIDE_Q3_R.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q4_APPROACH_R = new Pose2d(TARGET_ZONE_B_SIDE_Q4_R.getX(), TARGET_ZONE_B_SIDE_Q4_R.getY() + 14, TARGET_ZONE_B_SIDE_Q4_R.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q1_APPROACH_R = new Pose2d(TARGET_ZONE_C_SIDE_Q1_R.getX(), TARGET_ZONE_C_SIDE_Q1_R.getY() + 14, TARGET_ZONE_C_SIDE_Q1_R.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q2_APPROACH_R = new Pose2d(TARGET_ZONE_C_SIDE_Q2_R.getX(), TARGET_ZONE_C_SIDE_Q2_R.getY() + 14, TARGET_ZONE_C_SIDE_Q2_R.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q3_APPROACH_R = new Pose2d(TARGET_ZONE_C_SIDE_Q3_R.getX(), TARGET_ZONE_C_SIDE_Q3_R.getY() + 14, TARGET_ZONE_C_SIDE_Q3_R.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q4_APPROACH_R = new Pose2d(TARGET_ZONE_C_SIDE_Q4_R.getX(), TARGET_ZONE_C_SIDE_Q4_R.getY() + 14, TARGET_ZONE_C_SIDE_Q4_R.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q1_APPROACH_R = new Pose2d(TARGET_ZONE_A_FRONT_Q1_R.getX() - 14, TARGET_ZONE_A_FRONT_Q1_R.getY(), TARGET_ZONE_A_FRONT_Q1_R.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q2_APPROACH_R = new Pose2d(TARGET_ZONE_A_FRONT_Q2_R.getX() - 14, TARGET_ZONE_A_FRONT_Q2_R.getY(), TARGET_ZONE_A_FRONT_Q2_R.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q3_APPROACH_R = new Pose2d(TARGET_ZONE_A_FRONT_Q3_R.getX() - 14, TARGET_ZONE_A_FRONT_Q3_R.getY(), TARGET_ZONE_A_FRONT_Q3_R.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q4_APPROACH_R = new Pose2d(TARGET_ZONE_A_FRONT_Q4_R.getX() - 14, TARGET_ZONE_A_FRONT_Q4_R.getY(), TARGET_ZONE_A_FRONT_Q4_R.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q1_APPROACH_R = new Pose2d(TARGET_ZONE_B_FRONT_Q1_R.getX() - 14, TARGET_ZONE_B_FRONT_Q1_R.getY(), TARGET_ZONE_B_FRONT_Q1_R.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q2_APPROACH_R = new Pose2d(TARGET_ZONE_B_FRONT_Q2_R.getX() - 14, TARGET_ZONE_B_FRONT_Q2_R.getY(), TARGET_ZONE_B_FRONT_Q2_R.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q3_APPROACH_R = new Pose2d(TARGET_ZONE_B_FRONT_Q3_R.getX() - 14, TARGET_ZONE_B_FRONT_Q3_R.getY(), TARGET_ZONE_B_FRONT_Q3_R.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q4_APPROACH_R = new Pose2d(TARGET_ZONE_B_FRONT_Q4_R.getX() - 14, TARGET_ZONE_B_FRONT_Q4_R.getY(), TARGET_ZONE_B_FRONT_Q4_R.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q1_APPROACH_R = new Pose2d(TARGET_ZONE_C_FRONT_Q1_R.getX() - 14, TARGET_ZONE_C_FRONT_Q1_R.getY(), TARGET_ZONE_C_FRONT_Q1_R.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q2_APPROACH_R = new Pose2d(TARGET_ZONE_C_FRONT_Q2_R.getX() - 14, TARGET_ZONE_C_FRONT_Q2_R.getY(), TARGET_ZONE_C_FRONT_Q2_R.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q3_APPROACH_R = new Pose2d(TARGET_ZONE_C_FRONT_Q3_R.getX() - 14, TARGET_ZONE_C_FRONT_Q3_R.getY(), TARGET_ZONE_C_FRONT_Q3_R.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q4_APPROACH_R = new Pose2d(TARGET_ZONE_C_FRONT_Q4_R.getX() - 14, TARGET_ZONE_C_FRONT_Q4_R.getY(), TARGET_ZONE_C_FRONT_Q4_R.getHeading());
-
-    // Blue alliance target zone values
-    final Pose2d TARGET_ZONE_A_SIDE_Q1_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q2_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q3_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q4_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q1_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q2_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q3_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_SIDE_Q4_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q1_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q2_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q3_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_SIDE_Q4_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q1_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q2_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q3_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_FRONT_Q4_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q1_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q2_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q3_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_B_FRONT_Q4_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q1_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q2_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q3_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_C_FRONT_Q4_B = new Pose2d(0, 0, 0); // TODO: set these
-    final Pose2d TARGET_ZONE_A_SIDE_Q1_APPROACH_B = new Pose2d(TARGET_ZONE_A_SIDE_Q1_B.getX(), TARGET_ZONE_A_SIDE_Q1_B.getY() - 14, TARGET_ZONE_A_SIDE_Q1_B.getHeading());
-    final Pose2d TARGET_ZONE_A_SIDE_Q2_APPROACH_B = new Pose2d(TARGET_ZONE_A_SIDE_Q2_B.getX(), TARGET_ZONE_A_SIDE_Q2_B.getY() - 14, TARGET_ZONE_A_SIDE_Q2_B.getHeading());
-    final Pose2d TARGET_ZONE_A_SIDE_Q3_APPROACH_B = new Pose2d(TARGET_ZONE_A_SIDE_Q3_B.getX(), TARGET_ZONE_A_SIDE_Q3_B.getY() - 14, TARGET_ZONE_A_SIDE_Q3_B.getHeading());
-    final Pose2d TARGET_ZONE_A_SIDE_Q4_APPROACH_B = new Pose2d(TARGET_ZONE_A_SIDE_Q4_B.getX(), TARGET_ZONE_A_SIDE_Q4_B.getY() - 14, TARGET_ZONE_A_SIDE_Q4_B.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q1_APPROACH_B = new Pose2d(TARGET_ZONE_B_SIDE_Q1_B.getX(), TARGET_ZONE_B_SIDE_Q1_B.getY() - 14, TARGET_ZONE_B_SIDE_Q1_B.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q2_APPROACH_B = new Pose2d(TARGET_ZONE_B_SIDE_Q2_B.getX(), TARGET_ZONE_B_SIDE_Q2_B.getY() - 14, TARGET_ZONE_B_SIDE_Q2_B.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q3_APPROACH_B = new Pose2d(TARGET_ZONE_B_SIDE_Q3_B.getX(), TARGET_ZONE_B_SIDE_Q3_B.getY() - 14, TARGET_ZONE_B_SIDE_Q3_B.getHeading());
-    final Pose2d TARGET_ZONE_B_SIDE_Q4_APPROACH_B = new Pose2d(TARGET_ZONE_B_SIDE_Q4_B.getX(), TARGET_ZONE_B_SIDE_Q4_B.getY() - 14, TARGET_ZONE_B_SIDE_Q4_B.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q1_APPROACH_B = new Pose2d(TARGET_ZONE_C_SIDE_Q1_B.getX(), TARGET_ZONE_C_SIDE_Q1_B.getY() - 14, TARGET_ZONE_C_SIDE_Q1_B.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q2_APPROACH_B = new Pose2d(TARGET_ZONE_C_SIDE_Q2_B.getX(), TARGET_ZONE_C_SIDE_Q2_B.getY() - 14, TARGET_ZONE_C_SIDE_Q2_B.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q3_APPROACH_B = new Pose2d(TARGET_ZONE_C_SIDE_Q3_B.getX(), TARGET_ZONE_C_SIDE_Q3_B.getY() - 14, TARGET_ZONE_C_SIDE_Q3_B.getHeading());
-    final Pose2d TARGET_ZONE_C_SIDE_Q4_APPROACH_B = new Pose2d(TARGET_ZONE_C_SIDE_Q4_B.getX(), TARGET_ZONE_C_SIDE_Q4_B.getY() - 14, TARGET_ZONE_C_SIDE_Q4_B.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q1_APPROACH_B = new Pose2d(TARGET_ZONE_A_FRONT_Q1_B.getX() - 14, TARGET_ZONE_A_FRONT_Q1_B.getY(), TARGET_ZONE_A_FRONT_Q1_B.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q2_APPROACH_B = new Pose2d(TARGET_ZONE_A_FRONT_Q2_B.getX() - 14, TARGET_ZONE_A_FRONT_Q2_B.getY(), TARGET_ZONE_A_FRONT_Q2_B.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q3_APPROACH_B = new Pose2d(TARGET_ZONE_A_FRONT_Q3_B.getX() - 14, TARGET_ZONE_A_FRONT_Q3_B.getY(), TARGET_ZONE_A_FRONT_Q3_B.getHeading());
-    final Pose2d TARGET_ZONE_A_FRONT_Q4_APPROACH_B = new Pose2d(TARGET_ZONE_A_FRONT_Q4_B.getX() - 14, TARGET_ZONE_A_FRONT_Q4_B.getY(), TARGET_ZONE_A_FRONT_Q4_B.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q1_APPROACH_B = new Pose2d(TARGET_ZONE_B_FRONT_Q1_B.getX() - 14, TARGET_ZONE_B_FRONT_Q1_B.getY(), TARGET_ZONE_B_FRONT_Q1_B.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q2_APPROACH_B = new Pose2d(TARGET_ZONE_B_FRONT_Q2_B.getX() - 14, TARGET_ZONE_B_FRONT_Q2_B.getY(), TARGET_ZONE_B_FRONT_Q2_B.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q3_APPROACH_B = new Pose2d(TARGET_ZONE_B_FRONT_Q3_B.getX() - 14, TARGET_ZONE_B_FRONT_Q3_B.getY(), TARGET_ZONE_B_FRONT_Q3_B.getHeading());
-    final Pose2d TARGET_ZONE_B_FRONT_Q4_APPROACH_B = new Pose2d(TARGET_ZONE_B_FRONT_Q4_B.getX() - 14, TARGET_ZONE_B_FRONT_Q4_B.getY(), TARGET_ZONE_B_FRONT_Q4_B.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q1_APPROACH_B = new Pose2d(TARGET_ZONE_C_FRONT_Q1_B.getX() - 14, TARGET_ZONE_C_FRONT_Q1_B.getY(), TARGET_ZONE_C_FRONT_Q1_B.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q2_APPROACH_B = new Pose2d(TARGET_ZONE_C_FRONT_Q2_B.getX() - 14, TARGET_ZONE_C_FRONT_Q2_B.getY(), TARGET_ZONE_C_FRONT_Q2_B.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q3_APPROACH_B = new Pose2d(TARGET_ZONE_C_FRONT_Q3_B.getX() - 14, TARGET_ZONE_C_FRONT_Q3_B.getY(), TARGET_ZONE_C_FRONT_Q3_B.getHeading());
-    final Pose2d TARGET_ZONE_C_FRONT_Q4_APPROACH_B = new Pose2d(TARGET_ZONE_C_FRONT_Q4_B.getX() - 14, TARGET_ZONE_C_FRONT_Q4_B.getY(), TARGET_ZONE_C_FRONT_Q4_B.getHeading());
 
     // Starter stack related poses
     final Vector2d STARTER_STACK = new Vector2d(-24, -35);
     final Pose2d LONG_SHOT_POSE = new Pose2d(-37, -36, Math.toRadians(356));
     // Power shot related poses
-    final Pose2d POWER_SHOT_SHOOT_1 = new Pose2d(-3, -3.5, Math.toRadians(356));
-    final double DISTANCE_BETWEEN_POWER_SHOTS = 8; // inches
+    //final Pose2d POWER_SHOT_SHOOT_1 = new Pose2d(-3, -3.5, Math.toRadians(356));
+    //final double DISTANCE_BETWEEN_POWER_SHOTS = 8; // inches
     // Parking pose
-    final Pose2d PARKING_POSE = new Pose2d(12, -24, Math.toRadians(0));
+    //final Pose2d PARKING_POSE = new Pose2d(12, -24, Math.toRadians(0));
 
 // MOTOR AND SERVO DECLARATION:
     // Intake motor
@@ -231,7 +138,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
     private DcMotorEx ringElevator;
 
     // MOTOR AND SERVO POSITION CONSTANTS:
-    private static double highGoalTPS = 57.5 * 28;  // Ticks per second of the shooter when active and aiming for the high goal
+    private static double highGoalTPS = 57 * 28; // 57.5  // Ticks per second of the shooter when active and aiming for the high goal
     private static double powerShotTPS = 50 * 28; // Ticks per second of the shooter when active and aiming for the power shots
 
     private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
@@ -265,12 +172,10 @@ public class TNWRegionalsAuto extends LinearOpMode {
     // Driver Input Variables
     boolean nextStep = false; // if nextStep is true, driver input will continue to the next step
     boolean blueAlliance = false; // are we on the blue alliance?  indicated by drivers in init
-    byte startingPosition = 1; // starting position indicated by drivers in init
-    boolean targetZoneApproachFromSide = false; // direction to approach target zone indicated by drivers in configuration.  If our team delivers both wobble goals, this value is ignored
-    byte targetZoneDeliveryQuadrant = 0; // value 1-4, quadrant in which to score 1 wobble goal to leave room for alliance partner indicated by drivers in configuration.  If our team delivers both wobble goals, this value is ignored
+    byte startingPosition = 2; // starting position indicated by drivers in init
     boolean scoreAlliancePartnerWobble = true; // whether to collect and deliver alliance partner's wobble goal.  indicated by drivers in configuration
     boolean scoreAlliancePartnerRings = true;  // whether to collect and score alliance partner's preloaded rings.  indicated by drivers in configuration
-    byte parkingLocation = 1; // field tiles from alliance wall to park indicated by drivers in configuration
+    byte parkingLocation = 2; // field tiles from alliance wall to park indicated by drivers in configuration
     boolean alliancePartnerMoves = false;
     boolean buttonsReleased = true; // gamepad buttons are released before triggering queues
 
@@ -291,334 +196,46 @@ public class TNWRegionalsAuto extends LinearOpMode {
     }
 
     private void initializeElementPositions() {
-        if (scoreAlliancePartnerWobble) {
-            if (blueAlliance) {
-                if (targetZoneApproachFromSide) {
-                    switch (autoCase) {
-                        case 'A':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q1_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q1_B;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q2_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q2_B;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q3_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q3_B;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q4_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q4_B;
-                                    break;
-                            }
-                            break;
-                        case 'B':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q1_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q1_B;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q2_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q2_B;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q3_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q3_B;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q4_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q4_B;
-                                    break;
-                            }
-                            break;
-                        case 'C':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q1_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q1_B;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q2_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q2_B;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q3_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q3_B;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q4_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q4_B;
-                                    break;
-                            }
-                            break;
-                    }
-                }
-                else {
-                    switch (autoCase) {
-                        case 'A':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q1_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q1_B;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q2_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q2_B;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q3_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q3_B;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q4_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q4_B;
-                                    break;
-                            }
-                            break;
-                        case 'B':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q1_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q1_B;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q2_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q2_B;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q3_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q3_B;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q4_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q4_B;
-                                    break;
-                            }
-                            break;
-                        case 'C':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q1_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q1_B;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q2_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q2_B;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q3_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q3_B;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q4_APPROACH_B;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q4_B;
-                                    break;
-                            }
-                            break;
-                    }
-                }
-            }
-            else {
-                if (targetZoneApproachFromSide) {
-                    switch (autoCase) {
-                        case 'A':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q1_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q1_R;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q2_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q2_R;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q3_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q3_R;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_SIDE_Q4_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_SIDE_Q4_R;
-                                    break;
-                            }
-                            break;
-                        case 'B':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q1_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q1_R;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q2_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q2_R;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q3_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q3_R;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_SIDE_Q4_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_SIDE_Q4_R;
-                                    break;
-                            }
-                            break;
-                        case 'C':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q1_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q1_R;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q2_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q2_R;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q3_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q3_R;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_SIDE_Q4_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_SIDE_Q4_R;
-                                    break;
-                            }
-                            break;
-                    }
-                }
-                else {
-                    switch (autoCase) {
-                        case 'A':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q1_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q1_R;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q2_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q2_R;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q3_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q3_R;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_A_FRONT_Q4_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_A_FRONT_Q4_R;
-                                    break;
-                            }
-                            break;
-                        case 'B':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q1_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q1_R;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q2_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q2_R;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q3_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q3_R;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_B_FRONT_Q4_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_B_FRONT_Q4_R;
-                                    break;
-                            }
-                            break;
-                        case 'C':
-                            switch (targetZoneDeliveryQuadrant) {
-                                case 1:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q1_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q1_R;
-                                    break;
-                                case 2:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q2_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q2_R;
-                                    break;
-                                case 3:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q3_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q3_R;
-                                    break;
-                                case 4:
-                                    TARGET_ZONE_1_APPROACH = TARGET_ZONE_C_FRONT_Q4_APPROACH_R;
-                                    TARGET_ZONE_1 = TARGET_ZONE_C_FRONT_Q4_R;
-                                    break;
-                            }
-                            break;
-                    }
-                }
-            }
+        if (blueAlliance) {
+            TARGET_ZONE_A1 = TARGET_ZONE_A1_BLUE;
+            TARGET_ZONE_B1 = TARGET_ZONE_B1_BLUE;
+            TARGET_ZONE_C1 = TARGET_ZONE_C1_BLUE;
+            TARGET_ZONE_A2 = TARGET_ZONE_A2_BLUE;
+            TARGET_ZONE_B2 = TARGET_ZONE_B2_BLUE;
+            TARGET_ZONE_C2 = TARGET_ZONE_C2_BLUE;
         }
         else {
-            if (blueAlliance) {
-                switch (autoCase) {
-                    case 'A':
-                        TARGET_ZONE_1 = TARGET_ZONE_A1_DEFAULT_B;
-                        TARGET_ZONE_2 = TARGET_ZONE_A2_DEFAULT_B;
-                        break;
-                    case 'B':
-                        TARGET_ZONE_1 = TARGET_ZONE_B1_DEFAULT_B;
-                        TARGET_ZONE_2 = TARGET_ZONE_B2_DEFAULT_B;
-                        break;
-                    case 'C':
-                        TARGET_ZONE_1 = TARGET_ZONE_C1_DEFAULT_B;
-                        TARGET_ZONE_2 = TARGET_ZONE_C2_DEFAULT_B;
-                        break;
-                }
-            }
-            else {
-                switch (autoCase) {
-                    case 'A':
-                        TARGET_ZONE_1 = TARGET_ZONE_A1_DEFAULT_R;
-                        TARGET_ZONE_2 = TARGET_ZONE_A2_DEFAULT_R;
-                        break;
-                    case 'B':
-                        TARGET_ZONE_1 = TARGET_ZONE_B1_DEFAULT_R;
-                        TARGET_ZONE_2 = TARGET_ZONE_B2_DEFAULT_R;
-                        break;
-                    case 'C':
-                        TARGET_ZONE_1 = TARGET_ZONE_C1_DEFAULT_R;
-                        TARGET_ZONE_2 = TARGET_ZONE_C2_DEFAULT_R;
-                        break;
-                }
-            }
+            TARGET_ZONE_A1 = TARGET_ZONE_A1_RED;
+            TARGET_ZONE_B1 = TARGET_ZONE_B1_RED;
+            TARGET_ZONE_C1 = TARGET_ZONE_C1_RED;
+            TARGET_ZONE_A2 = TARGET_ZONE_A2_RED;
+            TARGET_ZONE_B2 = TARGET_ZONE_B2_RED;
+            TARGET_ZONE_C2 = TARGET_ZONE_C2_RED;
         }
         if (alliancePartnerMoves) {
-            PARTNER_RING_PICKUP_POSITION = PARTNER_RINGS_POSITION_ABSENT;
+            PARTNER_RINGS_POSITION = PARTNER_RINGS_POSITION_ABSENT;
             if (blueAlliance) {
-                switch (autoCase) {
-                    case 'A': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_B; break;
-                    case 'B': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_B; break;
-                    case 'C': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_B; break;
-                }
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_BLUE;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_BLUE;
             }
             else {
-                switch (autoCase) {
-                    case 'A': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_R; break;
-                    case 'B': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_R; break;
-                    case 'C': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_R; break;
-                }
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_RED;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_RED;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_RED;
             }
         }
         else {
-            PARTNER_RING_PICKUP_POSITION = PARTNER_RINGS_POSITION;
+            PARTNER_RINGS_POSITION = PARTNER_RINGS_POSITION_PRESENT;
             if (blueAlliance) {
-                switch (autoCase) {
-                    case 'A': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_B; break;
-                    case 'B': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_B; break;
-                    case 'C': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_B; break;
-                }
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_BLUE;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_BLUE;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_BLUE;
             }
             else {
-                switch (autoCase) {
-                    case 'A': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_R; break;
-                    case 'B': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_R; break;
-                    case 'C': PARTNER_WOBBLE_GOAL_PICKUP_POSITION = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_R; break;
-                }
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_RED;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_RED;
+                PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_RED;
             }
         }
     }
@@ -704,11 +321,14 @@ public class TNWRegionalsAuto extends LinearOpMode {
 
 // ROADRUNNER AUTONOMOUS TRAJECTORIES:
 
-        Trajectory shootPreloadedRings = drive.trajectoryBuilder(selInvertPose(startingPosition == 1 ? STARTING_POSE_1 : STARTING_POSE_2)) // drive from the start pose to the starter stack and shoot preloaded rings
+        initializeElementPositions(); // get bearings based on driver input data
+
+        // Auto Case A Trajectories
+
+        Trajectory alignToScorePreloadedRings = drive.trajectoryBuilder(selInvertPose(startingPosition == 1 ? STARTING_POSE_1 : STARTING_POSE_2)) // drive from the start pose to the starter stack and shoot preloaded rings
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        initializeElementPositions(); // initialize position
                         webcam.closeCameraDevice(); // turn off camera to save resources
                         ringElevator.setTargetPosition(RING_ELEVATOR_UP_POSITION); // raise ring elevator
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // move finger servo out to make room to avoid collision with ring elevator
@@ -716,7 +336,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to drop intake shield
                     }
                 })
-                .lineToLinearHeading(selInvertPose(new Pose2d(STARTER_STACK.getX() - 11, STARTER_STACK.getY(), Math.toRadians(356)), true))
+                .lineToLinearHeading(selInvertPose(LONG_SHOT_POSE, true))
                 // a series of temporal markers is preferred over a looped sequence with pauses to preserve roadrunner PID accuracy
                 .addTemporalMarker(.5, new MarkerCallback() {
                     @Override
@@ -724,49 +344,55 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         intakeDrive.setPower(0); // turn off intake
                     }
                 })
-                .addTemporalMarker(2, new MarkerCallback() { // at 2 seconds, shoot rings
+                .build();
+
+        Trajectory scorePreloadedRings = drive.trajectoryBuilder(selInvertPose(alignToScorePreloadedRings.end()))
+                .lineTo(new Vector2d(LONG_SHOT_POSE.getX() - 8, LONG_SHOT_POSE.getY()),
+                        SampleMecanumDrive.getVelocityConstraint(2.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .addTemporalMarker(0, new MarkerCallback() { // at 2 seconds, shoot rings
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
                     }
                 })
-                .addTemporalMarker(2.25, new MarkerCallback() {
+                .addTemporalMarker(.4, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
                     }
                 })
-                .addTemporalMarker(2.5, new MarkerCallback() {
+                .addTemporalMarker(.8, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
                     }
                 })
-                .addTemporalMarker(2.75, new MarkerCallback() {
+                .addTemporalMarker(1.2, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
                     }
                 })
-                .addTemporalMarker(3, new MarkerCallback() {
+                .addTemporalMarker(1.6, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
                     }
                 })
-                .addTemporalMarker(3.25, new MarkerCallback() {
+                .addTemporalMarker(2.0, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
                     }
                 })
-                .addTemporalMarker(3.5, new MarkerCallback() { // shoot 4 times in case a ring was jammed
+                .addTemporalMarker(2.4, new MarkerCallback() { // shoot 4 times in case a ring was jammed
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
                     }
                 })
-                .addTemporalMarker(3.75, new MarkerCallback() {
+                .addTemporalMarker(2.8, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
@@ -776,14 +402,158 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .build();
 
-        Trajectory shootStarterStackRings1 = drive.trajectoryBuilder(selInvertPose(shootPreloadedRings.end(), true)) // only used in auto cases B and C
+        Trajectory deliverWobbleGoal1A = drive.trajectoryBuilder(selInvertPose(scorePreloadedRings.end(), true))
+                .addTemporalMarker(1, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // deploy wobble arm
+                    }
+                })
+                .addTemporalMarker(1, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // retract finger servo to avoid accidental damage
+                    }
+                })
+                .lineToLinearHeading(TARGET_ZONE_A1) // because this pose is set manually, do not use selInvertPose on this pose.
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleClaw.setPosition(CLAW_OPENED_POSITION); // open wobble claw to release wobble goal
+                        wobbleArm.setTargetPosition(ARM_STARTING_POSITION); // completely retract wobble arm
+                    }
+                })
+                .build();
+
+        Trajectory backFromTargetZone1A = drive.trajectoryBuilder(deliverWobbleGoal1A.end())
+                .lineToLinearHeading(selInvertPose(new Pose2d(TARGET_ZONE_A1.getX(), TARGET_ZONE_A1.getY() + 14, TARGET_ZONE_A1.getHeading() - Math.toRadians(45))))
+                .addTemporalMarker(.5, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
+                    }
+                })
+                .build();
+
+      /*  Trajectory collectPartnerWobbleGoal = drive.trajectoryBuilder(backFromTargetZone1A.end())
+                .lineToLinearHeading(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A)
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleClaw.setPosition(CLAW_CLOSED_POSITION); // close wobble claw to capture alliance partner's wobble goal
+                    }
+                })
+                .build();
+
+        Trajectory backFromAlliancePartnerWobbleGoal = drive.trajectoryBuilder(collectPartnerWobbleGoal.end())
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleArm.setTargetPosition(ARM_HOVER_POSITION);
+                    }
+                })
+                .lineToLinearHeading(new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A.getX() + 5, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A.getY(), Math.toRadians(150)))
+                .build();*/
+
+        Trajectory alignToCollectPartnerRings = drive.trajectoryBuilder(selInvertPose(backFromTargetZone1A.end()))
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        intakeDrive.setPower(INTAKE_IN_POWER); // power on intake to collect alliance partner's rings
+                    }
+                })
+                .lineToLinearHeading(selInvertPose(new Pose2d(PARTNER_RINGS_POSITION.getX(), PARTNER_RINGS_POSITION.getY() - 8, Math.toRadians(150))))
+                .build();
+
+        Trajectory collectAlliancePartnerRings = drive.trajectoryBuilder(selInvertPose(alignToCollectPartnerRings.end()))
+                .lineToConstantHeading(selInvertPose(new Vector2d(PARTNER_RINGS_POSITION.getX(), PARTNER_RINGS_POSITION.getY() + 15)),
+                        SampleMecanumDrive.getVelocityConstraint(16, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .build();
+
+        Trajectory alignToScoreAlliancePartnerRings = drive.trajectoryBuilder(selInvertPose(collectAlliancePartnerRings.end()))
+                .addTemporalMarker(1, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // move finger servo to out position to avoid collision with ring elevator
+                        ringElevator.setTargetPosition(RING_ELEVATOR_UP_POSITION); // raise ring elevator to score rings
+                        intakeDrive.setPower(0); // turn off intake
+                        ringShooter.setVelocity(56.5 * 28); // spin up flywheel to score in high goal
+                    }
+                })
+                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 32, LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true))
+                .build();
+
+        Trajectory scoreAlliancePartnerRings = drive.trajectoryBuilder(selInvertPose(alignToScoreAlliancePartnerRings.end(), true))
+                .lineTo(selInvertPose(new Vector2d(LONG_SHOT_POSE.getX() + 24, LONG_SHOT_POSE.getY())),
+                        SampleMecanumDrive.getVelocityConstraint(2.5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .addTemporalMarker(0, new MarkerCallback() { // at 2 seconds, shoot rings
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
+                    }
+                })
+                .addTemporalMarker(.4, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
+                    }
+                })
+                .addTemporalMarker(.8, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
+                    }
+                })
+                .addTemporalMarker(1.2, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
+                    }
+                })
+                .addTemporalMarker(1.6, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
+                    }
+                })
+                .addTemporalMarker(2.0, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
+                    }
+                })
+                .addTemporalMarker(2.4, new MarkerCallback() { // shoot 4 times in case a ring was jammed
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
+                    }
+                })
+                .addTemporalMarker(2.8, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
+                        ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // drop ring elevator to intake more rings
+                        ringShooter.setPower(0); // power off ring shooter
+                    }
+                })
+                .build();
+
+        Trajectory parkA = drive.trajectoryBuilder(selInvertPose(scoreAlliancePartnerRings.end(), true))
+                .lineToLinearHeading(selInvertPose(new Pose2d(12, -56 + (parkingLocation - 1) * 24, Math.toRadians(0))))
+                .build();
+
+
+
+        Trajectory shootStarterStackRings1 = drive.trajectoryBuilder(selInvertPose(scorePreloadedRings.end(), true)) // only used in auto cases B and C
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to collect starter stack rings
                     }
                 })
-                .lineToLinearHeading(selInvertPose(new Pose2d(STARTER_STACK.getX() + 4, STARTER_STACK.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
+                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 10, STARTER_STACK.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
                         SampleMecanumDrive.getVelocityConstraint(10, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .addTemporalMarker(3, new MarkerCallback() { // after 3 seconds, trigger shoot sequence
@@ -816,18 +586,19 @@ public class TNWRegionalsAuto extends LinearOpMode {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
+                        ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION);
                     }
                 })
                 .build();
 
-        Trajectory shootStarterStackRings2 = drive.trajectoryBuilder(selInvertPose(shootPreloadedRings.end(), true)) // only used in auto case C
+        Trajectory shootStarterStackRings2 = drive.trajectoryBuilder(selInvertPose(scorePreloadedRings.end(), true)) // only used in auto case C
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to collect starter stack rings
                     }
                 })
-                .lineToLinearHeading(selInvertPose(new Pose2d(STARTER_STACK.getX() + 15, STARTER_STACK.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
+                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 20, STARTER_STACK.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
                         SampleMecanumDrive.getVelocityConstraint(10, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .addTemporalMarker(3, new MarkerCallback() { // after 3 seconds, trigger shoot sequence
@@ -860,67 +631,10 @@ public class TNWRegionalsAuto extends LinearOpMode {
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
+                        ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION);
                     }
                 })
                 .build();
-
-        Trajectory deliverWobbleGoal1Solo = drive.trajectoryBuilder(selInvertPose(autoCase == 'A' ? shootPreloadedRings.end() : autoCase == 'B' ? shootStarterStackRings1.end() : shootStarterStackRings2.end(), true)) // only used if our robot delivers both wobble goals
-                .addDisplacementMarker(new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // deploy wobble arm
-                    }
-                })
-                .addTemporalMarker(1, new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // retract finger servo to avoid accidental damage
-                    }
-                })
-                .lineToLinearHeading(TARGET_ZONE_1) // because this pose is set manually, do not use selInvertPose on this pose.
-                .addDisplacementMarker(new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        wobbleClaw.setPosition(CLAW_OPENED_POSITION); // open wobble claw to release wobble goal
-                    }
-                })
-                .build();
-
-        Trajectory alignToDeliverWobbleGoalDuo = drive.trajectoryBuilder(selInvertPose(autoCase == 'A' ? shootPreloadedRings.end() : autoCase == 'B' ? shootStarterStackRings1.end() : shootStarterStackRings2.end(), true)) // only used if our robot delivers 1 wobble goal
-                .addDisplacementMarker(new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // deploy wobble arm
-                    }
-                })
-                .addTemporalMarker(1, new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // retract finger servo to avoid accidental damage
-                    }
-                })
-                .lineToLinearHeading(TARGET_ZONE_1_APPROACH) // because this pose is set manually, do not use selInvertPose on this pose.
-                .build();
-
-        Trajectory deliverWobbleGoalDuo = drive.trajectoryBuilder(TARGET_ZONE_1_APPROACH) // because this pose is set manually, do not use selInvertPose on this pose.  Only used if our robot delivers 1 wobble goal
-                .lineToLinearHeading(TARGET_ZONE_1) // because this pose is set manually, do not use selInvertPose on this pose.
-                .addDisplacementMarker(new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        wobbleClaw.setPosition(CLAW_OPENED_POSITION); // open wobble claw to release wobble goal
-                    }
-                })
-                .build();
-
-        // collect alliance partner's wobble goal
-
-        // collect alliance partner's rings
-
-        // score alliance partner's rings
-
-        // deliver alliance partner's wobble goal
-
-        // park
 
 
 // INITIALIZE OPENCV
@@ -976,7 +690,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
 
         // Obtain ring elevator position values
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
-        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2017;
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000; // 2017
 
         // Set DcMotorEx PIDF coefficients
         ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
@@ -987,6 +701,19 @@ public class TNWRegionalsAuto extends LinearOpMode {
         telemetry.addLine("Waiting for start...");
         telemetry.update();
         waitForStart();
+
+        drive.followTrajectory(alignToScorePreloadedRings);
+        drive.followTrajectory(scorePreloadedRings);
+
+        if (autoCase == 'A') {
+            drive.followTrajectory(deliverWobbleGoal1A);
+            drive.followTrajectory(backFromTargetZone1A);
+            drive.followTrajectory(alignToCollectPartnerRings);
+            drive.followTrajectory(collectAlliancePartnerRings);
+            drive.followTrajectory(alignToScoreAlliancePartnerRings);
+            drive.followTrajectory(scoreAlliancePartnerRings);
+            drive.followTrajectory(parkA);
+        }
 
 
     }
@@ -1029,7 +756,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                  */
 
                 final int RING_SECTION_CROP_Y1 = (int) (imageFeed.rows() * RING_SCAN_CROP_PERCENTS[2]);
-                final int RING_SECTION_CROP_Y2 = (int) (imageFeed.rows() * RING_SCAN_CROP_PERCENTS[4]);
+                final int RING_SECTION_CROP_Y2 = (int) (imageFeed.rows() * RING_SCAN_CROP_PERCENTS[3]);
                 final int RING_SECTION_CROP_X1 = (int) (imageFeed.cols() * RING_SCAN_CROP_PERCENTS[0]);
                 final int RING_SECTION_CROP_X2 = (int) (imageFeed.cols() * RING_SCAN_CROP_PERCENTS[1]);
                 final Scalar ringVisualizeColor = new Scalar(0.0d, 255.0d, 0.0d);
