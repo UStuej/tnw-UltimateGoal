@@ -1,11 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.os.Environment;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.tnwutil.Settings;
 
 import java.io.File;
@@ -22,8 +21,10 @@ import java.util.Map;
 
 public class AutoConfig extends LinearOpMode {
 
+    // USER DEFINED CONSTANTS
     private static final short CFG_NAME_LENGTH = 5;
 
+    // States of gamepad 1 buttons
     private boolean gamepad1AHeld = false;
     private boolean gamepad1APressed = false;
     private boolean gamepad1LBHeld = false;
@@ -38,14 +39,14 @@ public class AutoConfig extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
+        
         // INIT
 
         Map<String, Settings> cfgs = null;
 
         // Read the already-existing configurations map if it exists
         {
-            try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(new File(Environment.getDataDirectory(), "tnwAuto.cfg")))) {
+            try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(new File(AppUtil.getDefContext().getFilesDir(), "tnwAuto.cfg")))) {
                 cfgs = (Map<String, Settings>) inputStream.readObject();
                 telemetry.addLine("Configurations file found!");
             } catch (IOException | ClassNotFoundException | ClassCastException e) {
@@ -62,7 +63,7 @@ public class AutoConfig extends LinearOpMode {
 
         telemetry.setAutoClear(false);
 
-        while (!isStopRequested()) {
+        while (true) {
 
             // Current config preset being modified
             Settings cfg = null;
@@ -72,15 +73,15 @@ public class AutoConfig extends LinearOpMode {
             if (cfgs != null) {
 
                 telemetry.clearAll();
-                telemetry.addLine("Modify existing config preset <LB>, create new config <RB>, or save changes <STOP>...");
+                telemetry.addLine("Modify existing config preset <LB>, create new config preset <RB>, clear existing configurations <DOWN>, or save changes <A>...");
                 telemetry.update();
 
                 // Wait for LB or RB to be pressed, or for the opmode to be stopped (resulting in saving the configurations)
                 do {
                     handleInput();
-                } while (!isStopRequested() && !gamepad1LBPressed && !gamepad1RBPressed);
+                } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1DOWNHeld);
 
-                if (isStopRequested()) {
+                if (gamepad1APressed) {  // Finish and save when A is pressed
                     break;
                 } else if (gamepad1LBPressed) {
 
@@ -96,10 +97,10 @@ public class AutoConfig extends LinearOpMode {
 
                     while (true) {
 
-                        // Wait until a button is pressed
+                        // Wait for a button to be pressed
                         do {
                             handleInput();
-                        } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed);
+                        } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1DOWNPressed);
 
                         if (gamepad1APressed) {  // Finish selection when A is pressed
                             break;
@@ -123,6 +124,24 @@ public class AutoConfig extends LinearOpMode {
 
                 } else if (gamepad1RBPressed) {
                     cfg = new Settings();
+                } else if (gamepad1DOWNPressed) {
+
+                    telemetry.clearAll();
+                    telemetry.addLine("WARNING:  This will reset all existing configuration presets on the next save!");
+                    telemetry.addLine("Proceed <LB>, or go back to menu <A>...");
+                    telemetry.update();
+
+                    // Wait for a button to be pressed
+                    do {
+                        handleInput();
+                    } while (!gamepad1LBPressed && !gamepad1APressed);
+
+                    if (gamepad1LBPressed) {
+                        cfgs = null;
+                    }
+
+                    continue;
+
                 }
 
             } else {
@@ -140,14 +159,11 @@ public class AutoConfig extends LinearOpMode {
 
                 short optionIdx = 0;
 
+                handleInput();
+                
                 // Controls to select an option and modify its value
                 while (true) {
-
-                    // Wait until a button is pressed
-                    do {
-                        handleInput();
-                    } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
-
+                    
                     if (gamepad1APressed) {  // Finish selection when A is pressed
                         break;
                     } else if (gamepad1LBPressed) {
@@ -192,13 +208,18 @@ public class AutoConfig extends LinearOpMode {
                         break;
 
                     }
-
+                    
                     telemetry.update();
+
+                    // Wait for a button to be pressed
+                    do {
+                        handleInput();
+                    } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
 
                 }
             }
 
-            // Ask for a name to save the preset as if a new one was created
+            // Allow the user to enter a name to save the preset as if a new one was created
             if (cfgName == null) {
 
                 telemetry.clearAll();
@@ -212,13 +233,13 @@ public class AutoConfig extends LinearOpMode {
                 while (true) {
 
                     // Name to be displayed on telemetry
-                    StringBuilder displayName = new StringBuilder();
+                    StringBuilder displayName = new StringBuilder(CFG_NAME_LENGTH + 2);
 
                     for (short i = 0; i < CFG_NAME_LENGTH; i++) {
                         if (i == digitIdx) {
-                            displayName.append("|");
+                            displayName.append('[');
                             displayName.append(digits[i]);
-                            displayName.append("|");
+                            displayName.append(']');
                         } else {
                             displayName.append(digits[i]);
                         }
@@ -227,7 +248,7 @@ public class AutoConfig extends LinearOpMode {
                     telName.setValue(displayName);
                     telemetry.update();
 
-                    // Wait until a button is pressed
+                    // Wait for a button to be pressed
                     do {
                         handleInput();
                     } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
@@ -268,14 +289,23 @@ public class AutoConfig extends LinearOpMode {
 
         }
 
-        // STOP
-
         // Save the new configurations map
-        try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(new File(Environment.getDataDirectory(), "tnwAuto.cfg")))) {
+        try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(new File(AppUtil.getDefContext().getFilesDir(), "tnwAuto.cfg")))) {
             outputStream.writeObject(cfgs);
         } catch (IOException e) {
-            e.printStackTrace();
+            telemetry.clearAll();
+            telemetry.addLine(e.getMessage());
+            telemetry.addLine(e.getLocalizedMessage());
+            telemetry.update();
+            sleep(10000);
+            return;
         }
+
+        telemetry.clearAll();
+        telemetry.addLine("Configurations successfully saved.  Goodbye...");
+        telemetry.update();
+
+        sleep(2000);
 
     }
 
