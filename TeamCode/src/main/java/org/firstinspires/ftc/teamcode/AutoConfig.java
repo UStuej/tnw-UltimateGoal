@@ -79,9 +79,11 @@ public class AutoConfig extends LinearOpMode {
                 // Wait for LB or RB to be pressed, or for the opmode to be stopped (resulting in saving the configurations)
                 do {
                     handleInput();
-                } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1DOWNHeld);
+                } while (!isStopRequested() && !gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1DOWNHeld);
 
-                if (gamepad1APressed) {  // Finish and save when A is pressed
+                if (isStopRequested()) {  // Exit the program if the stop button is pressed
+                    return;
+                } else if (gamepad1APressed) {  // Finish and save when A is pressed
                     break;
                 } else if (gamepad1LBPressed) {
 
@@ -100,9 +102,11 @@ public class AutoConfig extends LinearOpMode {
                         // Wait for a button to be pressed
                         do {
                             handleInput();
-                        } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1DOWNPressed);
+                        } while (!isStopRequested() && !gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1DOWNPressed);
 
-                        if (gamepad1APressed) {  // Finish selection when A is pressed
+                        if (isStopRequested()) {
+                            return;
+                        } else if (gamepad1APressed) {  // Finish selection when A is pressed
                             break;
                         } else if (gamepad1LBPressed) {
                             presetIdx = (short) (presetIdx > 0
@@ -134,9 +138,11 @@ public class AutoConfig extends LinearOpMode {
                     // Wait for a button to be pressed
                     do {
                         handleInput();
-                    } while (!gamepad1LBPressed && !gamepad1APressed);
+                    } while (!isStopRequested() && !gamepad1LBPressed && !gamepad1APressed);
 
-                    if (gamepad1LBPressed) {
+                    if (isStopRequested()) {  // Exit the program if the stop button is pressed
+                        return;
+                    } else if (gamepad1LBPressed) {
                         cfgs = null;
                     }
 
@@ -163,8 +169,10 @@ public class AutoConfig extends LinearOpMode {
                 
                 // Controls to select an option and modify its value
                 while (true) {
-                    
-                    if (gamepad1APressed) {  // Finish selection when A is pressed
+
+                    if (isStopRequested()) {  // Exit the program if the stop button is pressed
+                        return;
+                    } else if (gamepad1APressed) {  // Finish selection when A is pressed
                         break;
                     } else if (gamepad1LBPressed) {
                         optionIdx = (short) (optionIdx > 0
@@ -214,7 +222,7 @@ public class AutoConfig extends LinearOpMode {
                     // Wait for a button to be pressed
                     do {
                         handleInput();
-                    } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
+                    } while (!isStopRequested() && !gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
 
                 }
             }
@@ -251,9 +259,11 @@ public class AutoConfig extends LinearOpMode {
                     // Wait for a button to be pressed
                     do {
                         handleInput();
-                    } while (!gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
+                    } while (!isStopRequested() && !gamepad1APressed && !gamepad1LBPressed && !gamepad1RBPressed && !gamepad1UPPressed && !gamepad1DOWNPressed);
 
-                    if (gamepad1APressed) {  // Finish selection when A is pressed
+                    if (isStopRequested()) {  // Exit the program if the stop button is pressed
+                      return;
+                    } else if (gamepad1APressed) {  // Finish selection when A is pressed
                         break;
                     } else if (gamepad1LBPressed) {
                         digitIdx = (short) (digitIdx > 0
@@ -305,7 +315,7 @@ public class AutoConfig extends LinearOpMode {
         telemetry.addLine("Configurations successfully saved.  Goodbye...");
         telemetry.update();
 
-        sleep(2000);
+        sleep(1000);
 
     }
 
