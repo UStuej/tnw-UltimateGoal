@@ -36,7 +36,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
     public static double[] RING_SCAN_CROP_PERCENTS = new double[4];  // X1, X2, Y1, and Y2, respectively
 
     // Starting position 1 camera crop values
-<<<<<<< HEAD
     public static double[] RING_SCAN_CROP_PERCENTS_1_RED = {0.55, 0.84, 0.2, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
     public static double[] RING_SCAN_CROP_PERCENTS_2_RED = {0.01, 0.3, 0.2, 0.47};  // X1, X2, Y1, and Y2, respectively for the second starting position on red
     public static double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.16, 0.45, 0.2, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue
@@ -45,16 +44,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
     double ringImagePercent = 0.0;
     double oneRingPercentageMinimum = .05; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
     double fourRingPercentageMinimum = .25; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
-=======
-    public static double[] RING_SCAN_CROP_PERCENTS_1_RED = {0.4, 0.8, 0.1, 0.6};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
-    public static double[] RING_SCAN_CROP_PERCENTS_2_RED = {0.01, 0.3, 0.18, 0.45};  // X1, X2, Y1, and Y2, respectively for the second starting position on red TODO: set these
-    public static double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.4, 0.8, 0.1, 0.6};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue TODO: set these
-    public static double[] RING_SCAN_CROP_PERCENTS_2_BLUE = {0.0, 0.0, 0.0, 0.0};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue TODO: set these
-
-    double ringImagePercent = 0.0;
-    double oneRingPercentageMinimum = .01; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
-    double fourRingPercentageMinimum = .15; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
 
     private static final int RING_COLOR_H_START = 13;  // 15
     private static final int RING_COLOR_S_START = 45;  // 51
@@ -66,17 +55,10 @@ public class TNWRegionalsAuto extends LinearOpMode {
     char autoCase = 'X';
     char autoCaseCapture = 'X';
 
-<<<<<<< HEAD
     // ROADRUNNER VALUES:
     // Constant Roadrunner Pose Values
     // Starting poses
     final Pose2d STARTING_POSE_1 = new Pose2d(-63, -31, Math.toRadians(0)); // TODO: set this to allow more room for alliance partner and elements
-=======
-// ROADRUNNER VALUES:
-    // Constant Roadrunner Pose Values
-    // Starting poses
-    final Pose2d STARTING_POSE_1 = new Pose2d(-63, -32, Math.toRadians(0)); // TODO: set this to allow more room for alliance partner and elements
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
     final Pose2d STARTING_POSE_2 = new Pose2d(-63, -45, Math.toRadians(0)); // TODO: set these
 
     // Wobble goal poses
@@ -105,11 +87,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
     final Pose2d PARTNER_WOBBLE_GOAL_PICKUP_POSITION_C_ABSENT_BLUE = new Pose2d(-35-4, -55-4, Math.toRadians(330)); // TODO: set these
     final Pose2d PARTNER_SECOND_WOBBLE_GOAL_ALIGN_POSITION_ABSENT_BLUE = new Pose2d(PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE.getX() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE.getY() + 12, PARTNER_WOBBLE_GOAL_PICKUP_POSITION_B_ABSENT_BLUE.getHeading()); // TODO: set these
 
-<<<<<<< HEAD
     Pose2d PARTNER_RINGS_POSITION = new Pose2d(-58, -28, Math.toRadians(90)); // used by the autonomous. to be set in initializeElementPositions() function
-=======
-    Pose2d PARTNER_RINGS_POSITION = new Pose2d(-55, -28, Math.toRadians(90)); // used by the autonomous. to be set in initializeElementPositions() function
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
 
     //final Pose2d PARTNER_RINGS_POSITION_PRESENT = new Pose2d(-37, -23, 0); // TODO: set these
     //final Pose2d PARTNER_RINGS_POSITION_ABSENT = new Pose2d(0, 0, 0); // TODO: set these
@@ -138,11 +116,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
 
     // Starter stack related poses
     final Vector2d STARTER_STACK = new Vector2d(-24, -35);
-<<<<<<< HEAD
     final Pose2d LONG_SHOT_POSE = new Pose2d(-40, -38, Math.toRadians(355)); // y = -36, Heading = 356
-=======
-    final Pose2d LONG_SHOT_POSE = new Pose2d(-40, -36, Math.toRadians(356));
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
     // Power shot related poses
     //final Pose2d POWER_SHOT_SHOOT_1 = new Pose2d(-3, -3.5, Math.toRadians(356));
     //final double DISTANCE_BETWEEN_POWER_SHOTS = 8; // inches
@@ -168,17 +142,10 @@ public class TNWRegionalsAuto extends LinearOpMode {
     private static double highGoalTPS = 56.5 * 28; // 57.5  // Ticks per second of the shooter when active and aiming for the high goal
     private static double powerShotTPS = 50 * 28; // Ticks per second of the shooter when active and aiming for the power shots
 
-<<<<<<< HEAD
     final int RING_SHOOT_TIME = 750; // ring scoring interval measured in milliseconds
 
     private static double CLAW_OPENED_POSITION = 0.0;  // The position of the claw when it is open
     private static double CLAW_CLOSED_POSITION = 0.48;  // The position of the claw when it is closed
-=======
-    final int RING_SHOOT_TIME = 500; // ring scoring interval measured in milliseconds
-
-    private static double CLAW_OPENED_POSITION = 0.24;  // The position of the claw when it is open
-    private static double CLAW_CLOSED_POSITION = 0.80;  // The position of the claw when it is closed
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
 
     private static int ARM_DOWN_POSITION_DELTA = 422;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
     private static int ARM_UP_POSITION_DELTA = 222;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
@@ -219,10 +186,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
     boolean scoreAlliancePartnerWobble = true; // whether to collect and deliver alliance partner's wobble goal.  indicated by drivers in configuration
     boolean scoreAlliancePartnerRings = true;  // whether to collect and score alliance partner's preloaded rings.  indicated by drivers in configuration
     boolean deliverWobble = true; // whether to deliver preloaded wobble goal.  indicated by drivers in configuration
-<<<<<<< HEAD
     boolean navigateToLaunchLine = true; // whether or not to park on the launch line at the end of the autonomous period.  indicated by drivers in configuration
-=======
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
     byte parkingLocation = 2; // field tiles from alliance wall to park indicated by drivers in configuration
     boolean alliancePartnerMoves = false;
     boolean buttonsReleased = true; // gamepad buttons are released before triggering queues
@@ -354,18 +318,13 @@ public class TNWRegionalsAuto extends LinearOpMode {
             ringShooter.setVelocity(highGoalTPS);
         }
     }
-<<<<<<< HEAD
     private void pause(long millis, boolean flywheel) {
-=======
-    private void pause(int millis, boolean flywheel) {
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
         long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() <= startTime + millis) {
             stopMillis(1);
             if (flywheel) ringShooter.setVelocity(highGoalTPS);
         }
     }
-<<<<<<< HEAD
     private void pause(long millis, double TPS) {
         long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() <= startTime + millis) {
@@ -373,8 +332,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
             ringShooter.setVelocity(TPS);
         }
     }
-=======
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
 
 
 
@@ -419,7 +376,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 telemetry.update();
             }
         }
-<<<<<<< HEAD
         // obtain whether or not to navigate to launch line from drivers
         nextStep = false;
         buttonsReleased = false;
@@ -433,8 +389,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 telemetry.update();
             }
         }
-=======
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
         // obtain parking location from drivers
         nextStep = false;
         buttonsReleased = false;
@@ -485,7 +439,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 telemetry.update();
             }
         }
-<<<<<<< HEAD
         // allow driver to review selected configuration
         nextStep = false;
         buttonsReleased = false;
@@ -511,10 +464,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
         }
 
         drive.setPoseEstimate(selInvertPose(startingPosition == 1 ? STARTING_POSE_1 : STARTING_POSE_2));
-=======
-
-        drive.setPoseEstimate(startingPosition == 1 ? STARTING_POSE_1 : STARTING_POSE_2);
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
 
         initializeElementPositions(); // keep this in init to initialize camera viewing borders
 
@@ -528,7 +477,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 webcam.startStreaming(320, 240, OpenCvCameraRotation.UPSIDE_DOWN);
             }
         });
-<<<<<<< HEAD
 
 // INITIALIZE HARDWARE:
         // Initialize intake motor
@@ -594,81 +542,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
         // set autonomous start time for pause at end
         autoStartTime = System.currentTimeMillis();
 
-=======
-
-// INITIALIZE HARDWARE:
-        // Initialize intake motor
-        intakeDrive = hardwareMap.get(DcMotor.class, "intakeDrive");
-
-        // Initialize flywheel motor
-        ringShooter = hardwareMap.get(DcMotorEx.class, "shoot");
-
-        // Initialize Wobble Goal manipulation motors
-        wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
-        wobbleArm = hardwareMap.get(DcMotor.class, "WGArm");
-        fingerServo = hardwareMap.get(Servo.class, "ringFinger");
-
-        // Initialize ring elevator motor
-        ringElevator = hardwareMap.get(DcMotorEx.class, "ringElevator");
-
-        // Initialize motor and servo Positions
-        // Set Motor Directions
-        intakeDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        // Set servo initialization positions
-        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
-
-        // Apply motor power
-        // Apply power and set mode for wobble arm motor
-        wobbleArm.setTargetPosition(wobbleArm.getCurrentPosition());
-        wobbleArm.setPower(.5);
-        wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Apply power and set mode for ring elevator motor
-        ringElevator.setTargetPosition(ringElevator.getCurrentPosition());
-        ringElevator.setPower(0.8);
-        ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
-
-        // Obtain encoder positions based on starting position and deltas
-        // Obtain wobble arm position values
-        ARM_STARTING_POSITION = wobbleArm.getCurrentPosition() + 20;  // Get the starting position of the arm based on the current position of the arm at init time, which is assumed.
-        ARM_UP_POSITION = wobbleArm.getCurrentPosition() - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed.
-        ARM_DOWN_POSITION = wobbleArm.getCurrentPosition() - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed.
-        ARM_HOVER_POSITION = wobbleArm.getCurrentPosition() - ARM_HOVER_POSITION_DELTA;  // Get the hover position of the arm with respect to the current position of the arm at init time, which is assumed.
-
-        // Obtain ring elevator position values
-        RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
-        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000; // 2017
-
-        // Set DcMotorEx PIDF coefficients
-        ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
-        ringElevator.setVelocityPIDFCoefficients(5, 3, 3, 0);
-
-
-// WAIT FOR AUTONOMOUS TO BEGIN:
-        // Send configuration information to drivers for verification
-        if (blueAlliance) telemetry.addData("Alliance ", "BLUE");
-        else telemetry.addData("Alliance ", "RED");
-        if (startingPosition == 1) telemetry.addData("Starting Line ", "INNER");
-        else telemetry.addData("Starting Line ", "OUTER");
-        telemetry.addData("Field tiles from wall to park ", parkingLocation);
-        if (deliverWobble) telemetry.addLine("Deliver Preloaded Wobble Goal");
-        else telemetry.addLine("Don't Deliver Preloaded Wobble Goal");
-        if (scoreAlliancePartnerRings) telemetry.addLine("Score Alliance Partner Rings");
-        else telemetry.addLine("Don't Score Alliance Partner Rings");
-
-        telemetry.addLine("Waiting for start...");
-        telemetry.update();
-        waitForStart();
-
-        // store autonomous case
-        switch (autoCase) {
-            case 'A': autoCaseCapture = 'A'; break;
-            case 'B': autoCaseCapture = 'B'; break;
-            case 'C': autoCaseCapture = 'C'; break;
-        }
-
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
         // Build Roadrunner Trajectories
 
         Trajectory scorePreloadedRings = drive.trajectoryBuilder(selInvertPose(startingPosition == 1 ? STARTING_POSE_1 : STARTING_POSE_2)) // drive from the start pose to the starter stack and shoot preloaded rings
@@ -682,11 +555,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to drop intake shield
                     }
                 })
-<<<<<<< HEAD
                 .splineToLinearHeading(selInvertPose(new Pose2d(autoCaseCapture == 'A' ? LONG_SHOT_POSE.getX() + 26 : LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true), selInvertPose(Math.toRadians(startingPosition == 1 ? 270 : 90)))
-=======
-                .splineToLinearHeading(selInvertPose(LONG_SHOT_POSE, true), selInvertPose(Math.toRadians(startingPosition == 1 ? 270 : 90)))
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                 // a series of temporal markers is preferred over a looped sequence with pauses to preserve roadrunner PID accuracy
                 .addTemporalMarker(.5, new MarkerCallback() {
                     @Override
@@ -700,15 +569,9 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         pause(500); // allow flywheel PID to adjust
                         for (int i = 1; i <= 4; i++) {
                             fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
-<<<<<<< HEAD
                             pause(RING_SHOOT_TIME / 2, autoCaseCapture == 'A' ? highGoalTPS : 57.75 * 28);
                             fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
                             pause(RING_SHOOT_TIME / 2, autoCaseCapture == 'A' ? highGoalTPS : 57.75 * 28);
-=======
-                            pause(RING_SHOOT_TIME / 2);
-                            fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
-                            pause(RING_SHOOT_TIME / 2);
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                         }
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
                         ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // drop ring elevator to intake more rings
@@ -717,11 +580,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .build();
 
-<<<<<<< HEAD
         Trajectory shootStarterStackRings1 = drive.trajectoryBuilder(scorePreloadedRings.end()) // only used in auto cases B and C
-=======
-        Trajectory shootStarterStackRings1 = drive.trajectoryBuilder(selInvertPose(scorePreloadedRings.end(), true)) // only used in auto cases B and C
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -729,11 +588,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to collect starter stack rings
                     }
                 })
-<<<<<<< HEAD
                 .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 10, LONG_SHOT_POSE.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
-=======
-                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 15, STARTER_STACK.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                         SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .addDisplacementMarker(new MarkerCallback() {
@@ -743,15 +598,10 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // move ring finger to out position to avoid collision with ring elevator
                         ringElevator.setTargetPosition(RING_ELEVATOR_UP_POSITION); // raise ring elevator to score rings
                         ringShooter.setVelocity(highGoalTPS);
-<<<<<<< HEAD
                         pause(1750); // allow time for ring elevator to raise
                         intakeDrive.setPower(0); // turn off intake
                         final int REPETITIONS = autoCaseCapture == 'B' ? 2 : 4;
                         for (int i = 1; i <= REPETITIONS; i++) {
-=======
-                        pause(1500); // allow time for ring elevator to raise
-                        for (int i = 1; i <= 4; i++) {
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                             fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
                             pause(RING_SHOOT_TIME / 2);
                             fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
@@ -764,7 +614,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .build();
 
-<<<<<<< HEAD
         Trajectory shootStarterStackRings2 = drive.trajectoryBuilder(shootStarterStackRings1.end()) // only used in auto cases B and C
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
@@ -794,53 +643,10 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
                         ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // drop ring elevator to intake more rings
                         ringShooter.setPower(0); // power off ring shooter
-=======
-            Trajectory shootStarterStackRings2 = drive.trajectoryBuilder(selInvertPose(shootStarterStackRings1.end(), true)) // only used in auto cases B and C
-                    .addDisplacementMarker(new MarkerCallback() {
-                        @Override
-                        public void onMarkerReached() {
-                            pause(500, false);
-                            intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to collect starter stack rings
-                        }
-                    })
-                    .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 26, STARTER_STACK.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
-                            SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                            SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
-                    .addDisplacementMarker(new MarkerCallback() {
-                        @Override
-                        public void onMarkerReached() {
-                            pause(1000); // allow rings time to completely enter elevator
-                            fingerServo.setPosition(RING_FINGER_OUT_POSITION); // move ring finger to out position to avoid collision with ring elevator
-                            ringElevator.setTargetPosition(RING_ELEVATOR_UP_POSITION); // raise ring elevator to score rings
-                            ringShooter.setVelocity(highGoalTPS);
-                            pause(1500); // allow time for ring elevator to raise
-                            for (int i = 1; i <= 4; i++) {
-                                fingerServo.setPosition(RING_FINGER_IN_POSITION); // shoot one ring
-                                pause(RING_SHOOT_TIME / 2);
-                                fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
-                                pause(RING_SHOOT_TIME / 2);
-                            }
-                            fingerServo.setPosition(RING_FINGER_OUT_POSITION); // retract finger servo
-                            ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION); // drop ring elevator to intake more rings
-                            ringShooter.setPower(0); // power off ring shooter
-                        }
-                    })
-                    .build();
-
-        Trajectory alignToCollectPartnerRings = drive.trajectoryBuilder(selInvertPose(autoCaseCapture == 'A' ? scorePreloadedRings.end() : autoCaseCapture == 'B' ? shootStarterStackRings1.end() : shootStarterStackRings2.end(), true))
-                .splineToLinearHeading(selInvertPose(new Pose2d(PARTNER_RINGS_POSITION.getX(), PARTNER_RINGS_POSITION.getY() - 20, PARTNER_RINGS_POSITION.getHeading())), selInvertPose(Math.toRadians(180)),
-                        SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL, Math.PI / 2, DriveConstants.TRACK_WIDTH),
-                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
-                .addTemporalMarker(5, new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        fingerServo.setPosition(RING_FINGER_IN_POSITION); // retract finger servo into robot to avoid accidental damage
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                     }
                 })
                 .build();
 
-<<<<<<< HEAD
         Trajectory alignToCollectPartnerRings = drive.trajectoryBuilder(autoCaseCapture == 'A' ? scorePreloadedRings.end() : autoCaseCapture == 'B' ? shootStarterStackRings1.end() : shootStarterStackRings2.end())
                 .lineToLinearHeading(selInvertPose(new Pose2d(PARTNER_RINGS_POSITION.getX(), startingPosition == 2 ? PARTNER_RINGS_POSITION.getY() - 25 : PARTNER_RINGS_POSITION.getY() + 10, Math.toRadians(startingPosition == 2 ? 90 : 270))),
                         SampleMecanumDrive.getVelocityConstraint(DriveConstants.MAX_VEL, Math.PI / 2, DriveConstants.TRACK_WIDTH),
@@ -867,27 +673,12 @@ public class TNWRegionalsAuto extends LinearOpMode {
                     @Override
                     public void onMarkerReached() {
                         pause(500, false);
-=======
-        Trajectory collectAlliancePartnerRings = drive.trajectoryBuilder(selInvertPose(alignToCollectPartnerRings.end()))
-                .addDisplacementMarker(new MarkerCallback() {
-                    @Override
-                    public void onMarkerReached() {
-                        intakeDrive.setPower(INTAKE_IN_POWER); // power on intake to collect alliance partner's rings
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                     }
                 })
-                .lineToConstantHeading(selInvertPose(new Vector2d(PARTNER_RINGS_POSITION.getX(), PARTNER_RINGS_POSITION.getY() + 10)),
-                        SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .build();
 
-<<<<<<< HEAD
         Trajectory shootAlliancePartnerRings = drive.trajectoryBuilder(collectAlliancePartnerRings.end())
                 .addTemporalMarker(1.5, new MarkerCallback() {
-=======
-        Trajectory shootAlliancePartnerRings = drive.trajectoryBuilder(selInvertPose(collectAlliancePartnerRings.end()))
-                .addTemporalMarker(1, new MarkerCallback() {
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                     @Override
                     public void onMarkerReached() {
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // move finger servo to out position to avoid collision with ring elevator
@@ -896,11 +687,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         ringShooter.setVelocity(highGoalTPS); // spin up flywheel to score in high goal
                     }
                 })
-<<<<<<< HEAD
                 .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 26, LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true))
-=======
-                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true))
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -918,16 +705,11 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .build();
 
-<<<<<<< HEAD
         Trajectory deliverWobbleGoal1 = drive.trajectoryBuilder(scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
                 : autoCaseCapture == 'A' ? scorePreloadedRings.end()
                 : autoCaseCapture == 'B' ? shootStarterStackRings1.end()
                 : shootStarterStackRings2.end())
                 .addTemporalMarker(0, new MarkerCallback() {
-=======
-        Trajectory deliverWobbleGoal1 = drive.trajectoryBuilder(selInvertPose(scoreAlliancePartnerRings ? shootAlliancePartnerRings.end() : scorePreloadedRings.end(), true))
-                .addTemporalMarker(1, new MarkerCallback() {
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                     @Override
                     public void onMarkerReached() {
                         wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // deploy wobble arm
@@ -941,13 +723,8 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .lineToLinearHeading(
                         autoCaseCapture == 'A' ? TARGET_ZONE_A1
-<<<<<<< HEAD
                                 : autoCaseCapture == 'B' ? TARGET_ZONE_B1
                                 : TARGET_ZONE_C1) // because these poses are set manually, do not use selInvertPose on them.
-=======
-                        : autoCaseCapture == 'B' ? TARGET_ZONE_B1
-                        : TARGET_ZONE_C1) // because this pose is set manually, do not use selInvertPose on this pose.
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -958,15 +735,9 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 .build();
 
         Trajectory backFromTargetZone1 = drive.trajectoryBuilder(deliverWobbleGoal1.end())
-<<<<<<< HEAD
                 .lineToLinearHeading(autoCaseCapture == 'A' ? new Pose2d(TARGET_ZONE_A1.getX(), blueAlliance ? TARGET_ZONE_A1.getY() - 14 : TARGET_ZONE_A1.getY() + 14, TARGET_ZONE_A1.getHeading() - Math.toRadians(45))
                         : autoCaseCapture == 'B' ? new Pose2d(TARGET_ZONE_B1.getX() - 14, TARGET_ZONE_B1.getY(), TARGET_ZONE_B1.getHeading() - Math.toRadians(45))
                         : selInvertPose(new Pose2d(TARGET_ZONE_C1.getX() - 14, -56 + (parkingLocation - 1) * 24, Math.toRadians(0))))
-=======
-                .lineToLinearHeading(selInvertPose(autoCaseCapture == 'A' ? new Pose2d(TARGET_ZONE_A1.getX(), TARGET_ZONE_A1.getY() + 14, TARGET_ZONE_A1.getHeading() - Math.toRadians(45))
-                        : autoCaseCapture == 'B' ? new Pose2d(TARGET_ZONE_B1.getX() - 14, TARGET_ZONE_B1.getY(), TARGET_ZONE_B1.getHeading() - Math.toRadians(45))
-                        : new Pose2d(TARGET_ZONE_C1.getX() - 14, TARGET_ZONE_C1.getY() + 14, TARGET_ZONE_C1.getHeading() - Math.toRadians(45))))
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
                 .addTemporalMarker(.5, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -976,19 +747,11 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 .build();
 
         Trajectory park = drive.trajectoryBuilder(
-<<<<<<< HEAD
                 deliverWobble && (autoCaseCapture == 'A' || !scoreAlliancePartnerRings) ? backFromTargetZone1.end()
                         : scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
                         : autoCaseCapture == 'C' ? shootStarterStackRings2.end()
                         : autoCaseCapture == 'B' ? shootStarterStackRings1.end()
                         : scorePreloadedRings.end())
-=======
-                deliverWobble ? backFromTargetZone1.end()
-                : selInvertPose(scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
-                : autoCaseCapture == 'C' ? shootStarterStackRings2.end()
-                : autoCaseCapture == 'B' ? shootStarterStackRings1.end()
-                : scorePreloadedRings.end(), true))
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
 
                 .lineToLinearHeading(selInvertPose(new Pose2d(12, -56 + (parkingLocation - 1) * 24, Math.toRadians(0))))
                 .build();
@@ -1001,7 +764,6 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 drive.followTrajectory(shootStarterStackRings2);
             }
         }
-<<<<<<< HEAD
         if (scoreAlliancePartnerRings && (autoCaseCapture != 'C' || !deliverWobble)) {
             drive.followTrajectory(alignToCollectPartnerRings);
             drive.followTrajectory(collectAlliancePartnerRings);
@@ -1130,18 +892,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
             telemetry.update();
 
             return imageFeed;
-=======
-        if (scoreAlliancePartnerRings) {
-            drive.followTrajectory(alignToCollectPartnerRings);
-            drive.followTrajectory(collectAlliancePartnerRings);
-            drive.followTrajectory(shootAlliancePartnerRings);
         }
-        if (deliverWobble) {
-            drive.followTrajectory(deliverWobbleGoal1);
-            drive.followTrajectory(backFromTargetZone1);
->>>>>>> fe6d6686f6eb57e8f1edfee4a37b7db9e5711ab7
-        }
-        drive.followTrajectory(park);
 
         public int getRingPixels() {
             return ringPixels;
