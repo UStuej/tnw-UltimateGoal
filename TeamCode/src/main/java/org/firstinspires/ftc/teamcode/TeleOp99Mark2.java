@@ -29,6 +29,8 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled. The name is currently misleading (FIXME)
 
+    private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
+
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
     private static boolean BUTTONS_CYCLE_SPEED_CURVES = false;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
     private static boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
@@ -64,8 +66,8 @@ public class TeleOp99Mark2 extends OpMode {
     private static int RING_ELEVATOR_DOWN_POSITION;  // The position of the Ring Elevator when it is in the DOWN state
     private static int RING_ELEVATOR_VELOCITY = 6000;  // The velocity of the motor to use when running to its target position TODO: We might increase this
 
-    private static double RING_FINGER_IN_POSITION = 0.05;  // The position of the ring finger when it's in
-    private static double RING_FINGER_OUT_POSITION = 0.4;  // The position of the ring finger when it's out
+    private static double RING_FINGER_IN_POSITION = 0.12;  // The position of the ring finger when it's in
+    private static double RING_FINGER_OUT_POSITION = 0.50;  // The position of the ring finger when it's out
 
     private static double FULLAXIS_LEFT_WEIGHT = 0.75;  // The weighting of the left joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_RIGHT_WEIGHT to equal exactly 1
     private static double FULLAXIS_RIGHT_WEIGHT = 0.25;  // The weighting of the right joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_LEFT_WEIGHT to equal 1
@@ -243,7 +245,7 @@ public class TeleOp99Mark2 extends OpMode {
     private final Pose2d initialPose = currentPose;
     private SampleMecanumDrive drive;
 
-    private int autoPoseIndex = -1;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
+    private int autoPoseIndex = 0;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
 
     // The possible target positions for automatic driving
     public static Pose2d highGoalShootPose = PoseStorage.highGoalShootPose;  // Index 0
@@ -335,6 +337,9 @@ public class TeleOp99Mark2 extends OpMode {
             }
         }
 
+        if (gamepad1DpadUpPressed) { RING_ELEVATOR_UP_POSITION += 5; } // added as a failsafe to allow manual lift position tweaking as needed
+        else if (gamepad1DpadDownPressed) { RING_ELEVATOR_UP_POSITION -= 5; }
+
         autoServoControl();  // Run automatic servo control (wobble goal mechanism deployment or undeployment) on whatever motors are "free" from manual control if such deployment is enabled (which it also checks for through the user input variables). DO NOT move this function call into a conditional. Without this function, timekeeping for the deployment and undeployment would act really weird if any manual control interrupted it (it would act really weird in a number of circumstances for that matter. Don't do it.)
 
         if (USE_VARIABLE_SPEED_CURVES && BUTTONS_CYCLE_SPEED_CURVES) {
@@ -399,7 +404,7 @@ public class TeleOp99Mark2 extends OpMode {
         ringElevator.setPower(0.8);
         ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
-        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2017;
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000;
     }
 
     private void inputAdjustVariableSpeedCurves() {
@@ -678,7 +683,7 @@ public class TeleOp99Mark2 extends OpMode {
         backRightDrivePower = vertical + horizontal - rotation;
 
         // Set intake speed
-        intakeDrivePower = gamepad2LeftTrigger - gamepad2RightTrigger;
+        intakeDrivePower = (gamepad2LeftTrigger - gamepad2RightTrigger) * INTAKE_MAX_POWER;
     }
 
     private void checkAutoInterrupts() {  // Checks to see if any manual input will interfere with an automatic task, if manual input takes priority (AUTO_PRIORITY is false). If so, it disables the automatic overrides using a flag for each servo involved
@@ -804,7 +809,7 @@ public class TeleOp99Mark2 extends OpMode {
         }
 
         // Adjust finger state based on whether it's attempting to move inward and whether it's possible without damaging the ring elevator
-        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 200) {
+        if (Math.abs(ringElevator.getCurrentPosition() - RING_ELEVATOR_DOWN_POSITION) <= Math.abs(RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION) / 80) {
             fingerPosition = fingerAttemptingIntake ? RING_FINGER_OUT_POSITION : RING_FINGER_IN_POSITION;  // Move the finger inward if it's currently attempting to and the elevator position allows it
         }
         else {
@@ -901,7 +906,7 @@ public class TeleOp99Mark2 extends OpMode {
 
             // Reset pose estimate rotation if needed
             if (LEFT_SHOULDER_RECALIBRATES_ROTATION && gamepad1LeftShoulderPressed) {  // Reset the current pose estimate rotation to the initial pose rotation
-                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), initialPose.getHeading());
+                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), 90);
                 drive.setPoseEstimate(currentPose);
                 telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
             }
