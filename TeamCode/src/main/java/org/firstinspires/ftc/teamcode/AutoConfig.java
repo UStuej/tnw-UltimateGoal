@@ -22,7 +22,8 @@ import java.util.Map;
 public class AutoConfig extends LinearOpMode {
 
     // USER DEFINED CONSTANTS
-    private static final short CFG_NAME_LENGTH = 5;
+    private static final short CFG_OPTIONS = 2;  // Number of settings (option fields within Settings class)
+    private static final short CFG_NAME_LENGTH = 5;  // Length of assignable names (array of digits) to configuration presets
 
     // States of gamepad 1 buttons
     private boolean gamepad1AHeld = false;
@@ -177,11 +178,11 @@ public class AutoConfig extends LinearOpMode {
                     } else if (gamepad1LBPressed) {
                         optionIdx = (short) (optionIdx > 0
                                 ? optionIdx - 1
-                                : 1);  // Number of settings (option fields within Settings class) minus 1
+                                : CFG_OPTIONS - 1);
                     } else if (gamepad1RBPressed) {
-                        optionIdx = (short) (optionIdx < 1  // Number of settings (option fields within Settings class) minus 1
+                        optionIdx = (short) (optionIdx < CFG_OPTIONS - 1
                                 ? optionIdx + 1
-                                : 0);
+                                : CFG_OPTIONS - 1);
                     }
 
                     // Change to a new option to set, or modify the current one's value
