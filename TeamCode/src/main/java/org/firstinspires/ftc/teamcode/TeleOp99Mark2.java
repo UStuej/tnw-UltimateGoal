@@ -150,7 +150,7 @@ public class TeleOp99Mark2 extends OpMode {
     private boolean clawUserControl = false;  // Whether or not the user has claimed control of the claw during the wobble goal deployment/undeployment. Only used if AUTO_PRIORITY is false. Reset when we're no longer deploying or undeploying or we switch from deployment/undeployment.
 
     // States for the servos/motors that can be controlled via toggles
-    private boolean ringElevatorUp = true;  // Boolean representing whether or not the ring elevator is currently at (or running to) the up position
+    private boolean ringElevatorUp = false;  // Boolean representing whether or not the ring elevator is currently at (or running to) the up position
     private boolean armUp = false;  // Boolean representing whether or not the wobble goal arm is currently at (or running to) the up position
     private boolean fingerIn = false;  // Boolean representing whether or not the ring finger's target position is currently in
 
@@ -744,13 +744,15 @@ public class TeleOp99Mark2 extends OpMode {
         }
 
         // Shooter state
-        shooterState = gamepad2LeftShoulderHeld || gamepad2RightShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
+//        shooterState = gamepad2LeftShoulderHeld || gamepad2RightShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
+        shooterState = ringElevatorUp;  // The shooter turns on when the ring elevator is up, and turns off when it's down
 
-        if (gamepad2LeftShoulderHeld) {
-            currentShooterTPS = highGoalTPS;
-        }
-        else if (gamepad2RightShoulderHeld) {
+        if (gamepad2RightShoulderHeld) {
             currentShooterTPS = powerShotTPS;
+        }
+//        else if (gamepad2LeftShoulderHeld) {
+        else if (ringElevatorUp) {
+            currentShooterTPS = highGoalTPS;
         }
         else {
             currentShooterTPS = 0;
@@ -824,7 +826,7 @@ public class TeleOp99Mark2 extends OpMode {
         // Ring Elevator movement
         if (gamepad2APressed) {
             ringElevatorUp = !ringElevatorUp;
-            ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_DOWN_POSITION : RING_ELEVATOR_UP_POSITION);
+            ringElevator.setTargetPosition(ringElevatorUp ? RING_ELEVATOR_UP_POSITION : RING_ELEVATOR_DOWN_POSITION);
         }
     }
 
