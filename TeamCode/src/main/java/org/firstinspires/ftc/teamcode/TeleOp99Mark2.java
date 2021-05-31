@@ -16,6 +16,9 @@ import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @TeleOp(name = "TeleOp99Mark2")
 
 public class TeleOp99Mark2 extends OpMode {
@@ -30,6 +33,8 @@ public class TeleOp99Mark2 extends OpMode {
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
     private static boolean ENABLE_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled
+
+    private static boolean AUTO_TPS_SELECT = true;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
 
     private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
 
@@ -259,6 +264,9 @@ public class TeleOp99Mark2 extends OpMode {
     public static Pose2d powerShotPose3 = PoseStorage.powerShot3Pose;  // Index 3
     public static Pose2d dpadControlPose = PoseStorage.highGoalShootPose;  // Should be overriden by the user when gamepad 1 Dpad buttons are pressed
 
+    // Holds the positions of the actual goals to rotate towards (not poses to travel to!)
+    public static List<Vector2d> goalPositions = new ArrayList<Vector2d>(4);  // High goal + 3 power shots
+
     // The trajectory we're currently following, if we're following a trajectory
     private Trajectory targetTrajectory;
 
@@ -271,6 +279,8 @@ public class TeleOp99Mark2 extends OpMode {
     private boolean fingerAttemptingIntake;
 
     private boolean currentlyFollowingAutoTrajectory = false;  // Whether or not we're currently following an automatic trajectory. This should be set to false whenever we switch back to manual control
+
+    private boolean firstRotate = true;  // Whether or not the robot has been rotated towards the current goal since it was last changed by anything other than the button that cycles just rotation
 
     @Override
     public void init() {
@@ -319,6 +329,12 @@ public class TeleOp99Mark2 extends OpMode {
         time = System.currentTimeMillis();
         lastTime = time;  // Initialize the last tick time so that deltas can be properly calculated
         ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
+
+        // FIXME: Just guessed at these
+        goalPositions.set(0, new Vector2d(36, -24));  // High goal position
+        goalPositions.set(1, new Vector2d(36, -6));  // Power shot 1 position
+        goalPositions.set(2, new Vector2d(36, -12));  // Power shot 2 position
+        goalPositions.set(3, new Vector2d(36, -18));  // Power shot 3 position
     }
 
     @Override
@@ -481,10 +497,23 @@ public class TeleOp99Mark2 extends OpMode {
 //            currentlyFollowingAutoTrajectory = false;
 //            autoDrive = true;
 //        }
-        else if (gamepad1BPressed) {  // Cycles goals to align to (shared with autoPoseIndex). Should probably not be used while auto-driving, but you hopefully wouldn't anyway
-            // TODO: Currently no way to set rotation offset without it being immediately overriden by user input
+        else if (gamepad1BPressed) {  // Cycles goals and rotates robot towards new goal (connected with autoPoseIndex). Should probably not be used while auto-driving, but you hopefully wouldn't anyway
+            // Setting target heading is okay because it's an accumulative value and will act as if user input directly caused the rotation adjustment
+            if (!firstRotate) {
+                if (autoPoseIndex < 4 && autoPoseIndex >= 0) {  // We're in the goal range and it's safe to increment
+                    autoPoseIndex++;
+                }
+                else {  // It's outside the goal range (or would be if we incremented); set it to the first goal (the high goal)
+                    autoPoseIndex = 0;
+                }
+            }
+            else {
+                firstRotate = false;
+            }
+
+            targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
         }
-        else if (gamepad1XPressed) {  // More efficient button-wise. Could probably rewrite this logic I did at 12:00 AM too
+        else if (gamepad1XPressed) {  // Cycles power shot goals. Could probably rewrite this logic I did at 12:00 AM too
             if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
                 autoPoseIndex++;
             }
@@ -832,6 +861,10 @@ public class TeleOp99Mark2 extends OpMode {
         //else {
         //    ringShooter.setPower(0.0);  // If the shooter is inactive, zero its power
         //}
+
+        if (AUTO_TPS_SELECT) {  // If we're automatically selecting TPS for the shooter
+            currentShooterTPS = (int) drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)) * 10;  // Completely guessed at the *10 part
+        }
 
         if (shooterState) {
             ringShooter.setVelocity(currentShooterTPS);
