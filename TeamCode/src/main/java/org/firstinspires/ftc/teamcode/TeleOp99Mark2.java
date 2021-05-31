@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.control.PIDFController;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
 
@@ -27,7 +29,7 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
-    private static boolean GAMEPAD_XY_TOGGLES_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled. The name is currently misleading (FIXME)
+    private static boolean ENABLE_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled
 
     private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
 
@@ -80,8 +82,8 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static double GLOBAL_AUTO_MOVEMENT_OVERRIDE_DEADZONE = 0.1;  // The threshold over which any movement axes will immediately take back manual control. Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
 
-    private static double AUTO_DISTANCE_THRESHOLD = 0.5;  // 0.5 inches maximum error
-    private static double AUTO_ANGULAR_DISTANCE_THRESHOLD = Math.toRadians(5);  // 5 degrees maximum error
+    private static double AUTO_DISTANCE_THRESHOLD = 1.0;  // The maximum error (in inches) when the failsafe code will decide that Roadrunner won't error out when trying to construct a spline of this distance. In other words, trajectories shorter than this distance will not be run
+    private static double AUTO_ANGULAR_DISTANCE_THRESHOLD = Math.toRadians(5);  // 5 degrees maximum error (same as above, but for rotation)
 
     private static int PMODE = 0;  // PMODE, for problems
 
@@ -240,7 +242,10 @@ public class TeleOp99Mark2 extends OpMode {
     double horizontal = 0.0;
     double rotation = 0.0;
 
-    //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));  // TODO: SYNC THIS WITH AUTONOMOUS ASAP. PoseStorage should come in handy here
+    private double targetHeading;  // Offset to the robot heading, used as a target to maintain PID rotation
+    private PIDFController headingController = new PIDFController(SampleMecanumDrive.HEADING_PID, DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
+
+    //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));
     private Pose2d currentPose = PoseStorage.currentPose;
     private final Pose2d initialPose = currentPose;
     private SampleMecanumDrive drive;
@@ -252,6 +257,7 @@ public class TeleOp99Mark2 extends OpMode {
     public static Pose2d powerShotPose1 = PoseStorage.powerShot1Pose;  // Index 1
     public static Pose2d powerShotPose2 = PoseStorage.powerShot2Pose;  // Index 2
     public static Pose2d powerShotPose3 = PoseStorage.powerShot3Pose;  // Index 3
+    public static Pose2d dpadControlPose = PoseStorage.highGoalShootPose;  // Should be overriden by the user when gamepad 1 Dpad buttons are pressed
 
     // The trajectory we're currently following, if we're following a trajectory
     private Trajectory targetTrajectory;
@@ -354,11 +360,11 @@ public class TeleOp99Mark2 extends OpMode {
 
         getAutoPoseIndex();  // Use user input changes to determine what pose index we should be at, and whether we should be driving automatically or not
 
-        if (GAMEPAD_XY_TOGGLES_AUTO_DRIVE && autoDrive) {  // If we're currently driving automatically
+        if (ENABLE_AUTO_DRIVE && autoDrive) {  // If we're currently driving automatically
             checkAutoMovementInterrupts();  // Disable automatic driving if any manual movement is detected that should override it
         }
 
-        if (!GAMEPAD_XY_TOGGLES_AUTO_DRIVE || !autoDrive) {  // If we're not automatically driving the robot, apply manual movement controls
+        if (!ENABLE_AUTO_DRIVE || !autoDrive) {  // If we're not automatically driving the robot, apply manual movement controls
             applyManualMovementControls();  // The wobble-goal tasks don't prevent any manual movement, which is applied separately in this function
         }
         else {  // If we're using automatic (Roadrunner powered) controls, apply those
@@ -415,24 +421,26 @@ public class TeleOp99Mark2 extends OpMode {
             telemetry.addLine("Gamepad 1 left stick pressed: reset speed curve and speed curve mode");  // Debug message
         }
 
-        if (gamepad1APressed) {  // Cycle speed curve modes
-            if (currentSpeedCurveMode < 2) {
-                currentSpeedCurveMode++;  // Cycle
-            } else {
-                currentSpeedCurveMode = 0;  // Wrap back around to the beginning
+        if (BUTTONS_CYCLE_SPEED_CURVES) {  // Also an important change
+            if (gamepad1APressed) {  // Cycle speed curve modes
+                if (currentSpeedCurveMode < 2) {
+                    currentSpeedCurveMode++;  // Cycle
+                } else {
+                    currentSpeedCurveMode = 0;  // Wrap back around to the beginning
+                }
+
+                telemetry.addData("Gamepad 1 A: cycled speed curve mode to ", currentSpeedCurveMode);  // Debug message
             }
 
-            telemetry.addData("Gamepad 1 A: cycled speed curve mode to ", currentSpeedCurveMode);  // Debug message
-        }
+            if (gamepad1BPressed) {  // Cycle speed curves
+                if (currentSpeedCurve < 7) {
+                    currentSpeedCurve++;  // Cycle
+                } else {
+                    currentSpeedCurve = 0;  // Wrap back around to the beginning
+                }
 
-        if (gamepad1BPressed) {  // Cycle speed curves
-            if (currentSpeedCurve < 7) {
-                currentSpeedCurve++;  // Cycle
-            } else {
-                currentSpeedCurve = 0;  // Wrap back around to the beginning
+                telemetry.addData("Gamepad 1 B: cycled speed curve to", currentSpeedCurve);  // Debug message
             }
-
-            telemetry.addData("Gamepad 1 B: cycled speed curve to", currentSpeedCurve);  // Debug message
         }
     }
 
@@ -458,20 +466,69 @@ public class TeleOp99Mark2 extends OpMode {
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
-        else if (gamepad1XPressed) {
-            autoPoseIndex = 1;  // Power shot 1
+//        else if (gamepad1XPressed) {
+//            autoPoseIndex = 1;  // Power shot 1
+//            currentlyFollowingAutoTrajectory = false;
+//            autoDrive = true;
+//        }
+//        else if (gamepad1YPressed) {
+//            autoPoseIndex = 2;  // Power shot 2
+//            currentlyFollowingAutoTrajectory = false;
+//            autoDrive = true;
+//        }
+//        else if (gamepad1BPressed) {
+//            autoPoseIndex = 3;  // Power shot 3
+//            currentlyFollowingAutoTrajectory = false;
+//            autoDrive = true;
+//        }
+        else if (gamepad1BPressed) {  // Cycles goals to align to (shared with autoPoseIndex). Should probably not be used while auto-driving, but you hopefully wouldn't anyway
+            // TODO: Currently no way to set rotation offset without it being immediately overriden by user input
+        }
+        else if (gamepad1XPressed) {  // More efficient button-wise. Could probably rewrite this logic I did at 12:00 AM too
+            if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
+                autoPoseIndex++;
+            }
+            else {  // It's outside the power shot range; set it to the first power shot
+                autoPoseIndex = 1;  // Power shot 1
+            }
+
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
         else if (gamepad1YPressed) {
-            autoPoseIndex = 2;  // Power shot 2
+            if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to decrement
+                autoPoseIndex--;
+            }
+            else {  // It's outside the power shot range; set it to the last power shot
+                autoPoseIndex = 3;  // Power shot 3
+            }
+
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
-        else if (gamepad1BPressed) {
-            autoPoseIndex = 3;  // Power shot 3
+        else if (gamepad1DpadUpPressed) {
+            autoPoseIndex = 4;  // Dpad control
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
+            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() + 8, drive.getPoseEstimate().getHeading());
+        }
+        else if (gamepad1DpadDownPressed) {
+            autoPoseIndex = 4;  // Dpad control
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = true;
+            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() - 8, drive.getPoseEstimate().getHeading());
+        }
+        else if (gamepad1DpadLeftPressed) {
+            autoPoseIndex = 4;  // Dpad control
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = true;
+            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() - 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
+        }
+        else if (gamepad1DpadRightPressed) {
+            autoPoseIndex = 4;  // Dpad control
+            currentlyFollowingAutoTrajectory = false;
+            autoDrive = true;
+            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() + 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
         }
         else if (gamepad1RightStickPressed) {  // Cancel auto following if the right stick is pressed
             autoDrive = false;
@@ -587,7 +644,7 @@ public class TeleOp99Mark2 extends OpMode {
     private void applyAutomaticMovementControls() {
         // If a target position index is currently set and we're not within a certain threshold of that position and we're not currently following a trajectory for automatic driving, make a new trajectory and follow it asynchronously
         if (autoPoseIndex != -1) {
-            if (autoPoseIndex >= 0 && autoPoseIndex < 4) {
+            if (autoPoseIndex >= 0 && autoPoseIndex < 5) {
                 switch (autoPoseIndex) {
                     case (0):
                         targetPose = highGoalShootPose;
@@ -601,9 +658,12 @@ public class TeleOp99Mark2 extends OpMode {
                     case (3):
                         targetPose = powerShotPose3;
                         break;
+                    case (4):
+                        targetPose = dpadControlPose;
                 }
 
-                double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX(), 2) - Math.pow(targetPose.getX(), 2));
+                //double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX(), 2) - Math.pow(targetPose.getX(), 2));  // This was dead wrong
+                double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX() - targetPose.getX(), 2) + Math.pow(drive.getPoseEstimate().getY() - targetPose.getY(), 2));  // This should fix it
                 double angularDistance = Math.abs(drive.getPoseEstimate().getHeading() - targetPose.getHeading());
 
                 boolean areWeThereYet = (distance <= AUTO_DISTANCE_THRESHOLD && angularDistance <= AUTO_ANGULAR_DISTANCE_THRESHOLD);
@@ -626,7 +686,14 @@ public class TeleOp99Mark2 extends OpMode {
     private void applyManualMovementControls() {
         vertical = 0.0;  // Save each movement axis we'll use in its own variable
         horizontal = 0.0;
-        rotation = 0.0;
+
+        targetHeading -= rotation * 5;
+
+        headingController.setTargetPosition(targetHeading);
+
+        if (!(autoDrive && currentlyFollowingAutoTrajectory) || !ENABLE_AUTO_DRIVE) {  // We're not auto driving
+            rotation = headingController.update(drive.getPoseEstimate().getHeading());  // This should NEVER be called when it doesn't have accurate feedback. Otherwise P will accumulate until the autoDrive ends, then a burst of rotation will spin the bot out of control until it corrects itself
+        }
 
         double currentPowerFactor = gamepad1LeftShoulderHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
 
@@ -873,13 +940,13 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void applyMotorValues() {  // Assumes all sanity checks have already been applied to the variables it uses in setPosition
-        if (MOVEMENT_ROTATION_CORRECTION || GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're using rotation correction or automatic driving is enabled, we'll have to use roadrunner's functions to set power and correct rotation
+        if (MOVEMENT_ROTATION_CORRECTION || ENABLE_AUTO_DRIVE) {  // If we're using rotation correction or automatic driving is enabled, we'll have to use roadrunner's functions to set power and correct rotation
             Vector2d directionalVector = new Vector2d(horizontal, vertical);
             directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());
             //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
             //telemetry.update();
 
-            if (!(autoDrive && currentlyFollowingAutoTrajectory) || !GAMEPAD_XY_TOGGLES_AUTO_DRIVE) {  // If we're NOT currently automatic driving
+            if (!(autoDrive && currentlyFollowingAutoTrajectory) || !ENABLE_AUTO_DRIVE) {  // If we're NOT currently automatic driving
                 //drive.setDrivePower(
                 //        new Pose2d(
                 //                directionalVector.getX(),
@@ -894,9 +961,9 @@ public class TeleOp99Mark2 extends OpMode {
 
                 drive.setDriveSignal(new DriveSignal(
                         new Pose2d(
-                                directionalVector.getX() * 40.0,
-                                directionalVector.getY() * 40.0,
-                                -rotation * 5)));
+                                directionalVector.getX() * DriveConstants.MAX_VEL,  // Was 40.0
+                                directionalVector.getY() * DriveConstants.MAX_VEL,
+                                rotation)));
             }
 
             // Update all roadrunner stuff (odometry, etc.)
