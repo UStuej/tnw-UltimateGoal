@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.test;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.teamcode.tnwutil.collections.Triplet;
-
+@Disabled
 @TeleOp(name = "Motor Test")
 
 public class MotorTest extends OpMode {

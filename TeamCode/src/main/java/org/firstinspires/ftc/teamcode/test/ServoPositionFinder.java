@@ -1,10 +1,11 @@
 package org.firstinspires.ftc.teamcode.test;
 
-import java.lang.String;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 
+@Disabled
 @TeleOp(name = "ServoPositionFinder", group = "calibration")
 
 public class ServoPositionFinder extends OpMode {

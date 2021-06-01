@@ -22,10 +22,10 @@
 
 package org.firstinspires.ftc.teamcode.test;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -40,6 +40,7 @@ import org.openftc.easyopencv.OpenCvPipeline;
  * This version of the internal camera example uses EasyOpenCV's interface to the
  * original Android camera API
  */
+@Disabled
 @TeleOp
 public class StarterStackDetection extends LinearOpMode
 {
