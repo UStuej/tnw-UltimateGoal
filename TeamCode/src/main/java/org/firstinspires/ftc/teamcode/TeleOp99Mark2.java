@@ -35,7 +35,7 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static boolean ENABLE_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled
 
-    private static boolean AUTO_TPS_SELECT = true;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
+    private static boolean AUTO_TPS_SELECT = false;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
 
     private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
 
@@ -272,7 +272,7 @@ public class TeleOp99Mark2 extends OpMode {
     // The trajectory we're currently following, if we're following a trajectory
     private Trajectory targetTrajectory;
 
-    private int currentShooterTPS = 0;  // The current TPS of the ring shooter, if active
+    private int currentShooterTPS = highGoalTPS;  // The current TPS of the ring shooter, if active
 
     // The pose that we're currently targeting, extracted from the current index
     private Pose2d targetPose;
@@ -344,7 +344,7 @@ public class TeleOp99Mark2 extends OpMode {
         goalPositions = new ArrayList<>();  // High goal + 3 power shots
 
         // FIXME: Just guessed at these
-        goalPositions.add(new Vector2d(36, -24));  // High goal position
+        goalPositions.add(new Vector2d(36, -24));  // High goal position (FIXME: Needs to be corrected for blue goal)
         goalPositions.add(new Vector2d(36, -6));  // Power shot 1 position
         goalPositions.add(new Vector2d(36, -12));  // Power shot 2 position
         goalPositions.add(new Vector2d(36, -18));  // Power shot 3 position
@@ -581,34 +581,34 @@ public class TeleOp99Mark2 extends OpMode {
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
-        else if (gamepad1DpadUpPressed) {
+        else if (gamepad1DpadLeftPressed) {
             goalPositions.set(4, goalPositions.get(autoPoseIndex));  // Make sure the goal position doesn't change?
             autoPoseIndex = 4;  // Dpad control
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
             dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() + 8, drive.getPoseEstimate().getHeading());
         }
-        else if (gamepad1DpadDownPressed) {
+        else if (gamepad1DpadRightPressed) {
             goalPositions.set(4, goalPositions.get(autoPoseIndex));
             autoPoseIndex = 4;  // Dpad control
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
             dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() - 8, drive.getPoseEstimate().getHeading());
         }
-        else if (gamepad1DpadLeftPressed) {
-            goalPositions.set(4, goalPositions.get(autoPoseIndex));
-            autoPoseIndex = 4;  // Dpad control
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() - 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
-        }
-        else if (gamepad1DpadRightPressed) {
-            goalPositions.set(4, goalPositions.get(autoPoseIndex));
-            autoPoseIndex = 4;  // Dpad control
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() + 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
-        }
+        //else if (gamepad1DpadLeftPressed) {
+        //    goalPositions.set(4, goalPositions.get(autoPoseIndex));
+        //    autoPoseIndex = 4;  // Dpad control
+        //    currentlyFollowingAutoTrajectory = false;
+        //    autoDrive = true;
+        //    dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() - 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
+        //}
+        //else if (gamepad1DpadRightPressed) {
+        //    goalPositions.set(4, goalPositions.get(autoPoseIndex));
+        //    autoPoseIndex = 4;  // Dpad control
+        //    currentlyFollowingAutoTrajectory = false;
+        //    autoDrive = true;
+        //    dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() + 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
+        //}
         else if (gamepad1RightStickPressed) {  // Cancel auto following if the right stick is pressed
             autoDrive = false;
         }
@@ -893,16 +893,17 @@ public class TeleOp99Mark2 extends OpMode {
 //        shooterState = gamepad2LeftShoulderHeld || gamepad2RightShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
         shooterState = ringElevatorUp;  // The shooter turns on when the ring elevator is up, and turns off when it's down
 
-        if (gamepad2RightShoulderHeld) {
-            currentShooterTPS = powerShotTPS;
-        }
+        //if (gamepad2RightShoulderHeld) {
+        //    currentShooterTPS = powerShotTPS;
+        //}
 //        else if (gamepad2LeftShoulderHeld) {
-        else if (ringElevatorUp) {
-            currentShooterTPS = highGoalTPS;
-        }
-        else {
-            currentShooterTPS = 0;
-        }
+        //if (ringElevatorUp) {
+            //currentShooterTPS = highGoalTPS;
+        //}
+        //else {
+        //    //currentShooterTPS = 0;
+        //    ringShooter.setPower(0.0);
+        //}
 
         //if (shooterState) {
         //    currentShooterTPS = autoPoseIndex == 0 ? highGoalTPS : powerShotTPS;  // Get the desired shooter TPS from the selected auto target index
@@ -914,6 +915,14 @@ public class TeleOp99Mark2 extends OpMode {
 
         if (AUTO_TPS_SELECT) {  // If we're automatically selecting TPS for the shooter
             currentShooterTPS = (int) drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)) * 10;  // Completely guessed at the *10 part
+        }
+        else {  // Manual TPS control
+            if (gamepad2LeftShoulderPressed) {
+                currentShooterTPS += 5;
+            }
+            if (gamepad2RightShoulderPressed) {
+                currentShooterTPS -= 5;
+            }
         }
 
         if (shooterState) {
@@ -1072,6 +1081,7 @@ public class TeleOp99Mark2 extends OpMode {
             telemetry.addData("Current position y: ", currentPose.getY());
             telemetry.addData("Current rotation input: ", rotationInput);
             telemetry.addData("Current rotation compensation: ", rotation);
+            telemetry.addData("Current flywheel speed: ", currentShooterTPS);
             telemetry.addData("Current target heading: ", targetHeading);
             telemetry.addData("Current heading: ", currentPose.getHeading());
             telemetry.addData("Current continuous heading", continuousRotationEstimate);
