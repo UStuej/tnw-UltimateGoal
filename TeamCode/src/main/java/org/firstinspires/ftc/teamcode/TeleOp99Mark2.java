@@ -250,7 +250,7 @@ public class TeleOp99Mark2 extends OpMode {
     double rotationInput = 0.0;  // Input rotation from the user
 
     private double targetHeading;  // Offset to the robot heading, used as a target to maintain PID rotation
-    private PIDFController headingController = new PIDFController(new PIDCoefficients(12.0, 0.0, 0.0), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
+    private PIDFController headingController = new PIDFController(new PIDCoefficients(6.0, 1.0, 0.25), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
 
     //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));
     private Pose2d currentPose = PoseStorage.currentPose;
@@ -554,6 +554,7 @@ public class TeleOp99Mark2 extends OpMode {
             }
             else {
                 firstRotate = false;
+                autoPoseIndex = 0;
             }
 
             targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
@@ -1057,8 +1058,11 @@ public class TeleOp99Mark2 extends OpMode {
 
             // Reset pose estimate rotation if needed
             if (LEFT_SHOULDER_RECALIBRATES_ROTATION && gamepad1LeftShoulderPressed) {  // Reset the current pose estimate rotation to the initial pose rotation
-                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), 90);
+                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), Math.toRadians(90));
                 drive.setPoseEstimate(currentPose);
+                targetHeading = drive.getPoseEstimate().getHeading();
+                lastDrivePoseEstimate = targetHeading;
+                continuousRotationEstimate = targetHeading;
                 telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
             }
 
