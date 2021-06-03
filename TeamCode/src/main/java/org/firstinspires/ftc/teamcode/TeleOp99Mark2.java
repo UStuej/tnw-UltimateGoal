@@ -838,6 +838,12 @@ public class TeleOp99Mark2 extends OpMode {
             vertical = verticalController.update(drive.getPoseEstimate().getY());
         }
 
+        Vector2d directionalVector = new Vector2d(horizontal, vertical);
+        directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());  // Apply field-oriented heading
+
+        horizontal = directionalVector.getX():
+        vertical = directionalVector.getY();
+
         // Set drive motor power
         frontLeftDrivePower = vertical + horizontal + rotation;
         frontRightDrivePower = vertical - horizontal - rotation;
@@ -1049,8 +1055,6 @@ public class TeleOp99Mark2 extends OpMode {
 
     private void applyMotorValues() {  // Assumes all sanity checks have already been applied to the variables it uses in setPosition
         if (MOVEMENT_ROTATION_CORRECTION || ENABLE_AUTO_DRIVE) {  // If we're using rotation correction or automatic driving is enabled, we'll have to use roadrunner's functions to set power and correct rotation
-            Vector2d directionalVector = new Vector2d(horizontal, vertical);
-            directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());
             //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
             //telemetry.update();
 
@@ -1069,8 +1073,8 @@ public class TeleOp99Mark2 extends OpMode {
 
                 drive.setDriveSignal(new DriveSignal(
                         new Pose2d(
-                                directionalVector.getX() * DriveConstants.MAX_VEL,  // Was 40.0
-                                directionalVector.getY() * DriveConstants.MAX_VEL,
+                                horizontal * DriveConstants.MAX_VEL,  // Was 40.0
+                                vertical * DriveConstants.MAX_VEL,
                                 rotation)));
             }
 
