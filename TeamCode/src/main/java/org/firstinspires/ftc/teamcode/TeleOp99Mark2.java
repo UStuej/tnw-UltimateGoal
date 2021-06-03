@@ -33,6 +33,8 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static boolean ENABLE_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled
 
+    private static double PID_DEADZONE = 0.4;  // Minimum value under which PID corrections are not applied, to avoid unwanted small or incredibly slow corrections with certain P values. Set to 0.0 to disable
+
     private static boolean AUTO_TPS_SELECT = true;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
 
     private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
@@ -844,6 +846,10 @@ public class TeleOp99Mark2 extends OpMode {
         horizontal = directionalVector.getX();
         vertical = directionalVector.getY();
 
+        rotation = applyPIDDeadzone(rotation);
+        horizontal = applyPIDDeadzone(horizontal);
+        vertical = applyPIDDeadzone(vertical);
+
         // Set drive motor power
         frontLeftDrivePower = vertical + horizontal + rotation;
         frontRightDrivePower = vertical - horizontal - rotation;
@@ -852,6 +858,14 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Set intake speed
         intakeDrivePower = (gamepad2LeftTrigger - gamepad2RightTrigger) * INTAKE_MAX_POWER;
+    }
+
+    private double applyPIDDeadzone(double a) {
+        if (a < PID_DEADZONE) {
+            return 0.0;
+        }
+
+        return a;
     }
 
     private void checkAutoInterrupts() {  // Checks to see if any manual input will interfere with an automatic task, if manual input takes priority (AUTO_PRIORITY is false). If so, it disables the automatic overrides using a flag for each servo involved
