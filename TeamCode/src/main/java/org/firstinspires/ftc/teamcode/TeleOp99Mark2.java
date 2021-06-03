@@ -29,8 +29,6 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static boolean AUTO_PRIORITY = false;  // Whether or not automatic motor and server controls take priority over manual ones instead of the other way around
 
-    private static boolean CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = true;  // Whether the wobble goal deployment sequence should try to continue setting servo positions even if one of the dependency positions is manually set to something different TODO: This
-
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
     private static boolean ENABLE_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled
@@ -160,12 +158,6 @@ public class TeleOp99Mark2 extends OpMode {
     // States for the servos/motors that can be controlled via toggles
     private boolean ringElevatorUp = false;  // Boolean representing whether or not the ring elevator is currently at (or running to) the up position
     private boolean armUp = false;  // Boolean representing whether or not the wobble goal arm is currently at (or running to) the up position
-    private boolean fingerIn = false;  // Boolean representing whether or not the ring finger's target position is currently in
-
-    // Automatic robot scoring states TODO: Remove if Unused
-    private boolean autoMedGoalScore = false;
-    private boolean autoHighGoalScore = false;
-    private boolean autoPowerScore = false;
 
     // Gamepad 1 inputs JUST pressed
     private boolean gamepad1APressed = false;  // Whether or not the gamepad 1 a button was JUST pressed, handled by the handleInput function
@@ -1429,9 +1421,6 @@ public class TeleOp99Mark2 extends OpMode {
                 }
                 else if (pmode == 258) {
                     AUTO_PRIORITY = gamepad2RightShoulderHeld;
-                }
-                else if (pmode == 259) {
-                    CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = gamepad2RightShoulderHeld;
                 }
                 else if (pmode == 260) {
                     USE_VARIABLE_SPEED_CURVES = gamepad2RightShoulderHeld;
