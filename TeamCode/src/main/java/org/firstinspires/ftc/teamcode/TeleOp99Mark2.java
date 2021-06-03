@@ -822,13 +822,16 @@ public class TeleOp99Mark2 extends OpMode {
             rotationInput = gamepad1LeftTrigger - gamepad1RightTrigger;  // In Dpad mode, left and right triggers on gamepad 1 rotate
         }
 
-        verticalInput *= currentPowerFactor;
         horizontalInput *= currentPowerFactor;
+        verticalInput *= currentPowerFactor;
         rotationInput *= currentPowerFactor;
 
-        targetVertical -= verticalInput / 10.0;
-        targetHorizontal -= horizontalInput / 10.0;
-        targetHeading -= rotationInput / 10.0;
+        //targetVertical -= verticalInput / 10.0;
+        //targetHorizontal -= horizontalInput / 10.0;
+        //targetHeading -= rotationInput / 10.0;
+        targetHorizontal = drive.getPoseEstimate().getX() + horizontalInput / 10.0;  // Controls are relative to current robot position, not current robot target
+        targetVertical = drive.getPoseEstimate().getY() + verticalInput / 10.0;
+        targetHeading = drive.getPoseEstimate().getHeading() + rotationInput / 10.0;
 
         headingController.setTargetPosition(targetHeading);
         horizontalController.setTargetPosition(targetHorizontal);
