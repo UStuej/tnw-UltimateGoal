@@ -553,7 +553,8 @@ public class TeleOp99Mark2 extends OpMode {
                 autoPoseIndex = 0;
             }
 
-            targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
+            //targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
+            targetHeading = Math.atan((drive.getPoseEstimate().getY()) - goalPositions.get(autoPoseIndex).getY()) / (drive.getPoseEstimate().getX() - goalPositions.get(autoPoseIndex).getX());
         }
         else if (gamepad1XPressed) {  // Cycles power shot goals. Could probably rewrite this logic I did at 12:00 AM too
             if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
