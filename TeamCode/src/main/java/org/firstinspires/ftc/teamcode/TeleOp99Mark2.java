@@ -33,7 +33,7 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static boolean ENABLE_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled
 
-    private static boolean AUTO_TPS_SELECT = false;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
+    private static boolean AUTO_TPS_SELECT = true;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
 
     private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
 
