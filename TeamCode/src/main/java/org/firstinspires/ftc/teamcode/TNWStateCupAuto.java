@@ -34,6 +34,18 @@ public class TNWStateCupAuto extends LinearOpMode {
 
         // START
 
+        // Debug to show values which are being used
+        telemetry.addData("innerStartingLine", config.innerStartingLine);
+        telemetry.addData("starterStack", config.starterStack);
+        telemetry.addData("deliverWobble", config.deliverWobble);
+        telemetry.addData("park", config.park);
+        telemetry.addData("parkingLocation", config.parkingLocation);
+        telemetry.addData("isBlueAlliance", cfgIsBlueAlliance);
+        telemetry.addData("startDelay", cfgStartDelay);
+        telemetry.update();
+
+        sleep(30000);
+
     }
 
     private boolean userGetSettings() {
@@ -80,15 +92,17 @@ public class TNWStateCupAuto extends LinearOpMode {
             } else if (input.isAPressed()) {
                 break;
             } else if (input.isDpadLeftPressed()) {
-                dispStartDelay -= 1;
-            } else if (input.isRightBumperPressed()) {
+                dispStartDelay = (short) (dispStartDelay > 0
+                        ? dispStartDelay - 1
+                        : 0);
+            } else if (input.isDpadRightPressed()) {
                 dispStartDelay += 1;
             }
             itemStartDelay.setValue(dispStartDelay);
         }
         cfgStartDelay = dispStartDelay * 1000L;
         telemetry.clearAll();
-        // DEV: telemetry.update() not called, since it will be directly after this method is.
+        // DEV: telemetry.update() is not called, since it will be directly after this method is.
 
         telemetry.setAutoClear(true);
 
