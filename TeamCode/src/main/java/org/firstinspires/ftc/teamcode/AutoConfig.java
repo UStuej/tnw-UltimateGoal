@@ -316,11 +316,11 @@ public class AutoConfig extends LinearOpMode {
 
                 case 5:
                     if (input.isDpadLeftPressed()) {
-                        config.parkingLocation = (byte) (optionIdx > 0
+                        config.parkingLocation = (byte) (config.parkingLocation > 0
                                 ? config.parkingLocation - 1
                                 : 4);
                     } else if (input.isDpadRightPressed()) {
-                        config.parkingLocation = (byte) (optionIdx < 4
+                        config.parkingLocation = (byte) (config.parkingLocation < 4
                                 ? config.parkingLocation + 1
                                 : 0);
                     }
