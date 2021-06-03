@@ -841,7 +841,7 @@ public class TeleOp99Mark2 extends OpMode {
         Vector2d directionalVector = new Vector2d(horizontal, vertical);
         directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());  // Apply field-oriented heading
 
-        horizontal = directionalVector.getX():
+        horizontal = directionalVector.getX();
         vertical = directionalVector.getY();
 
         // Set drive motor power
