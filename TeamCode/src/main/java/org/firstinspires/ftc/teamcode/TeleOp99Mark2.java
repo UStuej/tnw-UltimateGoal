@@ -35,6 +35,8 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static double PID_DEADZONE = 0.4;  // Minimum value under which PID corrections are not applied, to avoid unwanted small or incredibly slow corrections with certain P values. Set to 0.0 to disable
 
+    private static double PID_UNLOCK_DEADZONE = 0.05;  // The deadzone above which joystick input will force PID to accept a new target position relative to the current one. Below this deadzone, PID will always maintain the targets set
+
     private static boolean AUTO_TPS_SELECT = true;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
 
     private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
@@ -829,9 +831,14 @@ public class TeleOp99Mark2 extends OpMode {
         //targetVertical -= verticalInput / 10.0;
         //targetHorizontal -= horizontalInput / 10.0;
         //targetHeading -= rotationInput / 10.0;
-        targetHorizontal = drive.getPoseEstimate().getX() + horizontalInput / 10.0;  // Controls are relative to current robot position, not current robot target
-        targetVertical = drive.getPoseEstimate().getY() + verticalInput / 10.0;
-        targetHeading = drive.getPoseEstimate().getHeading() + rotationInput / 10.0;
+        
+        if (Math.max(horizontalInput, verticalInput) > PID_UNLOCK_DEADZONE) {
+            targetHorizontal = drive.getPoseEstimate().getX() + horizontalInput / 10.0;  // Controls are relative to current robot position, not current robot target
+            targetVertical = drive.getPoseEstimate().getY() + verticalInput / 10.0;
+        }
+        if (rotationInput > PID_UNLOCK_DEADZONE) {
+            targetHeading = drive.getPoseEstimate().getHeading() + rotationInput / 10.0;
+        }
 
         headingController.setTargetPosition(targetHeading);
         horizontalController.setTargetPosition(targetHorizontal);
