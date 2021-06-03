@@ -236,13 +236,21 @@ public class TeleOp99Mark2 extends OpMode {
 
     private boolean autoDrive = false;  // Whether or not the robot is currently being driven automatically (through Roadrunner). Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
 
-    double vertical = 0.0;  // Movement axes for the manual robot movement control
+    double vertical = 0.0;  // Corrections axes for the DriveSignals
     double horizontal = 0.0;
     double rotation = 0.0;  // Manged by PID using the below user input variable
+
+    double verticalInput = 0.0;  // Movement axes for user input movement control
+    double horizontalInput = 0.0;
     double rotationInput = 0.0;  // Input rotation from the user
 
     private double targetHeading;  // Offset to the robot heading, used as a target to maintain PID rotation
+    private double targetHorizontal;
+    private double targetVertical;
+
     private PIDFController headingController = new PIDFController(new PIDCoefficients(6.0, 1.0, 0.25), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
+    private PIDFController verticalController = new PIDFController(new PIDCoefficients(6.0, 1.0, 0.25), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
+    private PIDFController horizontalController = new PIDFController(new PIDCoefficients(6.0, 1.0, 0.25), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
 
     //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));
     private Pose2d currentPose = PoseStorage.currentPose;
@@ -325,6 +333,10 @@ public class TeleOp99Mark2 extends OpMode {
 
         lastDrivePoseEstimate = drive.getPoseEstimate().getHeading();
         continuousRotationEstimate = drive.getPoseEstimate().getHeading();
+
+        targetHeading = initialPose.getHeading();
+        targetHorizontal = initialPose.getX();
+        targetVertical = initialPose.getY();
 
         time = System.currentTimeMillis();
         lastTime = time;  // Initialize the last tick time so that deltas can be properly calculated
@@ -760,63 +772,70 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void applyManualMovementControls() {
-        vertical = 0.0;  // Save each movement axis we'll use in its own variable
-        horizontal = 0.0;
+        verticalInput = 0.0;  // Save each movement axis we'll use in its own variable
+        horizontalInput = 0.0;
+        rotationInput = 0.0;
 
         double currentPowerFactor = gamepad1LeftShoulderHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
 
         if (AXIS_MOVEMENT) {  // If we're using axis movement
             if (FULLAXIS_CONTROL) {  // We're using the fullaxis movement scheme
                 if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
-                    vertical = easeNormalized((-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
-                    horizontal = easeNormalized((gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
+                    verticalInput = easeNormalized((-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
+                    horizontalInput = easeNormalized((gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
                     rotationInput = easeNormalized(gamepad1RightTrigger * gamepad1RightTrigger - gamepad1LeftTrigger * gamepad1LeftTrigger, currentSpeedCurve, currentSpeedCurveMode);
                 } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
-                    vertical = (-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT);
-                    horizontal = (gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT);
+                    verticalInput = (-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT);
+                    horizontalInput = (gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT);
                     rotationInput = (gamepad1RightTrigger - gamepad1LeftTrigger);
                 }
             }
             else {
                 if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
-                    vertical = easeNormalized(-gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
-                    horizontal = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
+                    verticalInput = easeNormalized(-gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
+                    horizontalInput = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
                     rotationInput = easeNormalized(gamepad1RightStickX, currentSpeedCurve, currentSpeedCurveMode);
                 } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
-                    vertical = -gamepad1LeftStickY;
-                    horizontal = gamepad1LeftStickX;
+                    verticalInput = -gamepad1LeftStickY;
+                    horizontalInput = gamepad1LeftStickX;
                     rotationInput = gamepad1RightStickX;
                 }
             }
         } else {  // If we're using dpad movement
             if (gamepad1DpadUpHeld && !gamepad1DpadDownHeld) {  // Up
-                vertical = 1.0;
+                verticalInput = 1.0;
             }
             if (gamepad1DpadDownHeld && !gamepad1DpadUpHeld) {  // Down
-                vertical = -1.0;
+                verticalInput = -1.0;
             }
 
             if (gamepad1DpadLeftHeld && !gamepad1DpadRightHeld) {  // Left
-                horizontal = -1.0;
+                horizontalInput = -1.0;
             }
 
             if (gamepad1DpadRightHeld && !gamepad1DpadLeftHeld) {  // Right
-                horizontal = 1.0;
+                horizontalInput = 1.0;
             }
 
             rotationInput = gamepad1LeftTrigger - gamepad1RightTrigger;  // In Dpad mode, left and right triggers on gamepad 1 rotate
         }
 
-        vertical *= currentPowerFactor;
-        horizontal *= currentPowerFactor;
+        verticalInput *= currentPowerFactor;
+        horizontalInput *= currentPowerFactor;
         rotationInput *= currentPowerFactor;
 
+        targetVertical -= verticalInput / 10.0;
+        targetHorizontal -= horizontalInput / 10.0;
         targetHeading -= rotationInput / 10.0;
 
         headingController.setTargetPosition(targetHeading);
+        horizontalController.setTargetPosition(targetHorizontal);
+        verticalController.setTargetPosition(targetVertical);
 
         if (!(autoDrive && currentlyFollowingAutoTrajectory) || !ENABLE_AUTO_DRIVE) {  // We're not auto driving
             rotation = headingController.update(continuousRotationEstimate);  // This should NEVER be called when it doesn't have accurate feedback. Otherwise P will accumulate until the autoDrive ends, then a burst of rotation will spin the bot out of control until it corrects itself
+            horizontal = horizontalController.update(drive.getPoseEstimate().getX());
+            vertical = verticalController.update(drive.getPoseEstimate().getY());
         }
 
         // Set drive motor power
