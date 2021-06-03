@@ -344,6 +344,10 @@ public class TeleOp99Mark2 extends OpMode {
         goalPositions.add(goalPositions.get(0));  // Placeholder position for Dpad movement index 4
     }
 
+    public double distanceToShooterVelocity(double distance) {
+        return (25.0*distance)/14.0 + (9900.0/7.0);  // Guessed at this
+    }
+
     public double absoluteMin(double a, double b, double c) {
         if (Math.abs(a) < Math.abs(b)) {
             // a < b; compare a to c now
@@ -906,7 +910,7 @@ public class TeleOp99Mark2 extends OpMode {
         //}
 
         if (AUTO_TPS_SELECT) {  // If we're automatically selecting TPS for the shooter
-            currentShooterTPS = (int) drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)) * 10;  // Completely guessed at the *10 part
+            currentShooterTPS = (int) distanceToShooterVelocity(drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)));
         }
         else {  // Manual TPS control
             if (gamepad2LeftShoulderPressed) {
