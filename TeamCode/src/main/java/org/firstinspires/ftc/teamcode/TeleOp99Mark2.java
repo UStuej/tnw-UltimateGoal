@@ -245,10 +245,6 @@ public class TeleOp99Mark2 extends OpMode {
     double horizontalInput = 0.0;
     double rotationInput = 0.0;  // Input rotation from the user
 
-    private double targetHeading;  // Offset to the robot heading, used as a target to maintain PID rotation
-    private double targetHorizontal;
-    private double targetVertical;
-
     //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));
     private Pose2d currentPose = PoseStorage.currentPose;
     private final Pose2d initialPose = currentPose;
@@ -570,7 +566,7 @@ public class TeleOp99Mark2 extends OpMode {
             }
 
             //targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
-            targetHeading = Math.atan((drive.getPoseEstimate().getY()) - goalPositions.get(autoPoseIndex).getY()) / (drive.getPoseEstimate().getX() - goalPositions.get(autoPoseIndex).getX());
+            targetPose = new Pose2d(targetPose.getX(), targetPose.getY(), Math.atan((drive.getPoseEstimate().getY()) - goalPositions.get(autoPoseIndex).getY()) / (drive.getPoseEstimate().getX() - goalPositions.get(autoPoseIndex).getX()));
         }
         else if (gamepad1XPressed) {  // Cycles power shot goals. Could probably rewrite this logic I did at 12:00 AM too
             if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
@@ -1036,7 +1032,8 @@ public class TeleOp99Mark2 extends OpMode {
                 //                vertical * DriveConstants.MAX_VEL,
                 //                rotation)));
                 lastTargetVelocity = targetVelocity;
-                targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);
+                //targetVelocity = targetPose.minus(drive.getPoseEstimate());  // Possible velocity
+                targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);  // Also a possible good velocity
                 targetAcceleration = targetVelocity.minus(lastTargetVelocity);  // Maybe shouldn't ever be negative? We'll see
                 drive.goTo(gotoPose, targetVelocity, targetAcceleration);  // Skeptical about acceleration here
             }
@@ -1052,9 +1049,9 @@ public class TeleOp99Mark2 extends OpMode {
             if (LEFT_SHOULDER_RECALIBRATES_ROTATION && gamepad1LeftShoulderPressed) {  // Reset the current pose estimate rotation to the initial pose rotation
                 currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), Math.toRadians(90));
                 drive.setPoseEstimate(currentPose);
-                targetHeading = drive.getPoseEstimate().getHeading();
-                lastDrivePoseEstimate = targetHeading;
-                continuousRotationEstimate = targetHeading;
+                targetPose = currentPose;
+                //lastDrivePoseEstimate = targetHeading;
+                //continuousRotationEstimate = targetHeading;
                 telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
             }
 
@@ -1065,9 +1062,8 @@ public class TeleOp99Mark2 extends OpMode {
             telemetry.addData("Current rotation input: ", rotationInput);
             telemetry.addData("Current rotation compensation: ", rotation);
             telemetry.addData("Current flywheel speed: ", currentShooterTPS);
-            telemetry.addData("Current target heading: ", targetHeading);
             telemetry.addData("Current heading: ", currentPose.getHeading());
-            telemetry.addData("Current continuous heading", continuousRotationEstimate);
+            //telemetry.addData("Current continuous heading", continuousRotationEstimate);
             telemetry.addData("Currently following trajectory: ", currentlyFollowingAutoTrajectory);
             telemetry.addData("Currently auto-driving: ", autoDrive);
             telemetry.addData("Currently busy: ", drive.isBusy());
