@@ -81,8 +81,9 @@ public class TNWStateCupAuto extends LinearOpMode {
         // DEV: Could be placed within a scope (temporary variable declared), but is not since this is the last "block" of code in this method, and can be grouped into its exit gc.
         telemetry.addLine("<LEFT | RIGHT> to modify, <A> to continue...");
         short dispStartDelay = 0;
-        Telemetry.Item itemStartDelay = telemetry.addData("Start Delay", dispStartDelay);
+        Telemetry.Item itemStartDelay = telemetry.addData("Start Delay", "");
         while (true) {
+            itemStartDelay.setValue(dispStartDelay + " seconds");
             telemetry.update();
             do {
                 input.update();
@@ -96,9 +97,8 @@ public class TNWStateCupAuto extends LinearOpMode {
                         ? dispStartDelay - 1
                         : 0);
             } else if (input.isDpadRightPressed()) {
-                dispStartDelay += 1;
+                dispStartDelay++;
             }
-            itemStartDelay.setValue(dispStartDelay);
         }
         cfgStartDelay = dispStartDelay * 1000L;
         telemetry.clearAll();
