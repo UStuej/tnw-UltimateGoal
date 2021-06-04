@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.control.PIDFController;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
+import com.acmerobotics.roadrunner.followers.HolonomicPIDVAFollower;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -32,10 +33,6 @@ public class TeleOp99Mark2 extends OpMode {
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
     private static boolean ENABLE_AUTO_DRIVE = true;  // Whether or not automatic driving should be enabled
-
-    private static double PID_DEADZONE = 0.4;  // Minimum value under which PID corrections are not applied, to avoid unwanted small or incredibly slow corrections with certain P values. Set to 0.0 to disable
-
-    private static double PID_UNLOCK_DEADZONE = 0.05;  // The deadzone above which joystick input will force PID to accept a new target position relative to the current one. Below this deadzone, PID will always maintain the targets set
 
     private static boolean AUTO_TPS_SELECT = true;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
 
@@ -252,10 +249,6 @@ public class TeleOp99Mark2 extends OpMode {
     private double targetHorizontal;
     private double targetVertical;
 
-    private PIDFController headingController = new PIDFController(new PIDCoefficients(6.0, 1.0, 0.25), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
-    private PIDFController verticalController = new PIDFController(new PIDCoefficients(6.0, 1.0, 0.25), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
-    private PIDFController horizontalController = new PIDFController(new PIDCoefficients(6.0, 1.0, 0.25), DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
-
     //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));
     private Pose2d currentPose = PoseStorage.currentPose;
     private final Pose2d initialPose = currentPose;
@@ -274,7 +267,7 @@ public class TeleOp99Mark2 extends OpMode {
     public static List<Vector2d> goalPositions;
 
     // The trajectory we're currently following, if we're following a trajectory
-    private Trajectory targetTrajectory;
+    //private Trajectory targetTrajectory;
 
     private int currentShooterTPS = highGoalTPS;  // The current TPS of the ring shooter, if active
 
@@ -290,6 +283,11 @@ public class TeleOp99Mark2 extends OpMode {
 
     private double continuousRotationEstimate;
     private double lastDrivePoseEstimate;
+
+    private Pose2d gotoPose;  // The pose the robot is driving to. Controlled by user input, semi-auto code, or both
+    private Pose2d lastTargetVelocity;  // The target velocity the robot was driving at as of the last DriveSignal
+    private Pose2d targetVelocity;  // The velocity that the robot is currently driving at. Controlled by user input, semi-auto code, or both
+    private Pose2d targetAcceleration;  // The acceleration that the robot is currently driving at. Controlled by user input, semi-auto code, or both
 
     @Override
     public void init() {
@@ -338,9 +336,11 @@ public class TeleOp99Mark2 extends OpMode {
         lastDrivePoseEstimate = drive.getPoseEstimate().getHeading();
         continuousRotationEstimate = drive.getPoseEstimate().getHeading();
 
-        targetHeading = initialPose.getHeading();
-        targetHorizontal = initialPose.getX();
-        targetVertical = initialPose.getY();
+        gotoPose = drive.getPoseEstimate();  // Shouldn't go anywhere to begin with
+
+//        targetHeading = initialPose.getHeading();
+//        targetHorizontal = initialPose.getX();
+//        targetVertical = initialPose.getY();
 
         time = System.currentTimeMillis();
         lastTime = time;  // Initialize the last tick time so that deltas can be properly calculated
@@ -734,45 +734,7 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void applyAutomaticMovementControls() {
-        // If a target position index is currently set and we're not within a certain threshold of that position and we're not currently following a trajectory for automatic driving, make a new trajectory and follow it asynchronously
-        if (autoPoseIndex != -1) {
-            if (autoPoseIndex >= 0 && autoPoseIndex < 5) {
-                switch (autoPoseIndex) {
-                    case (0):
-                        targetPose = highGoalShootPose;
-                        break;
-                    case (1):
-                        targetPose = powerShotPose1;
-                        break;
-                    case (2):
-                        targetPose = powerShotPose2;
-                        break;
-                    case (3):
-                        targetPose = powerShotPose3;
-                        break;
-                    case (4):
-                        targetPose = dpadControlPose;
-                }
 
-                //double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX(), 2) - Math.pow(targetPose.getX(), 2));  // This was dead wrong
-                double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX() - targetPose.getX(), 2) + Math.pow(drive.getPoseEstimate().getY() - targetPose.getY(), 2));  // This should fix it
-                double angularDistance = Math.abs(drive.getPoseEstimate().getHeading() - targetPose.getHeading());
-
-                boolean areWeThereYet = (distance <= AUTO_DISTANCE_THRESHOLD && angularDistance <= AUTO_ANGULAR_DISTANCE_THRESHOLD);
-
-                if (!areWeThereYet && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
-                    targetTrajectory = drive.trajectoryBuilder(drive.getPoseEstimate()).lineToLinearHeading(targetPose).build();
-                    drive.followTrajectoryAsync(targetTrajectory);  // This would be path continuity exception after the first iteration if this code were accessible while currentlyFollowingAutoTrajectory were true
-                    currentlyFollowingAutoTrajectory = true;
-                }
-                else if (areWeThereYet) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
-                    currentlyFollowingAutoTrajectory = false;
-                }
-            }
-            else {  // We have an invalid automatic position. We should probably throw an error here
-                // Maybe throw error???
-            }
-        }
     }
 
     private void applyManualMovementControls() {
@@ -831,34 +793,15 @@ public class TeleOp99Mark2 extends OpMode {
         //targetVertical -= verticalInput / 10.0;
         //targetHorizontal -= horizontalInput / 10.0;
         //targetHeading -= rotationInput / 10.0;
-        
-        if (Math.max(horizontalInput, verticalInput) > PID_UNLOCK_DEADZONE) {
-            targetHorizontal = drive.getPoseEstimate().getX() + horizontalInput / 10.0;  // Controls are relative to current robot position, not current robot target
-            targetVertical = drive.getPoseEstimate().getY() + verticalInput / 10.0;
-        }
-        if (rotationInput > PID_UNLOCK_DEADZONE) {
-            targetHeading = drive.getPoseEstimate().getHeading() + rotationInput / 10.0;
-        }
 
-        headingController.setTargetPosition(targetHeading);
-        horizontalController.setTargetPosition(targetHorizontal);
-        verticalController.setTargetPosition(targetVertical);
-
-        if (!(autoDrive && currentlyFollowingAutoTrajectory) || !ENABLE_AUTO_DRIVE) {  // We're not auto driving
-            rotation = headingController.update(continuousRotationEstimate);  // This should NEVER be called when it doesn't have accurate feedback. Otherwise P will accumulate until the autoDrive ends, then a burst of rotation will spin the bot out of control until it corrects itself
-            horizontal = horizontalController.update(drive.getPoseEstimate().getX());
-            vertical = verticalController.update(drive.getPoseEstimate().getY());
-        }
-
-        Vector2d directionalVector = new Vector2d(horizontal, vertical);
+        Vector2d directionalVector = new Vector2d(horizontalInput, verticalInput);
         directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());  // Apply field-oriented heading
 
         horizontal = directionalVector.getX();
         vertical = directionalVector.getY();
+        rotation = rotationInput;
 
-        rotation = applyPIDDeadzone(rotation);
-        horizontal = applyPIDDeadzone(horizontal);
-        vertical = applyPIDDeadzone(vertical);
+        gotoPose = new Pose2d(drive.getPoseEstimate().getX() + horizontal, drive.getPoseEstimate().getY() + vertical, drive.getPoseEstimate().getHeading() + rotation);  // I'm skeptical about rotation here
 
         // Set drive motor power
         frontLeftDrivePower = vertical + horizontal + rotation;
@@ -868,14 +811,6 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Set intake speed
         intakeDrivePower = (gamepad2LeftTrigger - gamepad2RightTrigger) * INTAKE_MAX_POWER;
-    }
-
-    private double applyPIDDeadzone(double a) {
-        if (a < PID_DEADZONE) {
-            return 0.0;
-        }
-
-        return a;
     }
 
     private void checkAutoInterrupts() {  // Checks to see if any manual input will interfere with an automatic task, if manual input takes priority (AUTO_PRIORITY is false). If so, it disables the automatic overrides using a flag for each servo involved
@@ -1095,11 +1030,15 @@ public class TeleOp99Mark2 extends OpMode {
                     drive.mode = SampleMecanumDrive.Mode.IDLE;
                 }
 
-                drive.setDriveSignal(new DriveSignal(
-                        new Pose2d(
-                                horizontal * DriveConstants.MAX_VEL,  // Was 40.0
-                                vertical * DriveConstants.MAX_VEL,
-                                rotation)));
+                //drive.setDriveSignal(new DriveSignal(
+                //        new Pose2d(
+                //                horizontal * DriveConstants.MAX_VEL,  // Was 40.0
+                //                vertical * DriveConstants.MAX_VEL,
+                //                rotation)));
+                lastTargetVelocity = targetVelocity;
+                targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);
+                targetAcceleration = targetVelocity.minus(lastTargetVelocity);  // Maybe shouldn't ever be negative? We'll see
+                drive.goTo(gotoPose, targetVelocity, targetAcceleration);  // Skeptical about acceleration here
             }
 
             // Update all roadrunner stuff (odometry, etc.)

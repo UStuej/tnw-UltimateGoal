@@ -90,7 +90,7 @@ public class GamepadInputHandler {
         isRightStickHeld = gamepad.right_stick_button;
         isBackHeld = gamepad.back;
         isStartHeld = gamepad.start;
-        
+
         // Determine if the buttons were just pressed using our cached inputs and the new ones
         isAPressed = !wasAHeld && isAHeld;
         isBPressed = !wasBHeld && isBHeld;

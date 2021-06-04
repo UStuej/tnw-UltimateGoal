@@ -10,7 +10,7 @@ import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.control.PIDFController;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
 import com.acmerobotics.roadrunner.drive.MecanumDrive;
-import com.acmerobotics.roadrunner.followers.HolonomicPIDVAFollower;
+//import com.acmerobotics.roadrunner.followers.HolonomicPIDVAFollower;
 import com.acmerobotics.roadrunner.followers.TrajectoryFollower;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.profile.MotionProfile;
@@ -35,8 +35,10 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
+import org.firstinspires.ftc.teamcode.tnwutil.HolonomicPIDVAFollower3;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,7 +90,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     private TrajectoryVelocityConstraint velConstraint;
     private TrajectoryAccelerationConstraint accelConstraint;
-    private TrajectoryFollower follower;
+    public HolonomicPIDVAFollower3 follower;
 
     private LinkedList<Pose2d> poseHistory;
 
@@ -116,7 +118,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         velConstraint = getVelocityConstraint(MAX_VEL, MAX_ANG_VEL, TRACK_WIDTH);
         accelConstraint = getAccelerationConstraint(MAX_ACCEL);
 
-        follower = new HolonomicPIDVAFollower(TRANSLATIONAL_PID, TRANSLATIONAL_PID, HEADING_PID,
+        follower = new HolonomicPIDVAFollower3(TRANSLATIONAL_PID, TRANSLATIONAL_PID, HEADING_PID,
                 new Pose2d(0.5, 0.5, Math.toRadians(5.0)), 0.5);
 
         poseHistory = new LinkedList<>();
@@ -196,6 +198,10 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         turnStart = clock.seconds();
         mode = Mode.TURN;
+    }
+
+    public void goTo(@NotNull Pose2d targetPose, @NotNull Pose2d targetVel, @NotNull Pose2d targetAccel) {  // Returns a DriveSignal to use to get to the target pose at the given velocity and acceleration
+        setDriveSignal(follower.internalUpdate(getPoseEstimate(), targetPose, targetVel, targetAccel, getPoseVelocity()));
     }
 
     public void turn(double angle) {
