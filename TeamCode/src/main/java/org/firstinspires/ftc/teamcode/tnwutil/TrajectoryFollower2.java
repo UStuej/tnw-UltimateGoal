@@ -51,7 +51,7 @@ public abstract class TrajectoryFollower2 {
     }
 
     protected final void setTrajectory(@NotNull Trajectory var1) {
-        Intrinsics.checkNotNullParameter(var1, "<set-?>");
+        //Intrinsics.checkNotNullParameter(var1, "<set-?>");
         this.trajectory = var1;
     }
 
@@ -61,7 +61,7 @@ public abstract class TrajectoryFollower2 {
     protected abstract void setLastError(@NotNull Pose2d var1);
 
     public void followTrajectory(@NotNull Trajectory trajectory) {
-        Intrinsics.checkNotNullParameter(trajectory, "trajectory");
+        //Intrinsics.checkNotNullParameter(trajectory, "trajectory");
         this.startTimestamp = this.clock.seconds();
         this.trajectory = trajectory;
         this.admissible = false;
@@ -98,7 +98,7 @@ public abstract class TrajectoryFollower2 {
     @JvmOverloads
     @NotNull
     public final DriveSignal update(@NotNull Pose2d currentPose, @Nullable Pose2d currentRobotVel) {
-        Intrinsics.checkNotNullParameter(currentPose, "currentPose");
+        //Intrinsics.checkNotNullParameter(currentPose, "currentPose");
 
         while(this.remainingMarkers.size() > 0 && this.elapsedTime() > ((TrajectoryMarker)this.remainingMarkers.get(0)).getTime()) {
             ((TrajectoryMarker)this.remainingMarkers.remove(0)).getCallback().onMarkerReached();
@@ -179,14 +179,14 @@ public abstract class TrajectoryFollower2 {
 
     @JvmOverloads
     public TrajectoryFollower2(@NotNull Pose2d admissibleError, double timeout, @NotNull NanoClock clock) {
-        Intrinsics.checkNotNullParameter(admissibleError, "admissibleError");
-        Intrinsics.checkNotNullParameter(clock, "clock");
+        //Intrinsics.checkNotNullParameter(admissibleError, "admissibleError");
+        //Intrinsics.checkNotNullParameter(clock, "clock");
         //super();
         this.admissibleError = admissibleError;
         this.timeout = timeout;
         this.clock = clock;
         boolean var5 = false;
-        this.remainingMarkers = (List)(new ArrayList());
+        this.remainingMarkers = (new ArrayList());
     }
 
     // $FF: synthetic method
@@ -234,11 +234,11 @@ final class TrajectoryFollower$followTrajectory$$inlined$sortBy$1 implements Com
         boolean var3 = false;
         TrajectoryMarker it = (TrajectoryMarker)a;
         int var5 = 0;
-        Comparable var10000 = (Comparable)it.getTime();
+        Comparable<Double> var10000 = (Comparable<Double>)it.getTime();
         it = (TrajectoryMarker)b;
-        Comparable var6 = var10000;
+        Comparable<Double> var6 = var10000;
         var5 = 0;
         Double var7 = it.getTime();
-        return ComparisonsKt.compareValues(var6, (Comparable)var7);
+        return ComparisonsKt.compareValues(var6, (Comparable<Double>)var7);
     }
 }

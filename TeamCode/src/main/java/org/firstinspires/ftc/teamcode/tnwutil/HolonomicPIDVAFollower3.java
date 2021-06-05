@@ -77,7 +77,7 @@ public final class HolonomicPIDVAFollower3 extends TrajectoryFollower2 {
     }
     @NotNull
     public DriveSignal internalUpdate(@NotNull Pose2d currentPose, @NotNull Pose2d targetPose, @NotNull Pose2d targetVel, @NotNull Pose2d targetAccel, @Nullable Pose2d currentRobotVel) {
-        Intrinsics.checkNotNullParameter(currentPose, "currentPose");
+        //Intrinsics.checkNotNullParameter(currentPose, "currentPose");
         double t = this.elapsedTime();
         Pose2d targetRobotVel = Kinematics.fieldToRobotVelocity(targetPose, targetVel);
         Pose2d targetRobotAccel = Kinematics.fieldToRobotAcceleration(targetPose, targetVel, targetAccel);
@@ -104,9 +104,9 @@ public final class HolonomicPIDVAFollower3 extends TrajectoryFollower2 {
 //        Intrinsics.checkNotNullParameter(headingCoeffs, "headingCoeffs");
 //        Intrinsics.checkNotNullParameter(admissibleError, "admissibleError");
 //        Intrinsics.checkNotNullParameter(clock, "clock");
-        this.axialController = new PIDFController(axialCoeffs, 0.0D, 0.0D, 0.0D, (Function2)null, (NanoClock)null);
-        this.lateralController = new PIDFController(lateralCoeffs, 0.0D, 0.0D, 0.0D, (Function2)null, (NanoClock)null);
-        this.headingController = new PIDFController(headingCoeffs, 0.0D, 0.0D, 0.0D, (Function2)null, (NanoClock)null);
+        this.axialController = new PIDFController(axialCoeffs, 0.0D, 0.0D, 0.0D);
+        this.lateralController = new PIDFController(lateralCoeffs, 0.0D, 0.0D, 0.0D);
+        this.headingController = new PIDFController(headingCoeffs, 0.0D, 0.0D, 0.0D);
         this.lastError = new Pose2d(0.0D, 0.0D, 0.0D);
         this.headingController.setInputBounds(-3.141592653589793D, 3.141592653589793D);
     }
@@ -154,15 +154,15 @@ public final class HolonomicPIDVAFollower3 extends TrajectoryFollower2 {
 final class HolonomicPIDVAFollower2Kt {
     @NotNull
     public static final Pose2d calculateFieldPoseError(@NotNull Pose2d targetFieldPose, @NotNull Pose2d currentFieldPose) {
-        Intrinsics.checkNotNullParameter(targetFieldPose, "targetFieldPose");
-        Intrinsics.checkNotNullParameter(currentFieldPose, "currentFieldPose");
+        //Intrinsics.checkNotNullParameter(targetFieldPose, "targetFieldPose");
+        //Intrinsics.checkNotNullParameter(currentFieldPose, "currentFieldPose");
         return new Pose2d(targetFieldPose.minus(currentFieldPose).vec(), Angle.normDelta(targetFieldPose.getHeading() - currentFieldPose.getHeading()));
     }
 
     @NotNull
     public static final Pose2d calculateRobotPoseError(@NotNull Pose2d targetFieldPose, @NotNull Pose2d currentFieldPose) {
-        Intrinsics.checkNotNullParameter(targetFieldPose, "targetFieldPose");
-        Intrinsics.checkNotNullParameter(currentFieldPose, "currentFieldPose");
+        //Intrinsics.checkNotNullParameter(targetFieldPose, "targetFieldPose");
+        //Intrinsics.checkNotNullParameter(currentFieldPose, "currentFieldPose");
         Pose2d errorInFieldFrame = calculateFieldPoseError(targetFieldPose, currentFieldPose);
         return new Pose2d(errorInFieldFrame.vec().rotated(-currentFieldPose.getHeading()), errorInFieldFrame.getHeading());
     }

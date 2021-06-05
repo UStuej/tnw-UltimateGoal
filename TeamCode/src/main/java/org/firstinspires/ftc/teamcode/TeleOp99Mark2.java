@@ -79,6 +79,8 @@ public class TeleOp99Mark2 extends OpMode {
     private static double FULLAXIS_LEFT_WEIGHT = 0.75;  // The weighting of the left joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_RIGHT_WEIGHT to equal exactly 1
     private static double FULLAXIS_RIGHT_WEIGHT = 0.25;  // The weighting of the right joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_LEFT_WEIGHT to equal 1
 
+    private static double PID_CONTROL_LOCK = 0.1;  // The value under which user input will not affect the target position, velocity, or acceleration of the follower
+
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
     private static boolean FULLAXIS_CONTROL = true;  // Whether or not fullaxis mode is used. With this enabled, both thumb axes contribute equally (half power maximum on each joystick) to the final robot speed. In this mode, the gamepad 1 triggers are used for rotation, which also yields more movement and thus more overall control
@@ -333,6 +335,8 @@ public class TeleOp99Mark2 extends OpMode {
         continuousRotationEstimate = drive.getPoseEstimate().getHeading();
 
         gotoPose = drive.getPoseEstimate();  // Shouldn't go anywhere to begin with
+        targetVelocity = new Pose2d();
+        targetAcceleration = new Pose2d();
 
 //        targetHeading = initialPose.getHeading();
 //        targetHorizontal = initialPose.getX();
@@ -358,6 +362,15 @@ public class TeleOp99Mark2 extends OpMode {
 
     public double distanceToShooterVelocity(double distance) {
         return (25.0*distance)/14.0 + (9900.0/7.0);  // Guessed at this
+    }
+
+    public double absoluteMinimum(double a, double b) {
+        if (Math.abs(a) < Math.abs(b)) {
+            return a;
+        }
+        else {
+            return b;
+        }
     }
 
     public double absoluteMin(double a, double b, double c) {
@@ -791,13 +804,21 @@ public class TeleOp99Mark2 extends OpMode {
         //targetHeading -= rotationInput / 10.0;
 
         Vector2d directionalVector = new Vector2d(horizontalInput, verticalInput);
-        directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());  // Apply field-oriented heading
+        //directionalVector = directionalVector.rotated(drive.getPoseEstimate().getHeading());  // Apply field-oriented heading
 
         horizontal = directionalVector.getX();
         vertical = directionalVector.getY();
-        rotation = rotationInput;
+        rotation = rotationInput * -4.0;
 
-        gotoPose = new Pose2d(drive.getPoseEstimate().getX() + horizontal, drive.getPoseEstimate().getY() + vertical, drive.getPoseEstimate().getHeading() + rotation);  // I'm skeptical about rotation here
+        if (Math.abs(horizontalInput) > PID_CONTROL_LOCK) {
+            gotoPose = new Pose2d(drive.getPoseEstimate().getX() + horizontal*deltaTime/1000.0 * DriveConstants.MAX_VEL * 2.25, gotoPose.getY(), gotoPose.getHeading());  // I'm skeptical about rotation here
+        }
+        if (Math.abs(verticalInput) > PID_CONTROL_LOCK) {
+            gotoPose = new Pose2d(gotoPose.getX(), drive.getPoseEstimate().getY() + vertical*deltaTime/1000.0 * DriveConstants.MAX_VEL * 2.25, gotoPose.getHeading());
+        }
+        if (Math.abs(rotationInput) > PID_CONTROL_LOCK) {
+            gotoPose = new Pose2d(gotoPose.getX(), gotoPose.getY(), drive.getPoseEstimate().getHeading() + rotation*deltaTime/1000.0 * Math.toRadians(90.0));
+        }
 
         // Set drive motor power
         frontLeftDrivePower = vertical + horizontal + rotation;
@@ -1031,10 +1052,14 @@ public class TeleOp99Mark2 extends OpMode {
                 //                horizontal * DriveConstants.MAX_VEL,  // Was 40.0
                 //                vertical * DriveConstants.MAX_VEL,
                 //                rotation)));
-                lastTargetVelocity = targetVelocity;
-                //targetVelocity = targetPose.minus(drive.getPoseEstimate());  // Possible velocity
-                targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);  // Also a possible good velocity
-                targetAcceleration = targetVelocity.minus(lastTargetVelocity);  // Maybe shouldn't ever be negative? We'll see
+                lastTargetVelocity = targetVelocity.copy(targetVelocity.getX(), targetVelocity.getY(), targetVelocity.getHeading());
+                //targetVelocity = new Pose2d(DriveConstants.MAX_VEL, DriveConstants.MAX_VEL, DriveConstants.MAX_ANG_VEL);
+                targetVelocity = gotoPose.minus(drive.getPoseEstimate()).div(deltaTime/100.0);  // Possible velocity
+                targetVelocity = new Pose2d(absoluteMinimum(targetVelocity.getX(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getY(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getHeading(), DriveConstants.MAX_ANG_VEL));  // For per-axis scaling
+                //targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);  // Also a possible good velocity
+                targetAcceleration = targetVelocity.minus(lastTargetVelocity).div(deltaTime/250.0);
+                targetAcceleration = new Pose2d(absoluteMinimum(targetAcceleration.getX(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getY(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getHeading(), DriveConstants.MAX_ANG_ACCEL));
+                //targetAcceleration = new Pose2d(DriveConstants.MAX_ACCEL, DriveConstants.MAX_ACCEL, DriveConstants.MAX_ANG_ACCEL);
                 drive.goTo(gotoPose, targetVelocity, targetAcceleration);  // Skeptical about acceleration here
             }
 
