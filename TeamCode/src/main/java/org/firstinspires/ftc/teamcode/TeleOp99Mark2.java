@@ -36,7 +36,9 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static boolean AUTO_TPS_SELECT = true;  // Whether or not the TPS should be automatically calculated based on our distance to the selected goal
 
-    private double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
+    private static double INTAKE_MAX_POWER = 0.8; // the maximum speed for the intake
+
+    private static long PID_COOLDOWN = 10;  // Amount of time (in milliseconds) after user control is under the PID_CONTROL_LOCK threshold that PID will decide the user is no longer adjusting the gotoPose. Prevents oscillation
 
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
     private static boolean BUTTONS_CYCLE_SPEED_CURVES = false;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
@@ -286,6 +288,8 @@ public class TeleOp99Mark2 extends OpMode {
     private Pose2d lastTargetVelocity;  // The target velocity the robot was driving at as of the last DriveSignal
     private Pose2d targetVelocity;  // The velocity that the robot is currently driving at. Controlled by user input, semi-auto code, or both
     private Pose2d targetAcceleration;  // The acceleration that the robot is currently driving at. Controlled by user input, semi-auto code, or both
+
+    private long pidCooldown;  // Amount of time (in milliseconds) until PID decides that user input is no longer changing the gotoPose
 
     @Override
     public void init() {
@@ -579,7 +583,7 @@ public class TeleOp99Mark2 extends OpMode {
             }
 
             //targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
-            targetPose = new Pose2d(targetPose.getX(), targetPose.getY(), Math.atan((drive.getPoseEstimate().getY()) - goalPositions.get(autoPoseIndex).getY()) / (drive.getPoseEstimate().getX() - goalPositions.get(autoPoseIndex).getX()));
+            gotoPose = new Pose2d(gotoPose.getX(), gotoPose.getY(), Math.atan((drive.getPoseEstimate().getY()) - goalPositions.get(autoPoseIndex).getY()) / (drive.getPoseEstimate().getX() - goalPositions.get(autoPoseIndex).getX()));
         }
         else if (gamepad1XPressed) {  // Cycles power shot goals. Could probably rewrite this logic I did at 12:00 AM too
             if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
@@ -655,6 +659,8 @@ public class TeleOp99Mark2 extends OpMode {
                     telemetry.addLine("Updated current pose to power shot 3 pose");
                     break;
             }
+
+            gotoPose = drive.getPoseEstimate();
 
             currentlyFollowingAutoTrajectory = false;  // If we were following this target, stop; now we've already reached it. This is probably redundant
         }
@@ -743,7 +749,25 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void applyAutomaticMovementControls() {
-
+        if (autoDrive) {
+            switch (autoPoseIndex) {
+                case (0):
+                    gotoPose = highGoalShootPose;
+                    break;
+                case (1):
+                    gotoPose = powerShotPose1;
+                    break;
+                case (2):
+                    gotoPose = powerShotPose2;
+                    break;
+                case (3):
+                    gotoPose = powerShotPose3;
+                    break;
+                case (4):
+                    gotoPose = dpadControlPose;
+                    break;
+            }
+        }
     }
 
     private void applyManualMovementControls() {
@@ -809,6 +833,12 @@ public class TeleOp99Mark2 extends OpMode {
         horizontal = directionalVector.getX();
         vertical = directionalVector.getY();
         rotation = rotationInput * -4.0;
+
+        pidCooldown -= deltaTime;
+
+        if (Math.abs(horizontalInput) > PID_CONTROL_LOCK || Math.abs(verticalInput) > PID_CONTROL_LOCK || Math.abs(rotationInput) > PID_CONTROL_LOCK) {
+            pidCooldown = PID_COOLDOWN;
+        }
 
         if (Math.abs(horizontalInput) > PID_CONTROL_LOCK) {
             gotoPose = new Pose2d(drive.getPoseEstimate().getX() + horizontal*deltaTime/1000.0 * DriveConstants.MAX_VEL * 2.25, gotoPose.getY(), gotoPose.getHeading());  // I'm skeptical about rotation here
@@ -1054,13 +1084,18 @@ public class TeleOp99Mark2 extends OpMode {
                 //                rotation)));
                 lastTargetVelocity = targetVelocity.copy(targetVelocity.getX(), targetVelocity.getY(), targetVelocity.getHeading());
                 //targetVelocity = new Pose2d(DriveConstants.MAX_VEL, DriveConstants.MAX_VEL, DriveConstants.MAX_ANG_VEL);
-                targetVelocity = gotoPose.minus(drive.getPoseEstimate()).div(deltaTime/100.0);  // Possible velocity
-                targetVelocity = new Pose2d(absoluteMinimum(targetVelocity.getX(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getY(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getHeading(), DriveConstants.MAX_ANG_VEL));  // For per-axis scaling
-                //targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);  // Also a possible good velocity
+                if (pidCooldown <= 0) {
+                    targetVelocity = new Pose2d();  // The user doesn't want us to move anymore; stop
+                }
+                else {
+                    targetVelocity = gotoPose.minus(drive.getPoseEstimate()).div(deltaTime / 100.0);  // Good velocity
+                    targetVelocity = new Pose2d(absoluteMinimum(targetVelocity.getX(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getY(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getHeading(), DriveConstants.MAX_ANG_VEL));  // For per-axis scaling
+                    //targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);  // Also a possible good velocity
+                }
                 targetAcceleration = targetVelocity.minus(lastTargetVelocity).div(deltaTime/250.0);
                 targetAcceleration = new Pose2d(absoluteMinimum(targetAcceleration.getX(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getY(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getHeading(), DriveConstants.MAX_ANG_ACCEL));
                 //targetAcceleration = new Pose2d(DriveConstants.MAX_ACCEL, DriveConstants.MAX_ACCEL, DriveConstants.MAX_ANG_ACCEL);
-                drive.goTo(gotoPose, targetVelocity, targetAcceleration);  // Skeptical about acceleration here
+                drive.goTo(gotoPose, targetVelocity, targetAcceleration);
             }
 
             // Update all roadrunner stuff (odometry, etc.)
@@ -1075,6 +1110,7 @@ public class TeleOp99Mark2 extends OpMode {
                 currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), Math.toRadians(90));
                 drive.setPoseEstimate(currentPose);
                 targetPose = currentPose;
+                gotoPose = drive.getPoseEstimate();
                 //lastDrivePoseEstimate = targetHeading;
                 //continuousRotationEstimate = targetHeading;
                 telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
