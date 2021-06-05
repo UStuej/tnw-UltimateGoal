@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.control.PIDFController;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
+import com.acmerobotics.roadrunner.followers.HolonomicPIDVAFollower;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -27,8 +29,6 @@ public class TeleOp99Mark2 extends OpMode {
     private static double MOVEMENT_FACTOR = 1.0;  // Floating-point number from 0 to 1 multiplied by all movement motor powers directly before application. Use this to limit the maximum power for ALL movement-related motors evenly
 
     private static boolean AUTO_PRIORITY = false;  // Whether or not automatic motor and server controls take priority over manual ones instead of the other way around
-
-    private static boolean CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = true;  // Whether the wobble goal deployment sequence should try to continue setting servo positions even if one of the dependency positions is manually set to something different TODO: This
 
     private static double JOYSTICK_INPUT_THRESHOLD = 0.10;  // The global threshold for all joystick axis inputs under which no input will be registered. Also referred to as a deadzone
 
@@ -78,6 +78,8 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static double FULLAXIS_LEFT_WEIGHT = 0.75;  // The weighting of the left joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_RIGHT_WEIGHT to equal exactly 1
     private static double FULLAXIS_RIGHT_WEIGHT = 0.25;  // The weighting of the right joystick when using fullaxis control, from 0 to 1. This should sum with FULLAXIS_LEFT_WEIGHT to equal 1
+
+    private static double PID_CONTROL_LOCK = 0.1;  // The value under which user input will not affect the target position, velocity, or acceleration of the follower
 
     private static double SLOW_MODE_POWER_FACTOR = 0.25;  // The amount multiplied to all motor values when in slow mode
 
@@ -159,12 +161,6 @@ public class TeleOp99Mark2 extends OpMode {
     // States for the servos/motors that can be controlled via toggles
     private boolean ringElevatorUp = false;  // Boolean representing whether or not the ring elevator is currently at (or running to) the up position
     private boolean armUp = false;  // Boolean representing whether or not the wobble goal arm is currently at (or running to) the up position
-    private boolean fingerIn = false;  // Boolean representing whether or not the ring finger's target position is currently in
-
-    // Automatic robot scoring states TODO: Remove if Unused
-    private boolean autoMedGoalScore = false;
-    private boolean autoHighGoalScore = false;
-    private boolean autoPowerScore = false;
 
     // Gamepad 1 inputs JUST pressed
     private boolean gamepad1APressed = false;  // Whether or not the gamepad 1 a button was JUST pressed, handled by the handleInput function
@@ -243,12 +239,13 @@ public class TeleOp99Mark2 extends OpMode {
 
     private boolean autoDrive = false;  // Whether or not the robot is currently being driven automatically (through Roadrunner). Only applies if GAMEPAD_XY_TOGGLES_AUTO_DRIVE is true
 
-    double vertical = 0.0;  // Movement axes for the manual robot movement control
+    double vertical = 0.0;  // Corrections axes for the DriveSignals
     double horizontal = 0.0;
-    double rotation = 0.0;
+    double rotation = 0.0;  // Manged by PID using the below user input variable
 
-    private double targetHeading;  // Offset to the robot heading, used as a target to maintain PID rotation
-    private PIDFController headingController = new PIDFController(SampleMecanumDrive.HEADING_PID, DriveConstants.kV, DriveConstants.kA, DriveConstants.kStatic);
+    double verticalInput = 0.0;  // Movement axes for user input movement control
+    double horizontalInput = 0.0;
+    double rotationInput = 0.0;  // Input rotation from the user
 
     //private Pose2d currentPose = new Pose2d(-63, -52, Math.toRadians(90));
     private Pose2d currentPose = PoseStorage.currentPose;
@@ -265,12 +262,12 @@ public class TeleOp99Mark2 extends OpMode {
     public static Pose2d dpadControlPose = PoseStorage.highGoalShootPose;  // Should be overriden by the user when gamepad 1 Dpad buttons are pressed
 
     // Holds the positions of the actual goals to rotate towards (not poses to travel to!)
-    public static List<Vector2d> goalPositions = new ArrayList<Vector2d>(4);  // High goal + 3 power shots
+    public static List<Vector2d> goalPositions;
 
     // The trajectory we're currently following, if we're following a trajectory
-    private Trajectory targetTrajectory;
+    //private Trajectory targetTrajectory;
 
-    private int currentShooterTPS = 0;  // The current TPS of the ring shooter, if active
+    private int currentShooterTPS = highGoalTPS;  // The current TPS of the ring shooter, if active
 
     // The pose that we're currently targeting, extracted from the current index
     private Pose2d targetPose;
@@ -281,6 +278,14 @@ public class TeleOp99Mark2 extends OpMode {
     private boolean currentlyFollowingAutoTrajectory = false;  // Whether or not we're currently following an automatic trajectory. This should be set to false whenever we switch back to manual control
 
     private boolean firstRotate = true;  // Whether or not the robot has been rotated towards the current goal since it was last changed by anything other than the button that cycles just rotation
+
+    private double continuousRotationEstimate;
+    private double lastDrivePoseEstimate;
+
+    private Pose2d gotoPose;  // The pose the robot is driving to. Controlled by user input, semi-auto code, or both
+    private Pose2d lastTargetVelocity;  // The target velocity the robot was driving at as of the last DriveSignal
+    private Pose2d targetVelocity;  // The velocity that the robot is currently driving at. Controlled by user input, semi-auto code, or both
+    private Pose2d targetAcceleration;  // The acceleration that the robot is currently driving at. Controlled by user input, semi-auto code, or both
 
     @Override
     public void init() {
@@ -326,20 +331,78 @@ public class TeleOp99Mark2 extends OpMode {
 
         initMotorPositions();
 
+        lastDrivePoseEstimate = drive.getPoseEstimate().getHeading();
+        continuousRotationEstimate = drive.getPoseEstimate().getHeading();
+
+        gotoPose = drive.getPoseEstimate();  // Shouldn't go anywhere to begin with
+        targetVelocity = new Pose2d();
+        targetAcceleration = new Pose2d();
+
+//        targetHeading = initialPose.getHeading();
+//        targetHorizontal = initialPose.getX();
+//        targetVertical = initialPose.getY();
+
         time = System.currentTimeMillis();
         lastTime = time;  // Initialize the last tick time so that deltas can be properly calculated
         ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
-
-        // FIXME: Just guessed at these
-        goalPositions.set(0, new Vector2d(36, -24));  // High goal position
-        goalPositions.set(1, new Vector2d(36, -6));  // Power shot 1 position
-        goalPositions.set(2, new Vector2d(36, -12));  // Power shot 2 position
-        goalPositions.set(3, new Vector2d(36, -18));  // Power shot 3 position
     }
 
     @Override
     public void start() {
-        // Moved setPower out of here
+        goalPositions = new ArrayList<>();  // High goal + 3 power shots
+
+        // FIXME: Just guessed at these
+        goalPositions.add(new Vector2d(36, -24));  // High goal position (FIXME: Needs to be corrected for blue goal)
+        goalPositions.add(new Vector2d(36, -6));  // Power shot 1 position
+        goalPositions.add(new Vector2d(36, -12));  // Power shot 2 position
+        goalPositions.add(new Vector2d(36, -18));  // Power shot 3 position
+
+        goalPositions.add(goalPositions.get(0));  // Placeholder position for Dpad movement index 4
+    }
+
+    public double distanceToShooterVelocity(double distance) {
+        return (25.0*distance)/14.0 + (9900.0/7.0);  // Guessed at this
+    }
+
+    public double absoluteMinimum(double a, double b) {
+        if (Math.abs(a) < Math.abs(b)) {
+            return a;
+        }
+        else {
+            return b;
+        }
+    }
+
+    public double absoluteMin(double a, double b, double c) {
+        if (Math.abs(a) < Math.abs(b)) {
+            // a < b; compare a to c now
+            if (Math.abs(a) < Math.abs(c)) {  // a < b and a < c
+                // a is smallest
+                return a;
+            }
+            else {  // b > a > c
+                // c is smallest
+                return c;
+            }
+        }
+        else if (Math.abs(b) < Math.abs(c)) {  // a > b; compare b to c now
+            // b is smallest
+            return b;
+        }
+        else {  // a > b > c
+            // c is smallest
+            return c;
+        }
+    }
+
+    public double getRotationDelta(double lastRotation, double thisRotation) {
+        double lastDegrees = Math.toDegrees(lastRotation);
+        double thisDegrees = Math.toDegrees(thisRotation);
+
+        double possibleDifference1 = (thisDegrees+360 - lastDegrees);
+        double possibleDifference2 = (thisDegrees - (lastDegrees+360));
+        double possibleDifference3 = (thisDegrees - lastDegrees);
+        return Math.toRadians(-absoluteMin(possibleDifference1, possibleDifference2, possibleDifference3));  // TODO: By absolute value
     }
 
     @Override
@@ -347,6 +410,9 @@ public class TeleOp99Mark2 extends OpMode {
         lastTime = time;  // Save this time as the LAST time for the NEXT tick
         time = System.currentTimeMillis();  // Get the new current time
         deltaTime = time - lastTime;  // Calculate the delta time from the last frame
+
+        continuousRotationEstimate += getRotationDelta(drive.getPoseEstimate().getHeading(), lastDrivePoseEstimate);
+        lastDrivePoseEstimate = drive.getPoseEstimate().getHeading();
 
         handleInput();  // Handle all basic user input and convert to more useful, unified forms. This only sets user input values; it does nothing else with them. That's the job of the manual control functions.
         pMode();
@@ -509,9 +575,11 @@ public class TeleOp99Mark2 extends OpMode {
             }
             else {
                 firstRotate = false;
+                autoPoseIndex = 0;
             }
 
-            targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
+            //targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
+            targetPose = new Pose2d(targetPose.getX(), targetPose.getY(), Math.atan((drive.getPoseEstimate().getY()) - goalPositions.get(autoPoseIndex).getY()) / (drive.getPoseEstimate().getX() - goalPositions.get(autoPoseIndex).getX()));
         }
         else if (gamepad1XPressed) {  // Cycles power shot goals. Could probably rewrite this logic I did at 12:00 AM too
             if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
@@ -535,30 +603,34 @@ public class TeleOp99Mark2 extends OpMode {
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
         }
-        else if (gamepad1DpadUpPressed) {
+        else if (gamepad1DpadLeftPressed) {
+            goalPositions.set(4, goalPositions.get(autoPoseIndex));  // Make sure the goal position doesn't change?
             autoPoseIndex = 4;  // Dpad control
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
             dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() + 8, drive.getPoseEstimate().getHeading());
         }
-        else if (gamepad1DpadDownPressed) {
+        else if (gamepad1DpadRightPressed) {
+            goalPositions.set(4, goalPositions.get(autoPoseIndex));
             autoPoseIndex = 4;  // Dpad control
             currentlyFollowingAutoTrajectory = false;
             autoDrive = true;
             dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() - 8, drive.getPoseEstimate().getHeading());
         }
-        else if (gamepad1DpadLeftPressed) {
-            autoPoseIndex = 4;  // Dpad control
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() - 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
-        }
-        else if (gamepad1DpadRightPressed) {
-            autoPoseIndex = 4;  // Dpad control
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() + 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
-        }
+        //else if (gamepad1DpadLeftPressed) {
+        //    goalPositions.set(4, goalPositions.get(autoPoseIndex));
+        //    autoPoseIndex = 4;  // Dpad control
+        //    currentlyFollowingAutoTrajectory = false;
+        //    autoDrive = true;
+        //    dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() - 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
+        //}
+        //else if (gamepad1DpadRightPressed) {
+        //    goalPositions.set(4, goalPositions.get(autoPoseIndex));
+        //    autoPoseIndex = 4;  // Dpad control
+        //    currentlyFollowingAutoTrajectory = false;
+        //    autoDrive = true;
+        //    dpadControlPose = new Pose2d(drive.getPoseEstimate().getX() + 8, drive.getPoseEstimate().getY(), drive.getPoseEstimate().getHeading());
+        //}
         else if (gamepad1RightStickPressed) {  // Cancel auto following if the right stick is pressed
             autoDrive = false;
         }
@@ -671,106 +743,82 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void applyAutomaticMovementControls() {
-        // If a target position index is currently set and we're not within a certain threshold of that position and we're not currently following a trajectory for automatic driving, make a new trajectory and follow it asynchronously
-        if (autoPoseIndex != -1) {
-            if (autoPoseIndex >= 0 && autoPoseIndex < 5) {
-                switch (autoPoseIndex) {
-                    case (0):
-                        targetPose = highGoalShootPose;
-                        break;
-                    case (1):
-                        targetPose = powerShotPose1;
-                        break;
-                    case (2):
-                        targetPose = powerShotPose2;
-                        break;
-                    case (3):
-                        targetPose = powerShotPose3;
-                        break;
-                    case (4):
-                        targetPose = dpadControlPose;
-                }
 
-                //double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX(), 2) - Math.pow(targetPose.getX(), 2));  // This was dead wrong
-                double distance = Math.sqrt(Math.pow(drive.getPoseEstimate().getX() - targetPose.getX(), 2) + Math.pow(drive.getPoseEstimate().getY() - targetPose.getY(), 2));  // This should fix it
-                double angularDistance = Math.abs(drive.getPoseEstimate().getHeading() - targetPose.getHeading());
-
-                boolean areWeThereYet = (distance <= AUTO_DISTANCE_THRESHOLD && angularDistance <= AUTO_ANGULAR_DISTANCE_THRESHOLD);
-
-                if (!areWeThereYet && !currentlyFollowingAutoTrajectory) {  // We aren't following a trajectory, but need to be
-                    targetTrajectory = drive.trajectoryBuilder(drive.getPoseEstimate()).lineToLinearHeading(targetPose).build();
-                    drive.followTrajectoryAsync(targetTrajectory);  // This would be path continuity exception after the first iteration if this code were accessible while currentlyFollowingAutoTrajectory were true
-                    currentlyFollowingAutoTrajectory = true;
-                }
-                else if (areWeThereYet) {  // We've reached the target pose; set currentlyFollowingAutoTrajectory to false to reflect this
-                    currentlyFollowingAutoTrajectory = false;
-                }
-            }
-            else {  // We have an invalid automatic position. We should probably throw an error here
-                // Maybe throw error???
-            }
-        }
     }
 
     private void applyManualMovementControls() {
-        vertical = 0.0;  // Save each movement axis we'll use in its own variable
-        horizontal = 0.0;
-
-        targetHeading -= rotation * 5;
-
-        headingController.setTargetPosition(targetHeading);
-
-        if (!(autoDrive && currentlyFollowingAutoTrajectory) || !ENABLE_AUTO_DRIVE) {  // We're not auto driving
-            rotation = headingController.update(drive.getPoseEstimate().getHeading());  // This should NEVER be called when it doesn't have accurate feedback. Otherwise P will accumulate until the autoDrive ends, then a burst of rotation will spin the bot out of control until it corrects itself
-        }
+        verticalInput = 0.0;  // Save each movement axis we'll use in its own variable
+        horizontalInput = 0.0;
+        rotationInput = 0.0;
 
         double currentPowerFactor = gamepad1LeftShoulderHeld ? SLOW_MODE_POWER_FACTOR : 1.0;
 
         if (AXIS_MOVEMENT) {  // If we're using axis movement
             if (FULLAXIS_CONTROL) {  // We're using the fullaxis movement scheme
                 if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
-                    vertical = easeNormalized((-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
-                    horizontal = easeNormalized((gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
-                    rotation = easeNormalized(gamepad1RightTrigger * gamepad1RightTrigger - gamepad1LeftTrigger * gamepad1LeftTrigger, currentSpeedCurve, currentSpeedCurveMode);
+                    verticalInput = easeNormalized((-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
+                    horizontalInput = easeNormalized((gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT), currentSpeedCurve, currentSpeedCurveMode);
+                    rotationInput = easeNormalized(gamepad1RightTrigger * gamepad1RightTrigger - gamepad1LeftTrigger * gamepad1LeftTrigger, currentSpeedCurve, currentSpeedCurveMode);
                 } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
-                    vertical = (-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT);
-                    horizontal = (gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT);
-                    rotation = (gamepad1RightTrigger - gamepad1LeftTrigger);
+                    verticalInput = (-gamepad1LeftStickY * FULLAXIS_LEFT_WEIGHT - gamepad1RightStickY * FULLAXIS_RIGHT_WEIGHT);
+                    horizontalInput = (gamepad1LeftStickX * FULLAXIS_LEFT_WEIGHT + gamepad1RightStickX * FULLAXIS_RIGHT_WEIGHT);
+                    rotationInput = (gamepad1RightTrigger - gamepad1LeftTrigger);
                 }
             }
             else {
                 if (USE_VARIABLE_SPEED_CURVES) {  // If we're using speed curves, apply the current one
-                    vertical = easeNormalized(-gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
-                    horizontal = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
-                    rotation = easeNormalized(gamepad1RightStickX, currentSpeedCurve, currentSpeedCurveMode);
+                    verticalInput = easeNormalized(-gamepad1LeftStickY, currentSpeedCurve, currentSpeedCurveMode);
+                    horizontalInput = easeNormalized(gamepad1LeftStickX, currentSpeedCurve, currentSpeedCurveMode);
+                    rotationInput = easeNormalized(gamepad1RightStickX, currentSpeedCurve, currentSpeedCurveMode);
                 } else {  // Otherwise, just use a flat (linear) curve by directly applying the joystick values
-                    vertical = -gamepad1LeftStickY;
-                    horizontal = gamepad1LeftStickX;
-                    rotation = gamepad1RightStickX;
+                    verticalInput = -gamepad1LeftStickY;
+                    horizontalInput = gamepad1LeftStickX;
+                    rotationInput = gamepad1RightStickX;
                 }
             }
         } else {  // If we're using dpad movement
             if (gamepad1DpadUpHeld && !gamepad1DpadDownHeld) {  // Up
-                vertical = 1.0;
+                verticalInput = 1.0;
             }
             if (gamepad1DpadDownHeld && !gamepad1DpadUpHeld) {  // Down
-                vertical = -1.0;
+                verticalInput = -1.0;
             }
 
             if (gamepad1DpadLeftHeld && !gamepad1DpadRightHeld) {  // Left
-                horizontal = -1.0;
+                horizontalInput = -1.0;
             }
 
             if (gamepad1DpadRightHeld && !gamepad1DpadLeftHeld) {  // Right
-                horizontal = 1.0;
+                horizontalInput = 1.0;
             }
 
-            rotation = gamepad1LeftTrigger - gamepad1RightTrigger;  // In Dpad mode, left and right triggers on gamepad 1 rotate
+            rotationInput = gamepad1LeftTrigger - gamepad1RightTrigger;  // In Dpad mode, left and right triggers on gamepad 1 rotate
         }
 
-        vertical *= currentPowerFactor;
-        horizontal *= currentPowerFactor;
-        rotation *= currentPowerFactor;
+        horizontalInput *= currentPowerFactor;
+        verticalInput *= currentPowerFactor;
+        rotationInput *= currentPowerFactor;
+
+        //targetVertical -= verticalInput / 10.0;
+        //targetHorizontal -= horizontalInput / 10.0;
+        //targetHeading -= rotationInput / 10.0;
+
+        Vector2d directionalVector = new Vector2d(horizontalInput, verticalInput);
+        //directionalVector = directionalVector.rotated(drive.getPoseEstimate().getHeading());  // Apply field-oriented heading
+
+        horizontal = directionalVector.getX();
+        vertical = directionalVector.getY();
+        rotation = rotationInput * -4.0;
+
+        if (Math.abs(horizontalInput) > PID_CONTROL_LOCK) {
+            gotoPose = new Pose2d(drive.getPoseEstimate().getX() + horizontal*deltaTime/1000.0 * DriveConstants.MAX_VEL * 2.25, gotoPose.getY(), gotoPose.getHeading());  // I'm skeptical about rotation here
+        }
+        if (Math.abs(verticalInput) > PID_CONTROL_LOCK) {
+            gotoPose = new Pose2d(gotoPose.getX(), drive.getPoseEstimate().getY() + vertical*deltaTime/1000.0 * DriveConstants.MAX_VEL * 2.25, gotoPose.getHeading());
+        }
+        if (Math.abs(rotationInput) > PID_CONTROL_LOCK) {
+            gotoPose = new Pose2d(gotoPose.getX(), gotoPose.getY(), drive.getPoseEstimate().getHeading() + rotation*deltaTime/1000.0 * Math.toRadians(90.0));
+        }
 
         // Set drive motor power
         frontLeftDrivePower = vertical + horizontal + rotation;
@@ -843,16 +891,17 @@ public class TeleOp99Mark2 extends OpMode {
 //        shooterState = gamepad2LeftShoulderHeld || gamepad2RightShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
         shooterState = ringElevatorUp;  // The shooter turns on when the ring elevator is up, and turns off when it's down
 
-        if (gamepad2RightShoulderHeld) {
-            currentShooterTPS = powerShotTPS;
-        }
+        //if (gamepad2RightShoulderHeld) {
+        //    currentShooterTPS = powerShotTPS;
+        //}
 //        else if (gamepad2LeftShoulderHeld) {
-        else if (ringElevatorUp) {
-            currentShooterTPS = highGoalTPS;
-        }
-        else {
-            currentShooterTPS = 0;
-        }
+        //if (ringElevatorUp) {
+            //currentShooterTPS = highGoalTPS;
+        //}
+        //else {
+        //    //currentShooterTPS = 0;
+        //    ringShooter.setPower(0.0);
+        //}
 
         //if (shooterState) {
         //    currentShooterTPS = autoPoseIndex == 0 ? highGoalTPS : powerShotTPS;  // Get the desired shooter TPS from the selected auto target index
@@ -863,7 +912,15 @@ public class TeleOp99Mark2 extends OpMode {
         //}
 
         if (AUTO_TPS_SELECT) {  // If we're automatically selecting TPS for the shooter
-            currentShooterTPS = (int) drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)) * 10;  // Completely guessed at the *10 part
+            currentShooterTPS = (int) distanceToShooterVelocity(drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)));
+        }
+        else {  // Manual TPS control
+            if (gamepad2LeftShoulderPressed) {
+                currentShooterTPS += 5;
+            }
+            if (gamepad2RightShoulderPressed) {
+                currentShooterTPS -= 5;
+            }
         }
 
         if (shooterState) {
@@ -974,8 +1031,6 @@ public class TeleOp99Mark2 extends OpMode {
 
     private void applyMotorValues() {  // Assumes all sanity checks have already been applied to the variables it uses in setPosition
         if (MOVEMENT_ROTATION_CORRECTION || ENABLE_AUTO_DRIVE) {  // If we're using rotation correction or automatic driving is enabled, we'll have to use roadrunner's functions to set power and correct rotation
-            Vector2d directionalVector = new Vector2d(horizontal, vertical);
-            directionalVector = directionalVector.rotated(-drive.getPoseEstimate().getHeading());
             //telemetry.addData("directionalVector angle: ", drive.getPoseEstimate().getHeading());
             //telemetry.update();
 
@@ -992,11 +1047,20 @@ public class TeleOp99Mark2 extends OpMode {
                     drive.mode = SampleMecanumDrive.Mode.IDLE;
                 }
 
-                drive.setDriveSignal(new DriveSignal(
-                        new Pose2d(
-                                directionalVector.getX() * DriveConstants.MAX_VEL,  // Was 40.0
-                                directionalVector.getY() * DriveConstants.MAX_VEL,
-                                rotation)));
+                //drive.setDriveSignal(new DriveSignal(
+                //        new Pose2d(
+                //                horizontal * DriveConstants.MAX_VEL,  // Was 40.0
+                //                vertical * DriveConstants.MAX_VEL,
+                //                rotation)));
+                lastTargetVelocity = targetVelocity.copy(targetVelocity.getX(), targetVelocity.getY(), targetVelocity.getHeading());
+                //targetVelocity = new Pose2d(DriveConstants.MAX_VEL, DriveConstants.MAX_VEL, DriveConstants.MAX_ANG_VEL);
+                targetVelocity = gotoPose.minus(drive.getPoseEstimate()).div(deltaTime/100.0);  // Possible velocity
+                targetVelocity = new Pose2d(absoluteMinimum(targetVelocity.getX(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getY(), DriveConstants.MAX_VEL), absoluteMinimum(targetVelocity.getHeading(), DriveConstants.MAX_ANG_VEL));  // For per-axis scaling
+                //targetVelocity = new Pose2d(horizontal * DriveConstants.MAX_VEL, vertical * DriveConstants.MAX_VEL, rotation * DriveConstants.MAX_ANG_VEL);  // Also a possible good velocity
+                targetAcceleration = targetVelocity.minus(lastTargetVelocity).div(deltaTime/250.0);
+                targetAcceleration = new Pose2d(absoluteMinimum(targetAcceleration.getX(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getY(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getHeading(), DriveConstants.MAX_ANG_ACCEL));
+                //targetAcceleration = new Pose2d(DriveConstants.MAX_ACCEL, DriveConstants.MAX_ACCEL, DriveConstants.MAX_ANG_ACCEL);
+                drive.goTo(gotoPose, targetVelocity, targetAcceleration);  // Skeptical about acceleration here
             }
 
             // Update all roadrunner stuff (odometry, etc.)
@@ -1008,8 +1072,11 @@ public class TeleOp99Mark2 extends OpMode {
 
             // Reset pose estimate rotation if needed
             if (LEFT_SHOULDER_RECALIBRATES_ROTATION && gamepad1LeftShoulderPressed) {  // Reset the current pose estimate rotation to the initial pose rotation
-                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), 90);
+                currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), Math.toRadians(90));
                 drive.setPoseEstimate(currentPose);
+                targetPose = currentPose;
+                //lastDrivePoseEstimate = targetHeading;
+                //continuousRotationEstimate = targetHeading;
                 telemetry.addLine("Gamepad 1 left shoulder pressed: reset current pose rotation");
             }
 
@@ -1017,7 +1084,11 @@ public class TeleOp99Mark2 extends OpMode {
 
             telemetry.addData("Current position x:", currentPose.getX());
             telemetry.addData("Current position y: ", currentPose.getY());
+            telemetry.addData("Current rotation input: ", rotationInput);
+            telemetry.addData("Current rotation compensation: ", rotation);
+            telemetry.addData("Current flywheel speed: ", currentShooterTPS);
             telemetry.addData("Current heading: ", currentPose.getHeading());
+            //telemetry.addData("Current continuous heading", continuousRotationEstimate);
             telemetry.addData("Currently following trajectory: ", currentlyFollowingAutoTrajectory);
             telemetry.addData("Currently auto-driving: ", autoDrive);
             telemetry.addData("Currently busy: ", drive.isBusy());
@@ -1362,9 +1433,6 @@ public class TeleOp99Mark2 extends OpMode {
                 }
                 else if (pmode == 258) {
                     AUTO_PRIORITY = gamepad2RightShoulderHeld;
-                }
-                else if (pmode == 259) {
-                    CONTINUE_AUTO_WITH_OVERRIDEN_DEPENDENCIES = gamepad2RightShoulderHeld;
                 }
                 else if (pmode == 260) {
                     USE_VARIABLE_SPEED_CURVES = gamepad2RightShoulderHeld;

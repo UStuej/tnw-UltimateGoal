@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.tnwutil.AutoSettings;
 import org.firstinspires.ftc.teamcode.tnwutil.GamepadInputHandler;
@@ -15,7 +16,8 @@ public class TNWStateCupAuto extends LinearOpMode {
     SampleMecanumDrive drive;
 
     AutoSettings config;
-    boolean blueAlliance;
+    boolean cfgIsBlueAlliance;
+    long cfgStartDelay;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -31,6 +33,18 @@ public class TNWStateCupAuto extends LinearOpMode {
         waitForStart();
 
         // START
+
+        // Debug to show values which are being used
+        telemetry.addData("innerStartingLine", config.innerStartingLine);
+        telemetry.addData("starterStack", config.starterStack);
+        telemetry.addData("deliverWobble", config.deliverWobble);
+        telemetry.addData("park", config.park);
+        telemetry.addData("parkingLocation", config.parkingLocation);
+        telemetry.addData("isBlueAlliance", cfgIsBlueAlliance);
+        telemetry.addData("startDelay", cfgStartDelay);
+        telemetry.update();
+
+        sleep(30000);
 
     }
 
@@ -60,9 +74,36 @@ public class TNWStateCupAuto extends LinearOpMode {
             input.update();
         } while (!isStopRequested() && !input.isXPressed() && !input.isBPressed());
         if (isStopRequested()) return true;
-        blueAlliance = input.isXPressed();
+        cfgIsBlueAlliance = input.isXPressed();
         telemetry.clearAll();
-        telemetry.update();
+
+        // Get start delay from user
+        // DEV: Could be placed within a scope (temporary variable declared), but is not since this is the last "block" of code in this method, and can be grouped into its exit gc.
+        telemetry.addLine("<LEFT | RIGHT> to modify, <A> to continue...");
+        short dispStartDelay = 0;
+        Telemetry.Item itemStartDelay = telemetry.addData("Start Delay", "");
+        while (true) {
+            itemStartDelay.setValue(dispStartDelay + " seconds");
+            telemetry.update();
+            do {
+                input.update();
+            } while (!isStopRequested() && !input.isAPressed() && !input.isDpadLeftPressed() && !input.isDpadRightPressed());
+            if (isStopRequested()) {
+                return true;
+            } else if (input.isAPressed()) {
+                break;
+            } else if (input.isDpadLeftPressed()) {
+                dispStartDelay = (short) (dispStartDelay > 0
+                        ? dispStartDelay - 1
+                        : 0);
+            } else if (input.isDpadRightPressed()) {
+                dispStartDelay++;
+            }
+        }
+        cfgStartDelay = dispStartDelay * 1000L;
+        telemetry.clearAll();
+        // DEV: telemetry.update() is not called, since it will be directly after this method is.
+
         telemetry.setAutoClear(true);
 
         return false;

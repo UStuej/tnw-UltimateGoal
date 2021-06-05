@@ -256,7 +256,6 @@ public class AutoConfig extends LinearOpMode {
         Telemetry.Item[] settings = {
                 telemetry.addData("Starting Line", () -> config.innerStartingLine ? "Inner" : "Outer"),
                 telemetry.addData("Starter Stack", () -> config.starterStack ? "YES" : "no"),
-                telemetry.addData("Power Shots", () -> config.powerShots ? "YES" : "no"),
                 telemetry.addData("Deliver Wobble", () -> config.deliverWobble ? "YES" : "no"),
                 telemetry.addData("Park", () -> config.park ? "YES" : "no"),
                 telemetry.addData("Parking Location", () -> config.parkingLocation + " tiles")
@@ -303,24 +302,20 @@ public class AutoConfig extends LinearOpMode {
                 break;
 
                 case 2:
-                    config.powerShots = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.powerShots;
-                break;
-
-                case 3:
                     config.deliverWobble = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.deliverWobble;
                 break;
 
-                case 4:
+                case 3:
                     config.park = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.park;
                 break;
 
-                case 5:
+                case 4:
                     if (input.isDpadLeftPressed()) {
-                        config.parkingLocation = (byte) (optionIdx > 0
+                        config.parkingLocation = (byte) (config.parkingLocation > 0
                                 ? config.parkingLocation - 1
                                 : 4);
                     } else if (input.isDpadRightPressed()) {
-                        config.parkingLocation = (byte) (optionIdx < 4
+                        config.parkingLocation = (byte) (config.parkingLocation < 4
                                 ? config.parkingLocation + 1
                                 : 0);
                     }
