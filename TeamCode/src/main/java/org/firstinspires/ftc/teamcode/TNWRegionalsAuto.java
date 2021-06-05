@@ -35,14 +35,14 @@ public class TNWRegionalsAuto extends LinearOpMode {
     public static double[] RING_SCAN_CROP_PERCENTS = new double[4];  // X1, X2, Y1, and Y2, respectively
 
     // Starting position 1 camera crop values
-    public static double[] RING_SCAN_CROP_PERCENTS_1_RED = {0.55, 0.84, 0.2, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
-    public static double[] RING_SCAN_CROP_PERCENTS_2_RED = {0.01, 0.3, 0.2, 0.47};  // X1, X2, Y1, and Y2, respectively for the second starting position on red
-    public static double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.16, 0.45, 0.2, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue
-    public static double[] RING_SCAN_CROP_PERCENTS_2_BLUE = {0.6, 0.89, 0.2, 0.47};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue
+    public static double[] RING_SCAN_CROP_PERCENTS_1_RED = {0.68, 0.87, 0.27, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
+    public static double[] RING_SCAN_CROP_PERCENTS_2_RED = {0.01, 0.20, 0.3, 0.5};  // X1, X2, Y1, and Y2, respectively for the second starting position on red
+    public static double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.06, 0.25, 0.27, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue
+    public static double[] RING_SCAN_CROP_PERCENTS_2_BLUE = {0.72, 0.91, 0.28, 0.48};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue
 
     double ringImagePercent = 0.0;
-    double oneRingPercentageMinimum = .05; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
-    double fourRingPercentageMinimum = .25; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
+    double oneRingPercentageMinimum = .04; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
+    double fourRingPercentageMinimum = .15; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
 
     private static final int RING_COLOR_H_START = 13;  // 15
     private static final int RING_COLOR_S_START = 45;  // 51
@@ -57,8 +57,11 @@ public class TNWRegionalsAuto extends LinearOpMode {
     // ROADRUNNER VALUES:
     // Constant Roadrunner Pose Values
     // Starting poses
-    final Pose2d STARTING_POSE_1 = new Pose2d(-63, -31, Math.toRadians(0)); // TODO: set this to allow more room for alliance partner and elements
-    final Pose2d STARTING_POSE_2 = new Pose2d(-63, -45, Math.toRadians(0)); // TODO: set these
+    final Pose2d STARTING_POSE_1 = new Pose2d(-63, -18, Math.toRadians(0)); // TODO: set this to allow more room for alliance partner and elements
+    final Pose2d STARTING_POSE_2 = new Pose2d(-63, -(56 + 3.0/8), Math.toRadians(0)); // TODO: set these
+
+    Pose2d SECONDARY_SHOOT_POSE_OUTER = new Pose2d(-2, -57, Math.toRadians(90) - Math.atan(/*X*/(72.0 - (-2)) / /*Y*/Math.abs(-57 - (-33.0))));
+    Pose2d SECONDARY_SHOOT_POSE_INNER = new Pose2d(-2, -12, Math.toRadians(360) - (Math.toRadians(90) - Math.atan(/*X*/(72.0 - (-2)) / /*Y*/Math.abs((-12) - (-33.0)))));
 
     // Wobble goal poses
     final int DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING = 10; // inches
@@ -188,6 +191,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
     boolean navigateToLaunchLine = true; // whether or not to park on the launch line at the end of the autonomous period.  indicated by drivers in configuration
     byte parkingLocation = 2; // field tiles from alliance wall to park indicated by drivers in configuration
     boolean alliancePartnerMoves = false;
+    boolean scoreStarterStack = true;
     boolean buttonsReleased = true; // gamepad buttons are released before triggering queues
 
     SampleMecanumDrive drive;
@@ -375,6 +379,24 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 telemetry.update();
             }
         }
+        // obtain whether or not to score starter stack rings from drivers
+        nextStep = false;
+        buttonsReleased = false;
+        while (!nextStep) {
+            handleInput();
+            if (!gamepad1APressed && !gamepad1BPressed) buttonsReleased = true;
+            if (buttonsReleased) {
+                if (gamepad1APressed) {
+                    scoreStarterStack = true;
+                    nextStep = true;
+                } else if (gamepad1BPressed) {
+                    scoreStarterStack = false;
+                    nextStep = true;
+                }
+                telemetry.addData("Obtaining ", "Score Starter Stack? (A for Yes, B for No)");
+                telemetry.update();
+            }
+        }
         // obtain whether or not to navigate to launch line from drivers
         nextStep = false;
         buttonsReleased = false;
@@ -473,7 +495,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                webcam.startStreaming(320, 240, OpenCvCameraRotation.UPSIDE_DOWN);
+                webcam.startStreaming(1920, 1080, OpenCvCameraRotation.UPSIDE_DOWN);
             }
         });
 
@@ -550,12 +572,16 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         webcam.closeCameraDevice(); // turn off camera to save resources
                         ringElevator.setTargetPosition(RING_ELEVATOR_UP_POSITION); // raise ring elevator
                         fingerServo.setPosition(RING_FINGER_OUT_POSITION); // move finger servo out to make room to avoid collision with ring elevator
-                        ringShooter.setVelocity(57.75 * 28); // spin up ring shooter to score in high goal // using a different speed since we are farther back.
+                        if (scoreStarterStack) ringShooter.setVelocity(57.75 * 28); // spin up ring shooter to score in high goal // using a different speed since we are farther back.
+                        else ringShooter.setVelocity(54.5 * 28);
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to drop intake shield
                     }
                 })
-                .splineToLinearHeading(selInvertPose(new Pose2d(autoCaseCapture == 'A' ? LONG_SHOT_POSE.getX() + 26 : LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true), selInvertPose(Math.toRadians(startingPosition == 1 ? 270 : 90)))
-                // a series of temporal markers is preferred over a looped sequence with pauses to preserve roadrunner PID accuracy
+                .splineToConstantHeading(selInvertPose(scoreStarterStack ? startingPosition == 1 ? new Vector2d(STARTING_POSE_1.getX() + 0.1, STARTING_POSE_1.getY()) : new Vector2d(STARTING_POSE_2.getX() + 0.1, STARTING_POSE_2.getY())
+                        : startingPosition == 1 ? new Vector2d(STARTING_POSE_1.getX() + 3, STARTING_POSE_1.getY() + 5) : new Vector2d(STARTING_POSE_2.getX() + 3, STARTING_POSE_2.getY() - 3)), Math.toRadians(0))
+                .splineToSplineHeading(scoreStarterStack ? selInvertPose(new Pose2d(autoCaseCapture == 'A' ? LONG_SHOT_POSE.getX() + 26 : LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true)
+                        : startingPosition == 1 ? selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_INNER.getX(), SECONDARY_SHOOT_POSE_INNER.getY(), SECONDARY_SHOOT_POSE_INNER.getHeading() - selInvertPose(Math.toRadians(4))))
+                        : selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(5)))), scoreStarterStack ? selInvertPose(Math.toRadians(startingPosition == 1 ? 270 : 90)) : Math.toRadians(0))
                 .addTemporalMarker(.5, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -704,10 +730,12 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .build();
 
-        Trajectory deliverWobbleGoal1 = drive.trajectoryBuilder(scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
+        Trajectory deliverWobbleGoal1 = drive.trajectoryBuilder(scoreStarterStack ?
+                (scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
                 : autoCaseCapture == 'A' ? scorePreloadedRings.end()
                 : autoCaseCapture == 'B' ? shootStarterStackRings1.end()
                 : shootStarterStackRings2.end())
+                : scorePreloadedRings.end())
                 .addTemporalMarker(0, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -746,7 +774,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 .build();
 
         Trajectory park = drive.trajectoryBuilder(
-                deliverWobble && (autoCaseCapture == 'A' || !scoreAlliancePartnerRings) ? backFromTargetZone1.end()
+                deliverWobble && (autoCaseCapture == 'A' || !scoreAlliancePartnerRings || !scoreStarterStack) ? backFromTargetZone1.end()
                         : scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
                         : autoCaseCapture == 'C' ? shootStarterStackRings2.end()
                         : autoCaseCapture == 'B' ? shootStarterStackRings1.end()
@@ -757,22 +785,24 @@ public class TNWRegionalsAuto extends LinearOpMode {
 
 
         drive.followTrajectory(scorePreloadedRings);
-        if (autoCaseCapture != 'A') {
-            drive.followTrajectory(shootStarterStackRings1);
-            if (autoCaseCapture == 'C') {
-                drive.followTrajectory(shootStarterStackRings2);
+        if (scoreStarterStack) {
+            if (autoCaseCapture != 'A') {
+                drive.followTrajectory(shootStarterStackRings1);
+                if (autoCaseCapture == 'C') {
+                    drive.followTrajectory(shootStarterStackRings2);
+                }
             }
         }
-        if (scoreAlliancePartnerRings && (autoCaseCapture != 'C' || !deliverWobble)) {
+        if (scoreAlliancePartnerRings && (autoCaseCapture != 'C' || !deliverWobble) && scoreStarterStack) {
             drive.followTrajectory(alignToCollectPartnerRings);
             drive.followTrajectory(collectAlliancePartnerRings);
             if (autoCaseCapture != 'C') drive.followTrajectory(shootAlliancePartnerRings);
         }
-        if (deliverWobble && (autoCaseCapture != 'B' || !scoreAlliancePartnerRings)) {
+        if (deliverWobble && (autoCaseCapture != 'B' || !scoreAlliancePartnerRings || !scoreStarterStack)) {
             drive.followTrajectory(deliverWobbleGoal1);
             drive.followTrajectory(backFromTargetZone1);
         }
-        if (navigateToLaunchLine && (autoCaseCapture != 'C' || !scoreAlliancePartnerRings)) {
+        if (navigateToLaunchLine && (autoCaseCapture != 'C' || !scoreAlliancePartnerRings || !scoreStarterStack)) {
             drive.followTrajectory(park);
         }
         wobbleArm.setTargetPosition(ARM_STARTING_POSITION);
@@ -802,8 +832,8 @@ public class TNWRegionalsAuto extends LinearOpMode {
         double redValue, greenValue, blueValue;
         final int resolutionTuner = 5; // One pixel sampled every # pixels.  Raise for speed, lower for reliability.
         final int RED_VALUE_MIN = 100;
-        final double ORANGE_GB_LOW_THRESHOLD = 1.5;
-        final double ORANGE_RG_LOW_THRESHOLD = 1.25;
+        final double ORANGE_GB_LOW_THRESHOLD = 1.1; // 1.5 on old webcam
+        final double ORANGE_RG_LOW_THRESHOLD = 1.25; // possibly increase for new webcam?
         final double ORANGE_RB_LOW_THRESHOLD = 5.0;
         public int totalPixels = 0;
 
