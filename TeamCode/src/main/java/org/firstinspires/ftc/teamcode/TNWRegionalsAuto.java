@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.tnwutil.PoseStorage;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -352,9 +353,11 @@ public class TNWRegionalsAuto extends LinearOpMode {
             if (buttonsReleased) {
                 if (gamepad1APressed) {
                     blueAlliance = false;
+                    PoseStorage.isRed = true;
                     nextStep = true;
                 } else if (gamepad1BPressed) {
                     blueAlliance = true;
+                    PoseStorage.isRed = false;
                     nextStep = true;
                 }
                 telemetry.addData("Obtaining ", "Red Alliance? (A for yes, B for no)");
@@ -808,6 +811,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
         wobbleArm.setTargetPosition(ARM_STARTING_POSITION);
         intakeDrive.setPower(0);
         ringShooter.setPower(0);
+        PoseStorage.currentPose = drive.getPoseEstimate();
         pause(autoStartTime + 29900 - System.currentTimeMillis(), false);
     }
     class imageFeedPipeline extends OpenCvPipeline

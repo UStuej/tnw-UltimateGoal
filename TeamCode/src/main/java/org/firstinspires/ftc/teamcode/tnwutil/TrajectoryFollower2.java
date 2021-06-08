@@ -142,7 +142,7 @@ public abstract class TrajectoryFollower2 {
 
             this.remainingMarkers.clear();
             this.executedFinalUpdate = true;
-            var8 = new DriveSignal((Pose2d)null, (Pose2d)null);
+            var8 = new DriveSignal();
         } else {
             var8 = this.internalUpdate(currentPose, currentRobotVel);
         }

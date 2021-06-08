@@ -46,6 +46,13 @@ public class TeleOp99Mark2 extends OpMode {
     private static int DEFAULT_SPEED_CURVE = 0;  // Only applies if using variable speed curves. The index of the speed curve to use by default (from 0-7 inclusive), and when reset. See above comments for speed curve list
     private static int DEFAULT_SPEED_CURVE_MODE = 0;  // Only applies if using variable speed curves. The index of the speed curve mode to use by default (from 0-2) inclusive. See above comments for mode list
 
+    private static double LEFT_PADDLE_IN_POSITION = 0.96;  // State positions for the ring paddles
+    private static double LEFT_PADDLE_OUT_POSITION = 0.52;
+    private static double RIGHT_PADDLE_IN_POSITION = 0.02;
+    private static double RIGHT_PADDLE_OUT_POSITION = 0.46;
+
+    private static double ZERO_HEADING_PREVENTION_THRESHOLD = 0.03;  // Threshold under which the pose heading is clipped to this value to prevent rotational oscillation when the heading wraps from 0 radians to about 6.3
+
     private static int highGoalTPS = 55 * 28;  // Ticks per second of the shooter when active and aiming for the high goal
     private static int powerShotTPS = 50 * 28;  // Ticks per second of the shooter when active and aiming for the power shots
 
@@ -142,6 +149,11 @@ public class TeleOp99Mark2 extends OpMode {
     private Servo wobbleClaw;  // Wobble goal claw servo
     private Servo fingerServo;  // Ring finger servo
     private DcMotor wobbleArm;  // Wobble goal arm motor (used with encoders and runToPosition, so it acts like a servo)
+
+    private Servo leftPaddle;  // Servos for the paddles that stop rings from passing the robot while shooting
+    private Servo rightPaddle;
+
+    private boolean paddleState = false;  // Whether or not the paddles are currently out
 
     // Ring shooter motor
     private DcMotorEx ringShooter;
@@ -257,11 +269,11 @@ public class TeleOp99Mark2 extends OpMode {
     private int autoPoseIndex = 0;  // Index of the pose to drive to automatically (if automatic driving is currently enabled), or -1 if no position should be driven to
 
     // The possible target positions for automatic driving
-    public static Pose2d highGoalShootPose = PoseStorage.highGoalShootPose;  // Index 0
-    public static Pose2d powerShotPose1 = PoseStorage.powerShot1Pose;  // Index 1
-    public static Pose2d powerShotPose2 = PoseStorage.powerShot2Pose;  // Index 2
-    public static Pose2d powerShotPose3 = PoseStorage.powerShot3Pose;  // Index 3
-    public static Pose2d dpadControlPose = PoseStorage.highGoalShootPose;  // Should be overriden by the user when gamepad 1 Dpad buttons are pressed
+    public static Pose2d highGoalShootPose = PoseStorage.getAlliancePose(PoseStorage.highGoalShootPose);  // Index 0
+    public static Pose2d powerShotPose1 = PoseStorage.getAlliancePose(PoseStorage.powerShot1Pose);  // Index 1
+    public static Pose2d powerShotPose2 = PoseStorage.getAlliancePose(PoseStorage.powerShot2Pose);  // Index 2
+    public static Pose2d powerShotPose3 = PoseStorage.getAlliancePose(PoseStorage.powerShot3Pose);  // Index 3
+    public static Pose2d dpadControlPose = PoseStorage.getAlliancePose(PoseStorage.highGoalShootPose);  // Should be overriden by the user when gamepad 1 Dpad buttons are pressed
 
     // Holds the positions of the actual goals to rotate towards (not poses to travel to!)
     public static List<Vector2d> goalPositions;
@@ -326,6 +338,8 @@ public class TeleOp99Mark2 extends OpMode {
         wobbleClaw = hardwareMap.get(Servo.class, "WGClaw");
         wobbleArm = hardwareMap.get(DcMotor.class, "WGArm");
         fingerServo = hardwareMap.get(Servo.class, "ringFinger");
+        leftPaddle = hardwareMap.get(Servo.class, "leftPaddle");
+        rightPaddle = hardwareMap.get(Servo.class, "rightPaddle");
 
         // Initialize Ring Elevator motor
         ringElevator = hardwareMap.get(DcMotorEx.class, "ringElevator");
@@ -356,10 +370,10 @@ public class TeleOp99Mark2 extends OpMode {
         goalPositions = new ArrayList<>();  // High goal + 3 power shots
 
         // FIXME: Just guessed at these
-        goalPositions.add(new Vector2d(36, -24));  // High goal position (FIXME: Needs to be corrected for blue goal)
-        goalPositions.add(new Vector2d(36, -6));  // Power shot 1 position
-        goalPositions.add(new Vector2d(36, -12));  // Power shot 2 position
-        goalPositions.add(new Vector2d(36, -18));  // Power shot 3 position
+        goalPositions.add(PoseStorage.getAllianceVector(new Vector2d(36, -24)));  // High goal position (FIXME: Needs to be corrected for blue goal)
+        goalPositions.add(PoseStorage.getAllianceVector(new Vector2d(36, -6)));  // Power shot 1 position
+        goalPositions.add(PoseStorage.getAllianceVector(new Vector2d(36, -12)));  // Power shot 2 position
+        goalPositions.add(PoseStorage.getAllianceVector(new Vector2d(36, -18)));  // Power shot 3 position
 
         goalPositions.add(goalPositions.get(0));  // Placeholder position for Dpad movement index 4
     }
@@ -547,11 +561,11 @@ public class TeleOp99Mark2 extends OpMode {
     }
 
     private void getAutoPoseIndex() {
-        if (gamepad1APressed) {
-            autoPoseIndex = 0;  // High goal
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-        }
+        //if (gamepad1APressed) {
+        //    autoPoseIndex = 0;  // High goal
+        //    currentlyFollowingAutoTrajectory = false;
+        //    autoDrive = true;
+        //}
 //        else if (gamepad1XPressed) {
 //            autoPoseIndex = 1;  // Power shot 1
 //            currentlyFollowingAutoTrajectory = false;
@@ -567,60 +581,63 @@ public class TeleOp99Mark2 extends OpMode {
 //            currentlyFollowingAutoTrajectory = false;
 //            autoDrive = true;
 //        }
-        else if (gamepad1BPressed) {  // Cycles goals and rotates robot towards new goal (connected with autoPoseIndex). Should probably not be used while auto-driving, but you hopefully wouldn't anyway
+        if (gamepad1BPressed) {  // Cycles goals and rotates robot towards new goal (connected with autoPoseIndex). Should probably not be used while auto-driving, but you hopefully wouldn't anyway
             // Setting target heading is okay because it's an accumulative value and will act as if user input directly caused the rotation adjustment
-            if (!firstRotate) {
-                if (autoPoseIndex < 4 && autoPoseIndex >= 0) {  // We're in the goal range and it's safe to increment
-                    autoPoseIndex++;
-                }
-                else {  // It's outside the goal range (or would be if we incremented); set it to the first goal (the high goal)
-                    autoPoseIndex = 0;
-                }
-            }
-            else {
-                firstRotate = false;
-                autoPoseIndex = 0;
-            }
+//            if (!firstRotate) {
+//                if (autoPoseIndex < 4 && autoPoseIndex >= 0) {  // We're in the goal range and it's safe to increment
+//                    autoPoseIndex++;
+//                }
+//                else {  // It's outside the goal range (or would be if we incremented); set it to the first goal (the high goal)
+//                    autoPoseIndex = 0;
+//                }
+//            }
+//            else {
+//                firstRotate = false;
+//                autoPoseIndex = 0;
+//            }
+            autoPoseIndex = 0;  // Always use the high goal
+            pidCooldown = PID_COOLDOWN;
 
             //targetHeading = drive.getPoseEstimate().vec().angleBetween(goalPositions.get(autoPoseIndex));  // Might need to multiply by -1 or do some 90 degree offset or something. We'll see FIXME: Awaiting testing
             gotoPose = new Pose2d(gotoPose.getX(), gotoPose.getY(), Math.atan((drive.getPoseEstimate().getY()) - goalPositions.get(autoPoseIndex).getY()) / (drive.getPoseEstimate().getX() - goalPositions.get(autoPoseIndex).getX()));
         }
-        else if (gamepad1XPressed) {  // Cycles power shot goals. Could probably rewrite this logic I did at 12:00 AM too
-            if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
-                autoPoseIndex++;
-            }
-            else {  // It's outside the power shot range; set it to the first power shot
-                autoPoseIndex = 1;  // Power shot 1
-            }
+//        if (gamepad1XPressed) {  // Cycles power shot goals. Could probably rewrite this logic I did at 12:00 AM too
+//            if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to increment
+//                autoPoseIndex++;
+//            }
+//            else {  // It's outside the power shot range; set it to the first power shot
+//                autoPoseIndex = 1;  // Power shot 1
+//            }
+//
+//            currentlyFollowingAutoTrajectory = false;
+//            autoDrive = true;
+//        }
+//        if (gamepad1YPressed) {
+//            if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to decrement
+//                autoPoseIndex--;
+//            }
+//            else {  // It's outside the power shot range; set it to the last power shot
+//                autoPoseIndex = 3;  // Power shot 3
+//            }
+//
+//            currentlyFollowingAutoTrajectory = false;
+//            autoDrive = true;
+//        }
 
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-        }
-        else if (gamepad1YPressed) {
-            if (autoPoseIndex < 3 && autoPoseIndex > 0) {  // We're in the power shot range and it's safe to decrement
-                autoPoseIndex--;
-            }
-            else {  // It's outside the power shot range; set it to the last power shot
-                autoPoseIndex = 3;  // Power shot 3
-            }
-
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-        }
-        else if (gamepad1DpadLeftPressed) {
-            goalPositions.set(4, goalPositions.get(autoPoseIndex));  // Make sure the goal position doesn't change?
-            autoPoseIndex = 4;  // Dpad control
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() + 8, drive.getPoseEstimate().getHeading());
-        }
-        else if (gamepad1DpadRightPressed) {
-            goalPositions.set(4, goalPositions.get(autoPoseIndex));
-            autoPoseIndex = 4;  // Dpad control
-            currentlyFollowingAutoTrajectory = false;
-            autoDrive = true;
-            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() - 8, drive.getPoseEstimate().getHeading());
-        }
+//        else if (gamepad1DpadLeftPressed) {
+//            goalPositions.set(4, goalPositions.get(autoPoseIndex));  // Make sure the goal position doesn't change?
+//            autoPoseIndex = 4;  // Dpad control
+//            currentlyFollowingAutoTrajectory = false;
+//            autoDrive = true;
+//            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() + 8, drive.getPoseEstimate().getHeading());
+//        }
+//        else if (gamepad1DpadRightPressed) {
+//            goalPositions.set(4, goalPositions.get(autoPoseIndex));
+//            autoPoseIndex = 4;  // Dpad control
+//            currentlyFollowingAutoTrajectory = false;
+//            autoDrive = true;
+//            dpadControlPose = new Pose2d(drive.getPoseEstimate().getX(), drive.getPoseEstimate().getY() - 8, drive.getPoseEstimate().getHeading());
+//        }
         //else if (gamepad1DpadLeftPressed) {
         //    goalPositions.set(4, goalPositions.get(autoPoseIndex));
         //    autoPoseIndex = 4;  // Dpad control
@@ -917,13 +934,14 @@ public class TeleOp99Mark2 extends OpMode {
             }
         }
 
+        paddleState = gamepad1RightStickHeld;
+
+        leftPaddle.setPosition(!paddleState ? LEFT_PADDLE_IN_POSITION : LEFT_PADDLE_OUT_POSITION);
+        rightPaddle.setPosition(!paddleState ? RIGHT_PADDLE_IN_POSITION : RIGHT_PADDLE_OUT_POSITION);
+
         // Shooter state
 //        shooterState = gamepad2LeftShoulderHeld || gamepad2RightShoulderHeld;  // The shooter is only on when the left shoulder on gamepad 2 is held
         shooterState = ringElevatorUp;  // The shooter turns on when the ring elevator is up, and turns off when it's down
-
-        //if (gamepad2RightShoulderHeld) {
-        //    currentShooterTPS = powerShotTPS;
-        //}
 //        else if (gamepad2LeftShoulderHeld) {
         //if (ringElevatorUp) {
             //currentShooterTPS = highGoalTPS;
@@ -951,6 +969,10 @@ public class TeleOp99Mark2 extends OpMode {
             if (gamepad2RightShoulderPressed) {
                 currentShooterTPS -= 5;
             }
+        }
+
+        if (gamepad2RightShoulderHeld) {  // Manual override for power shot speed
+            currentShooterTPS = powerShotTPS;
         }
 
         if (shooterState) {
@@ -1095,6 +1117,7 @@ public class TeleOp99Mark2 extends OpMode {
                 targetAcceleration = targetVelocity.minus(lastTargetVelocity).div(deltaTime/250.0);
                 targetAcceleration = new Pose2d(absoluteMinimum(targetAcceleration.getX(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getY(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getHeading(), DriveConstants.MAX_ANG_ACCEL));
                 //targetAcceleration = new Pose2d(DriveConstants.MAX_ACCEL, DriveConstants.MAX_ACCEL, DriveConstants.MAX_ANG_ACCEL);
+                gotoPose = new Pose2d(gotoPose.getX(), gotoPose.getY(), Math.abs(gotoPose.getHeading()) < ZERO_HEADING_PREVENTION_THRESHOLD ? ZERO_HEADING_PREVENTION_THRESHOLD : gotoPose.getHeading());
                 drive.goTo(gotoPose, targetVelocity, targetAcceleration);
             }
 
