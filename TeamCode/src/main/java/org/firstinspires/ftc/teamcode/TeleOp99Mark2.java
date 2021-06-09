@@ -1117,7 +1117,7 @@ public class TeleOp99Mark2 extends OpMode {
                 targetAcceleration = targetVelocity.minus(lastTargetVelocity).div(deltaTime/250.0);
                 targetAcceleration = new Pose2d(absoluteMinimum(targetAcceleration.getX(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getY(), DriveConstants.MAX_ACCEL), absoluteMinimum(targetAcceleration.getHeading(), DriveConstants.MAX_ANG_ACCEL));
                 //targetAcceleration = new Pose2d(DriveConstants.MAX_ACCEL, DriveConstants.MAX_ACCEL, DriveConstants.MAX_ANG_ACCEL);
-                gotoPose = new Pose2d(gotoPose.getX(), gotoPose.getY(), Math.abs(gotoPose.getHeading()) < ZERO_HEADING_PREVENTION_THRESHOLD ? ZERO_HEADING_PREVENTION_THRESHOLD : gotoPose.getHeading());
+                gotoPose = new Pose2d(gotoPose.getX(), gotoPose.getY(), (gotoPose.getHeading() < ZERO_HEADING_PREVENTION_THRESHOLD || gotoPose.getHeading() > Math.PI*2 - ZERO_HEADING_PREVENTION_THRESHOLD) ? ZERO_HEADING_PREVENTION_THRESHOLD : gotoPose.getHeading());
                 drive.goTo(gotoPose, targetVelocity, targetAcceleration);
             }
 
