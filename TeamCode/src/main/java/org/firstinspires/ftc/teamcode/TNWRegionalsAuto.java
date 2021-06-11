@@ -15,8 +15,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
@@ -32,13 +34,20 @@ public class TNWRegionalsAuto extends LinearOpMode {
 
     // STARTER STACK DETECTION VALUES:
     // Starting position camera crop values to be set and used by OpenCV
-    public static double[] RING_SCAN_CROP_PERCENTS = new double[4];  // X1, X2, Y1, and Y2, respectively
+    double[] RING_SCAN_CROP_PERCENTS = new double[4];  // X1, X2, Y1, and Y2, respectively
 
     // Starting position 1 camera crop values
-    public static double[] RING_SCAN_CROP_PERCENTS_1_RED = {0.68, 0.87, 0.27, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
-    public static double[] RING_SCAN_CROP_PERCENTS_2_RED = {0.01, 0.20, 0.3, 0.5};  // X1, X2, Y1, and Y2, respectively for the second starting position on red
-    public static double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.06, 0.25, 0.27, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue
-    public static double[] RING_SCAN_CROP_PERCENTS_2_BLUE = {0.72, 0.91, 0.28, 0.48};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue
+    double[] RING_SCAN_CROP_PERCENTS_1_RED = {0.68, 0.87, 0.27, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on red
+    double[] RING_SCAN_CROP_PERCENTS_2_RED = {0.01, 0.20, 0.3, 0.5};  // X1, X2, Y1, and Y2, respectively for the second starting position on red
+    double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.06, 0.25, 0.27, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue
+    double[] RING_SCAN_CROP_PERCENTS_2_BLUE = {0.72, 0.91, 0.28, 0.48};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue
+
+    /*public static int LOWER_HSV_H = 0;
+    public static int LOWER_HSV_S= 0;
+    public static int LOWER_HSV_V = 0;
+    public static int UPPER_HSV_H = 0;
+    public static int UPPER_HSV_S = 0;
+    public static int UPPER_HSV_V = 0;*/
 
     double ringImagePercent = 0.0;
     double oneRingPercentageMinimum = .04; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
@@ -103,7 +112,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
     Pose2d TARGET_ZONE_C2; // used by the autonomous. to be set in initializeElementPositions() function
 
     final Pose2d TARGET_ZONE_A_RED_2 = new Pose2d(34, -57, Math.toRadians(30));
-    final Pose2d TARGET_ZONE_B_RED_2 = new Pose2d(26, -50, Math.toRadians(270));
+    final Pose2d TARGET_ZONE_B_RED_2 = new Pose2d(34, -50, Math.toRadians(270));
     final Pose2d TARGET_ZONE_C_RED_2 = new Pose2d(48, -50, Math.toRadians(180));
 
     final Pose2d TARGET_ZONE_A_BLUE_2 = new Pose2d(34, 57, Math.toRadians(0));
@@ -589,7 +598,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         : startingPosition == 1 ? new Vector2d(STARTING_POSE_1.getX() + 3, STARTING_POSE_1.getY() + 5) : new Vector2d(STARTING_POSE_2.getX() + 3, STARTING_POSE_2.getY() - 3)), Math.toRadians(0))
                 .splineToSplineHeading(scoreStarterStack ? selInvertPose(new Pose2d(autoCaseCapture == 'A' ? LONG_SHOT_POSE.getX() + 26 : LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true)
                         : startingPosition == 1 ? selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_INNER.getX(), SECONDARY_SHOOT_POSE_INNER.getY(), SECONDARY_SHOOT_POSE_INNER.getHeading() - selInvertPose(Math.toRadians(4))))
-                        : selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(6)))), scoreStarterStack ? selInvertPose(Math.toRadians(startingPosition == 1 ? 270 : 90)) : Math.toRadians(0))
+                        : selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(8)))), scoreStarterStack ? selInvertPose(Math.toRadians(startingPosition == 1 ? 270 : 90)) : Math.toRadians(0))
                 .addTemporalMarker(.5, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -775,14 +784,17 @@ public class TNWRegionalsAuto extends LinearOpMode {
                     public void onMarkerReached() {
                         if (!scoreStarterStack) {
                             if (autoCaseCapture == 'A') pause(1000, false);
-                            else if (autoCaseCapture == 'B') pause(4000, false);
-                            else pause(4000, false);
+                            else if (autoCaseCapture == 'B') pause(1000, false);
+                            else pause(1000, false);
                         }
                         else {
                             pause(1000, false);
                         }
                         wobbleClaw.setPosition(CLAW_OPENED_POSITION); // open wobble claw to release wobble goal
+                        pause(250, false);
                         wobbleArm.setTargetPosition(ARM_STARTING_POSITION); // completely retract wobble arm
+                        pause(1000, false);
+                        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
                     }
                 })
                 .build();
@@ -799,27 +811,39 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .build();
 
+        Trajectory alignToPark = drive.trajectoryBuilder(deliverWobbleGoal1.end())
+                .lineToLinearHeading(selInvertPose(autoCaseCapture == 'A' ? (new Pose2d(40, -57 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 2) - 1) * 24, Math.toRadians(0)))
+                        : (new Pose2d(40, -57 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 2) - 1) * 24, Math.toRadians(0)))))
+                .addDisplacementMarker(new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
+                        wobbleArm.setTargetPosition(ARM_STARTING_POSITION);
+                    }
+                })
+                .build();
+
         Trajectory park = drive.trajectoryBuilder(
                 deliverWobble && scoreStarterStack && (autoCaseCapture == 'A' || !scoreAlliancePartnerRings) ? backFromTargetZone1.end()
                         : scoreStarterStack ? (scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
                         : autoCaseCapture == 'C' ? shootStarterStackRings2.end()
                         : autoCaseCapture == 'B' ? shootStarterStackRings1.end()
                         : scorePreloadedRings.end())
-                        : deliverWobbleGoal1.end())
+                        : alignToPark.end())
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        wobbleArm.setTargetPosition(ARM_STARTING_POSITION);
+                        if (scoreStarterStack) wobbleArm.setTargetPosition(ARM_STARTING_POSITION);
                         ringShooter.setPower(0);
                     }
                 })
-                .addTemporalMarker(1.5, new MarkerCallback() {
+                .addTemporalMarker(1, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
                         wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
                     }
                 })
-                .lineToLinearHeading(selInvertPose(new Pose2d(12, -56 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 2) - 1) * 24, Math.toRadians(0))))
+                .lineToLinearHeading(selInvertPose(new Pose2d(12, -57 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 2) - 1) * 24, Math.toRadians(0))))
                 .build();
 
 
@@ -840,6 +864,9 @@ public class TNWRegionalsAuto extends LinearOpMode {
         if (deliverWobble && (autoCaseCapture != 'B' || !scoreAlliancePartnerRings || !scoreStarterStack)) {
             drive.followTrajectory(deliverWobbleGoal1);
             if (scoreStarterStack) drive.followTrajectory(backFromTargetZone1);
+        }
+        if (!scoreStarterStack) {
+            drive.followTrajectory(alignToPark);
         }
         if (navigateToLaunchLine && (autoCaseCapture != 'C' || !scoreAlliancePartnerRings || !scoreStarterStack)) {
             drive.followTrajectory(park);
@@ -862,7 +889,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
          * constantly allocating and freeing large chunks of memory.
          */
         Mat imageCrop = new Mat();
-        Mat imageHSV = new Mat();
+        Mat HSVImage = new Mat();
         Mat ringMask = new Mat();
         int ringPixels = 0;
         double[] pixel;
@@ -887,11 +914,13 @@ public class TNWRegionalsAuto extends LinearOpMode {
              * it to another Mat.
              */
 
+            // OLD VISION CODE
             final int RING_SECTION_CROP_Y1 = (int) (imageFeed.rows() * RING_SCAN_CROP_PERCENTS[2]);
             final int RING_SECTION_CROP_Y2 = (int) (imageFeed.rows() * RING_SCAN_CROP_PERCENTS[3]);
             final int RING_SECTION_CROP_X1 = (int) (imageFeed.cols() * RING_SCAN_CROP_PERCENTS[0]);
             final int RING_SECTION_CROP_X2 = (int) (imageFeed.cols() * RING_SCAN_CROP_PERCENTS[1]);
             final Scalar ringVisualizeColor = new Scalar(0.0d, 255.0d, 0.0d);
+            /*
 
             setpixelPoint = new Point(0, 0);
 
@@ -904,7 +933,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                     redValue = pixel[0];
                     greenValue = pixel[1];
                     blueValue = pixel[2];
-                    if (/*redValue >= blueValue * ORANGE_RB_LOW_THRESHOLD && */redValue >= greenValue * ORANGE_RG_LOW_THRESHOLD && greenValue >= blueValue * ORANGE_GB_LOW_THRESHOLD) {
+                    if (/*redValue >= blueValue * ORANGE_RB_LOW_THRESHOLD && *//*redValue >= greenValue * ORANGE_RG_LOW_THRESHOLD && greenValue >= blueValue * ORANGE_GB_LOW_THRESHOLD) {
                         ringPixels++;
                         // imageFeed.set(y, x, setpixel)
                         setpixelPoint.x = (int) x;
@@ -935,7 +964,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
 
             /*
              * Send some stats to the telemetry
-             */
+             *//*
 
             char autoCase_ = 'X';
 
@@ -959,12 +988,65 @@ public class TNWRegionalsAuto extends LinearOpMode {
             telemetry.addData("Total pixels", totalPixels);
             telemetry.update();
 
-            return imageFeed;
+            return imageFeed;*/
+            // NEW VISION CODE:
+            /*final Scalar LOWER_HSV = new Scalar(0, 0, 0);
+            final Scalar UPPER_HSV = new Scalar(180, 255, 160);*/
+            /*final Scalar LOWER_HSV = new Scalar(LOWER_HSV_H, LOWER_HSV_S, LOWER_HSV_V);
+            final Scalar UPPER_HSV = new Scalar(UPPER_HSV_H, UPPER_HSV_S, UPPER_HSV_V);*/
+            final Scalar LOWER_HSV = new Scalar(80, 60, 0);
+            final Scalar UPPER_HSV = new Scalar(110, 255, 255);
+            Imgproc.cvtColor(imageFeed, HSVImage, Imgproc.COLOR_BGR2HSV);
+            Core.inRange(HSVImage, LOWER_HSV, UPPER_HSV, ringMask);
+            //Core.bitwise_not(ringMask, ringMask);
+
+            //HSVImage.release();  // Don't leak memory!
+
+            ringMask = ringMask.submat(new Rect(new Point(RING_SECTION_CROP_X1, RING_SECTION_CROP_Y1), new Point(RING_SECTION_CROP_X2, RING_SECTION_CROP_Y2)));
+            ringPixels = Core.countNonZero(ringMask);
+            totalPixels = ((RING_SECTION_CROP_Y2 - RING_SECTION_CROP_Y1) * (RING_SECTION_CROP_X2 - RING_SECTION_CROP_X1));
+            ringImagePercent = (double) ringPixels / ((double) totalPixels);
+
+            //ringMask.release();
+
+            Imgproc.rectangle(
+                    imageFeed,
+                    new Point(
+                            RING_SECTION_CROP_X1,
+                            RING_SECTION_CROP_Y1),
+                    new Point(
+                            RING_SECTION_CROP_X2,
+                            RING_SECTION_CROP_Y2),
+                    new Scalar(0, 255, 0), 4);
+
+            char autoCase_ = 'X';
+
+            if (ringImagePercent >= oneRingPercentageMinimum && ringImagePercent < fourRingPercentageMinimum) { autoCase = 'B'; }
+            else if (ringImagePercent >= fourRingPercentageMinimum) { autoCase = 'C'; }
+            else {autoCase = 'A'; }
+
+            telemetry.addData("Auto Case: ", (char) (autoCase));
+            telemetry.addData("Ring Percentage: ", ringImagePercent);
+            telemetry.addData("Frame Count", webcam.getFrameCount());
+            telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
+            telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
+            telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
+            telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
+            telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
+            telemetry.addData("Ring-Colored Pixels: ", totalPixels);
+            telemetry.addData("Ring crop region X1", RING_SCAN_CROP_PERCENTS[0]);
+            telemetry.addData("Ring crop region Y1", RING_SCAN_CROP_PERCENTS[2]);
+            telemetry.addData("Ring crop region X2", RING_SCAN_CROP_PERCENTS[1]);
+            telemetry.addData("Ring crop region Y2", RING_SCAN_CROP_PERCENTS[3]);
+            telemetry.addData("Total pixels", totalPixels);
+            telemetry.update();
+
+            return ringMask;
         }
 
-        public int getRingPixels() {
+        /*public int getRingPixels() {
             return ringPixels;
-        }
+        }*/
 
         @Override
         public void onViewportTapped()
