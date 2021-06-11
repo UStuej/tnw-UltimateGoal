@@ -40,6 +40,10 @@ public class TeleOp99Mark2 extends OpMode {
 
     private static long PID_COOLDOWN = 10;  // Amount of time (in milliseconds) after user control is under the PID_CONTROL_LOCK threshold that PID will decide the user is no longer adjusting the gotoPose. Prevents oscillation
 
+    private static int LEFT_BUMPER_SHOOTER_OVERRIDE = 1540;  // Overrides for shooter speeds
+    private static int RIGHT_BUMPER_SHOOTER_OVERRIDE = 50*28;  // Power shot speed
+    private static int BOTH_BUMPERS_SHOOTER_OVERRIDE = 1630;
+
     private static boolean USE_VARIABLE_SPEED_CURVES = true;  // Whether or not custom curves for movement-related axis input should be used. If this is false, a linear curve will be used
     private static boolean BUTTONS_CYCLE_SPEED_CURVES = false;  // Only applies if using variable speed curves. If this is true, the driver's gamepad buttons (X and Y) will be able to cycle through custom speed curves. A toggles between in, out, and in-out easings and B selects a function (linear, sine, quad, cubic, quart, quint, expo, and circ in order of "curve sharpness")
     private static boolean LEFT_STICK_RESETS_SPEED_CURVE = true;  // Only applies if using variable speed curves. If this is true, the driver's gamepad joystick left stick will reset the speed curve to the default.
@@ -960,9 +964,20 @@ public class TeleOp99Mark2 extends OpMode {
         //}
 
         if (AUTO_TPS_SELECT) {  // If we're automatically selecting TPS for the shooter
-            currentShooterTPS = (int) distanceToShooterVelocity(drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)));
+            if (gamepad2LeftShoulderHeld && !gamepad2RightShoulderHeld) {  // Check first for manual overrides
+                currentShooterTPS = LEFT_BUMPER_SHOOTER_OVERRIDE;
+            }
+            else if (gamepad2RightShoulderHeld && !gamepad2LeftShoulderHeld) {  // Only the right shoulder is held
+                currentShooterTPS = RIGHT_BUMPER_SHOOTER_OVERRIDE;
+            }
+            else if (gamepad2LeftShoulderPressed && gamepad2RightShoulderPressed) {  // Both shoulders are held
+                currentShooterTPS = BOTH_BUMPERS_SHOOTER_OVERRIDE;
+            }
+            else {  // Nothing is held; continue with automatic flywheel speed
+                currentShooterTPS = (int) distanceToShooterVelocity(drive.getPoseEstimate().vec().distTo(goalPositions.get(autoPoseIndex)));
+            }
         }
-        else {  // Manual TPS control
+        else {  // Manual TPS increments
             if (gamepad2LeftShoulderPressed) {
                 currentShooterTPS += 5;
             }
