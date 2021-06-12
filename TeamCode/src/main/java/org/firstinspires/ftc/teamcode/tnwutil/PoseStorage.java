@@ -16,6 +16,10 @@ public class PoseStorage {
     public static Pose2d ringStack2Position = new Pose2d(-24, -36);
     public static boolean isRed = true;  // Whether or not we're on the red alliance, if false, blue is assumed
 
+    public static boolean autonomousRan = false;
+    public static int wobbleArmStartPosition;
+    public static int ringElevatorStartPosition;
+
     public static Pose2d powerShot1Pose = new Pose2d(0, -4, Math.toRadians(356));  // Assuming the robot starts moving forward (TODO: Test these ASAP)
     public static Pose2d powerShot2Pose = new Pose2d(0, -12, Math.toRadians(356));
     public static Pose2d powerShot3Pose = new Pose2d(0, -20, Math.toRadians(356));

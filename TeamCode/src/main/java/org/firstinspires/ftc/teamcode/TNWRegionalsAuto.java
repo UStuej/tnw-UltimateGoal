@@ -26,6 +26,8 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
+import org.firstinspires.ftc.teamcode.tnwutil.PoseStorage;
+
 @Config
 @Autonomous(group = "drive")
 public class TNWRegionalsAuto extends LinearOpMode {
@@ -69,8 +71,8 @@ public class TNWRegionalsAuto extends LinearOpMode {
     final Pose2d STARTING_POSE_1 = new Pose2d(-63, -18, Math.toRadians(0)); // TODO: set this to allow more room for alliance partner and elements
     final Pose2d STARTING_POSE_2 = new Pose2d(-63, -(56 + 3.0/8), Math.toRadians(0)); // TODO: set these
 
-    Pose2d SECONDARY_SHOOT_POSE_OUTER = new Pose2d(-2, -57, Math.toRadians(90) - Math.atan(/*X*/(72.0 - (-2)) / /*Y*/Math.abs(-57 - (-33.0))));
-    Pose2d SECONDARY_SHOOT_POSE_INNER = new Pose2d(-2, -12, Math.toRadians(360) - (Math.toRadians(90) - Math.atan(/*X*/(72.0 - (-2)) / /*Y*/Math.abs((-12) - (-33.0)))));
+    Pose2d SECONDARY_SHOOT_POSE_OUTER = new Pose2d(-3, -57, Math.toRadians(90) - Math.atan(/*X*/(72.0 - (-2)) / /*Y*/Math.abs(-57 - (-33.0))));
+    Pose2d SECONDARY_SHOOT_POSE_INNER = new Pose2d(-4, -12, Math.toRadians(360) - (Math.toRadians(90) - Math.atan(/*X*/(72.0 - (-4)) / /*Y*/Math.abs((-12) - (-33.0)))));
 
     // Wobble goal poses
     final int DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING = 10; // inches
@@ -111,15 +113,39 @@ public class TNWRegionalsAuto extends LinearOpMode {
     Pose2d TARGET_ZONE_C1; // used by the autonomous. to be set in initializeElementPositions() function
     Pose2d TARGET_ZONE_C2; // used by the autonomous. to be set in initializeElementPositions() function
 
-    final Pose2d TARGET_ZONE_A_RED_2 = new Pose2d(34, -57, Math.toRadians(30));
-    final Pose2d TARGET_ZONE_B_RED_2 = new Pose2d(34, -50, Math.toRadians(270));
-    final Pose2d TARGET_ZONE_C_RED_2 = new Pose2d(48, -50, Math.toRadians(180));
+    // PRIMARY WOBBLE GOAL DELIVERY POSES
+    // Red Alliance
+    final Pose2d TARGET_ZONE_A_RED_1_OUTER = new Pose2d(34, -57, Math.toRadians(30));
+    final Pose2d TARGET_ZONE_B_RED_1_OUTER = new Pose2d(34, -50, Math.toRadians(270));
+    final Pose2d TARGET_ZONE_C_RED_1_OUTER = new Pose2d(48, -50, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_A_RED_1_INNER = new Pose2d(25, -42, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_B_RED_1_INNER = new Pose2d(46, -18, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_C_RED_1_INNER = new Pose2d(55, -42, Math.toRadians(125));
+    // Blue Alliance
+    final Pose2d TARGET_ZONE_A_BLUE_1_OUTER = new Pose2d(32, 57, Math.toRadians(0));
+    final Pose2d TARGET_ZONE_B_BLUE_1_OUTER = new Pose2d(50, 52, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_C_BLUE_1_OUTER = new Pose2d(48, 56, Math.toRadians(210));
+    final Pose2d TARGET_ZONE_A_BLUE_1_INNER = new Pose2d(10, 44, Math.toRadians(270));
+    final Pose2d TARGET_ZONE_B_BLUE_1_INNER = new Pose2d(35, 19, Math.toRadians(270));
+    final Pose2d TARGET_ZONE_C_BLUE_1_INNER = new Pose2d(54, 44, Math.toRadians(270));
 
-    final Pose2d TARGET_ZONE_A_BLUE_2 = new Pose2d(34, 57, Math.toRadians(0));
-    final Pose2d TARGET_ZONE_B_BLUE_2 = new Pose2d(42, 50, Math.toRadians(90));
-    final Pose2d TARGET_ZONE_C_BLUE_2 = new Pose2d(48, 50, Math.toRadians(210));
+    // SECONDARY WOBBLE GOAL DELIVERY POSES
+    // Red Alliance
+    final Pose2d TARGET_ZONE_A_RED_2_OUTER = new Pose2d(34, -57, Math.toRadians(30));
+    final Pose2d TARGET_ZONE_B_RED_2_OUTER = new Pose2d(34, -50, Math.toRadians(270));
+    final Pose2d TARGET_ZONE_C_RED_2_OUTER = new Pose2d(48, -50, Math.toRadians(180));
+    final Pose2d TARGET_ZONE_A_RED_2_INNER = new Pose2d(26, -42, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_B_RED_2_INNER = new Pose2d(46, -18, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_C_RED_2_INNER = new Pose2d(55, -42, Math.toRadians(125));
+    // Blue Alliance
+    final Pose2d TARGET_ZONE_A_BLUE_2_OUTER = new Pose2d(32, 57, Math.toRadians(0));
+    final Pose2d TARGET_ZONE_B_BLUE_2_OUTER = new Pose2d(50, 52, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_C_BLUE_2_OUTER = new Pose2d(48, 56, Math.toRadians(210));
+    final Pose2d TARGET_ZONE_A_BLUE_2_INNER = new Pose2d(10, 44, Math.toRadians(270));
+    final Pose2d TARGET_ZONE_B_BLUE_2_INNER = new Pose2d(35, 19, Math.toRadians(270));
+    final Pose2d TARGET_ZONE_C_BLUE_2_INNER = new Pose2d(54, 44, Math.toRadians(270));
 
-    final Pose2d TARGET_ZONE_A1_RED = new Pose2d(25, -42, Math.toRadians(90));
+    /*final Pose2d TARGET_ZONE_A1_RED = new Pose2d(25, -42, Math.toRadians(90));
     final Pose2d TARGET_ZONE_A2_RED = new Pose2d(TARGET_ZONE_A1_RED.getX(), TARGET_ZONE_A1_RED.getY() + DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_A1_RED.getHeading());
     final Pose2d TARGET_ZONE_B1_RED = new Pose2d(25, -32, Math.toRadians(180));
     final Pose2d TARGET_ZONE_B2_RED = new Pose2d(TARGET_ZONE_B1_RED.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1_RED.getY() + 2, TARGET_ZONE_B1_RED.getHeading());
@@ -131,11 +157,11 @@ public class TNWRegionalsAuto extends LinearOpMode {
     final Pose2d TARGET_ZONE_B2_BLUE = new Pose2d(TARGET_ZONE_B1_BLUE.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_B1_BLUE.getY() + 2, TARGET_ZONE_B1_BLUE.getHeading());
     final Pose2d TARGET_ZONE_C1_BLUE = new Pose2d(43, 54, Math.toRadians(225));
     final Pose2d TARGET_ZONE_C2_BLUE = new Pose2d(TARGET_ZONE_C1_BLUE.getX() - DISTANCE_BETWEEN_WOBBLE_GOAL_SCORING, TARGET_ZONE_C1_BLUE.getY(), TARGET_ZONE_C1_BLUE.getHeading());
-
+*/
 
     // Starter stack related poses
     final Vector2d STARTER_STACK = new Vector2d(-24, -35);
-    final Pose2d LONG_SHOT_POSE = new Pose2d(-40, -38, Math.toRadians(355)); // y = -36, Heading = 356
+    final Pose2d LONG_SHOT_POSE = new Pose2d(-40, -38, Math.toRadians(0)); // y = -36, Heading = 356
     // Power shot related poses
     //final Pose2d POWER_SHOT_SHOOT_1 = new Pose2d(-3, -3.5, Math.toRadians(356));
     //final double DISTANCE_BETWEEN_POWER_SHOTS = 8; // inches
@@ -166,9 +192,9 @@ public class TNWRegionalsAuto extends LinearOpMode {
     private static double CLAW_OPENED_POSITION = 0.0;  // The position of the claw when it is open
     private static double CLAW_CLOSED_POSITION = 0.48;  // The position of the claw when it is closed
 
-    private static int ARM_DOWN_POSITION_DELTA = 422;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
-    private static int ARM_UP_POSITION_DELTA = 222;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
-    private static int ARM_HOVER_POSITION_DELTA = 330;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
+    private static int ARM_DOWN_POSITION_DELTA = 402;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's down
+    private static int ARM_UP_POSITION_DELTA = 202;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
+    private static int ARM_HOVER_POSITION_DELTA = 310;  // The delta (offset from the init position of the motor's encoder) position of the arm when it's up
 
     private static int ARM_DOWN_POSITION;  // The absolute position (in motor encoder units) of the arm's down position. Set on init
     private static int ARM_UP_POSITION;  // The absolute position (in motor encoder units) of the arm's up position. Set on init
@@ -250,7 +276,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 }
             }
         }
-        if (blueAlliance) {
+        /*if (blueAlliance) {
             TARGET_ZONE_A1 = TARGET_ZONE_A1_BLUE;
             TARGET_ZONE_B1 = TARGET_ZONE_B1_BLUE;
             TARGET_ZONE_C1 = TARGET_ZONE_C1_BLUE;
@@ -265,7 +291,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
             TARGET_ZONE_A2 = TARGET_ZONE_A2_RED;
             TARGET_ZONE_B2 = TARGET_ZONE_B2_RED;
             TARGET_ZONE_C2 = TARGET_ZONE_C2_RED;
-        }
+        }*/
         if (alliancePartnerMoves) {
             if (blueAlliance) {
                 PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A = PARTNER_WOBBLE_GOAL_PICKUP_POSITION_A_ABSENT_BLUE;
@@ -517,6 +543,8 @@ public class TNWRegionalsAuto extends LinearOpMode {
         });
 
 // INITIALIZE HARDWARE:
+        PoseStorage.autonomousRan = true;
+
         // Initialize intake motor
         intakeDrive = hardwareMap.get(DcMotor.class, "intakeDrive");
 
@@ -551,13 +579,15 @@ public class TNWRegionalsAuto extends LinearOpMode {
 
         // Obtain encoder positions based on starting position and deltas
         // Obtain wobble arm position values
-        ARM_STARTING_POSITION = wobbleArm.getCurrentPosition() + 20;  // Get the starting position of the arm based on the current position of the arm at init time, which is assumed.
+        ARM_STARTING_POSITION = wobbleArm.getCurrentPosition();  // Get the starting position of the arm based on the current position of the arm at init time, which is assumed.
+        PoseStorage.wobbleArmStartPosition = ARM_STARTING_POSITION;
         ARM_UP_POSITION = wobbleArm.getCurrentPosition() - ARM_UP_POSITION_DELTA;  // Get the up position of the arm with respect to the current position of the arm at init time, which is assumed.
         ARM_DOWN_POSITION = wobbleArm.getCurrentPosition() - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed.
         ARM_HOVER_POSITION = wobbleArm.getCurrentPosition() - ARM_HOVER_POSITION_DELTA;  // Get the hover position of the arm with respect to the current position of the arm at init time, which is assumed.
 
         // Obtain ring elevator position values
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
+        PoseStorage.ringElevatorStartPosition = RING_ELEVATOR_DOWN_POSITION;
         RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000; // 2017
 
         // Set DcMotorEx PIDF coefficients
@@ -596,9 +626,12 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .splineToConstantHeading(selInvertPose(scoreStarterStack ? startingPosition == 1 ? new Vector2d(STARTING_POSE_1.getX() + 0.1, STARTING_POSE_1.getY()) : new Vector2d(STARTING_POSE_2.getX() + 0.1, STARTING_POSE_2.getY())
                         : startingPosition == 1 ? new Vector2d(STARTING_POSE_1.getX() + 3, STARTING_POSE_1.getY() + 5) : new Vector2d(STARTING_POSE_2.getX() + 3, STARTING_POSE_2.getY() - 3)), Math.toRadians(0))
-                .splineToSplineHeading(scoreStarterStack ? selInvertPose(new Pose2d(autoCaseCapture == 'A' ? LONG_SHOT_POSE.getX() + 26 : LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), LONG_SHOT_POSE.getHeading()), true)
-                        : startingPosition == 1 ? selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_INNER.getX(), SECONDARY_SHOOT_POSE_INNER.getY(), SECONDARY_SHOOT_POSE_INNER.getHeading() - selInvertPose(Math.toRadians(4))))
-                        : selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(8)))), scoreStarterStack ? selInvertPose(Math.toRadians(startingPosition == 1 ? 270 : 90)) : Math.toRadians(0))
+                .splineToSplineHeading(scoreStarterStack ? selInvertPose(autoCaseCapture == 'A' ?
+                        (startingPosition == 2 ? new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(blueAlliance ? 5 : 8)))
+                                : new Pose2d(SECONDARY_SHOOT_POSE_INNER.getX(), SECONDARY_SHOOT_POSE_INNER.getY(), SECONDARY_SHOOT_POSE_INNER.getHeading() - selInvertPose(Math.toRadians(blueAlliance ? 6 : 4))))
+                        : new Pose2d(LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), selInvertPose(LONG_SHOT_POSE.getHeading() - Math.toRadians(blueAlliance ? 7 : 5))))
+                        : startingPosition == 1 ? selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_INNER.getX(), SECONDARY_SHOOT_POSE_INNER.getY(), SECONDARY_SHOOT_POSE_INNER.getHeading() - selInvertPose(Math.toRadians(blueAlliance ? 6 : 4))))
+                        : selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(blueAlliance ? 5 : 8)))), scoreStarterStack ? selInvertPose(Math.toRadians(autoCaseCapture == 'A' ? Math.toRadians(0) : startingPosition == 1 ? 270 : 90)) : Math.toRadians(0))
                 .addTemporalMarker(.5, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -630,7 +663,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to collect starter stack rings
                     }
                 })
-                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 10, LONG_SHOT_POSE.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
+                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 10, LONG_SHOT_POSE.getY(), selInvertPose(LONG_SHOT_POSE.getHeading() - Math.toRadians(blueAlliance ? 7 : 5)))), // slowly intake starter stack rings to avoid jamming the intake
                         SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .addDisplacementMarker(new MarkerCallback() {
@@ -664,7 +697,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         intakeDrive.setPower(INTAKE_IN_POWER); // turn on intake to collect starter stack rings
                     }
                 })
-                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 26, LONG_SHOT_POSE.getY(), Math.toRadians(356)), true), // slowly intake starter stack rings to avoid jamming the intake
+                .lineToLinearHeading(selInvertPose(new Pose2d(LONG_SHOT_POSE.getX() + 26, LONG_SHOT_POSE.getY(), selInvertPose(LONG_SHOT_POSE.getHeading() - Math.toRadians(blueAlliance ? 7 : 5)))), // slowly intake starter stack rings to avoid jamming the intake
                         SampleMecanumDrive.getVelocityConstraint(5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .addDisplacementMarker(new MarkerCallback() {
@@ -756,7 +789,13 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 .addTemporalMarker(0, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // deploy wobble arm
+                        if (autoCaseCapture != 'C') wobbleArm.setTargetPosition(ARM_DOWN_POSITION); // deploy wobble arm
+                    }
+                })
+                .addTemporalMarker(1, new MarkerCallback() {
+                    @Override
+                    public void onMarkerReached() {
+                        wobbleArm.setTargetPosition(ARM_DOWN_POSITION);
                     }
                 })
                 .addTemporalMarker(1, new MarkerCallback() {
@@ -767,39 +806,47 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 })
                 .lineToLinearHeading(
                         scoreStarterStack ?
-                                (autoCaseCapture == 'A' ? TARGET_ZONE_A1
-                                        : autoCaseCapture == 'B' ? TARGET_ZONE_B1
-                                        : TARGET_ZONE_C1)
+                                (blueAlliance ?
+                                    (startingPosition == 2 ? (autoCaseCapture == 'A' ? TARGET_ZONE_A_BLUE_1_OUTER
+                                            : autoCaseCapture == 'B' ? TARGET_ZONE_B_BLUE_1_OUTER
+                                            : TARGET_ZONE_C_BLUE_1_OUTER)
+                                        : (autoCaseCapture == 'A' ? TARGET_ZONE_A_BLUE_1_INNER
+                                            : autoCaseCapture == 'B' ? TARGET_ZONE_B_BLUE_1_INNER
+                                            : TARGET_ZONE_C_BLUE_1_INNER))
+                                    : (startingPosition == 2 ? (autoCaseCapture == 'A' ? TARGET_ZONE_A_RED_1_OUTER
+                                            : autoCaseCapture == 'B' ? TARGET_ZONE_B_RED_1_OUTER
+                                            : TARGET_ZONE_C_RED_1_OUTER)
+                                        : (autoCaseCapture == 'A' ? TARGET_ZONE_A_RED_1_INNER
+                                            : autoCaseCapture == 'B' ? TARGET_ZONE_B_RED_1_INNER
+                                            : TARGET_ZONE_C_RED_1_INNER)))
 
                                 : (blueAlliance ?
-                                (autoCaseCapture == 'A' ? TARGET_ZONE_A_BLUE_2
-                                        : autoCaseCapture == 'B' ? TARGET_ZONE_B_BLUE_2
-                                        : TARGET_ZONE_C_BLUE_2)
-                                :
-                                (autoCaseCapture == 'A' ? TARGET_ZONE_A_RED_2
-                                        : autoCaseCapture == 'B' ? TARGET_ZONE_B_RED_2
-                                        : TARGET_ZONE_C_RED_2)))// because these poses are set manually, do not use selInvertPose on them.
+                                (startingPosition == 2 ? (autoCaseCapture == 'A' ? TARGET_ZONE_A_BLUE_2_OUTER
+                                        : autoCaseCapture == 'B' ? TARGET_ZONE_B_BLUE_2_OUTER
+                                        : TARGET_ZONE_C_BLUE_2_OUTER)
+                                    : (autoCaseCapture == 'A' ? TARGET_ZONE_A_BLUE_2_INNER
+                                        : autoCaseCapture == 'B' ? TARGET_ZONE_B_BLUE_2_INNER
+                                        : TARGET_ZONE_C_BLUE_2_INNER))
+                                : (startingPosition == 2 ? (autoCaseCapture == 'A' ? TARGET_ZONE_A_RED_2_OUTER
+                                        : autoCaseCapture == 'B' ? TARGET_ZONE_B_RED_2_OUTER
+                                        : TARGET_ZONE_C_RED_2_OUTER)
+                                    : (autoCaseCapture == 'A' ? TARGET_ZONE_A_RED_2_INNER
+                                        : autoCaseCapture == 'B' ? TARGET_ZONE_B_RED_2_INNER
+                                        : TARGET_ZONE_C_RED_2_INNER))))// because these poses are set manually, do not use selInvertPose on them.
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
-                        if (!scoreStarterStack) {
-                            if (autoCaseCapture == 'A') pause(1000, false);
-                            else if (autoCaseCapture == 'B') pause(1000, false);
-                            else pause(1000, false);
-                        }
-                        else {
-                            pause(1000, false);
-                        }
+                        pause(1000, false);
                         wobbleClaw.setPosition(CLAW_OPENED_POSITION); // open wobble claw to release wobble goal
                         pause(250, false);
                         wobbleArm.setTargetPosition(ARM_STARTING_POSITION); // completely retract wobble arm
-                        pause(1000, false);
+                        pause(500, false);
                         wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
                     }
                 })
                 .build();
 
-        Trajectory backFromTargetZone1 = drive.trajectoryBuilder(deliverWobbleGoal1.end())
+        /*Trajectory backFromTargetZone1 = drive.trajectoryBuilder(deliverWobbleGoal1.end())
                 .lineToLinearHeading(autoCaseCapture == 'A' ? new Pose2d(TARGET_ZONE_A1.getX(), blueAlliance ? TARGET_ZONE_A1.getY() - 14 : TARGET_ZONE_A1.getY() + 14, TARGET_ZONE_A1.getHeading() - Math.toRadians(45))
                         : autoCaseCapture == 'B' ? new Pose2d(TARGET_ZONE_B1.getX() - 14, TARGET_ZONE_B1.getY(), TARGET_ZONE_B1.getHeading() - Math.toRadians(45))
                         : selInvertPose(new Pose2d(TARGET_ZONE_C1.getX() - 14, -56 + (parkingLocation - 1) * 24, Math.toRadians(0))))
@@ -809,11 +856,11 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
                     }
                 })
-                .build();
+                .build();*/
 
         Trajectory alignToPark = drive.trajectoryBuilder(deliverWobbleGoal1.end())
-                .lineToLinearHeading(selInvertPose(autoCaseCapture == 'A' ? (new Pose2d(40, -57 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 2) - 1) * 24, Math.toRadians(0)))
-                        : (new Pose2d(40, -57 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 2) - 1) * 24, Math.toRadians(0)))))
+                .lineToLinearHeading(selInvertPose(/*autoCaseCapture == 'A' ?*/ (new Pose2d(40, -59 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 3) - 1) * 24, Math.toRadians(0)))))
+                        //: (new Pose2d(40, -59 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 3) - 1) * 24, Math.toRadians(0)))))
                 .addDisplacementMarker(new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -824,7 +871,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                 .build();
 
         Trajectory park = drive.trajectoryBuilder(
-                deliverWobble && scoreStarterStack && (autoCaseCapture == 'A' || !scoreAlliancePartnerRings) ? backFromTargetZone1.end()
+                deliverWobble && scoreStarterStack && (autoCaseCapture == 'A' || !scoreAlliancePartnerRings) ? alignToPark.end()
                         : scoreStarterStack ? (scoreAlliancePartnerRings ? shootAlliancePartnerRings.end()
                         : autoCaseCapture == 'C' ? shootStarterStackRings2.end()
                         : autoCaseCapture == 'B' ? shootStarterStackRings1.end()
@@ -843,7 +890,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
                         wobbleClaw.setPosition(CLAW_CLOSED_POSITION);
                     }
                 })
-                .lineToLinearHeading(selInvertPose(new Pose2d(12, -57 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 2) - 1) * 24, Math.toRadians(0))))
+                .lineToLinearHeading(selInvertPose(new Pose2d(12, -59 + ((parkingLocation != 1 ? parkingLocation : (autoCaseCapture != 'A') ? 1 : 3) - 1) * 24, Math.toRadians(0))))
                 .build();
 
 
@@ -863,9 +910,7 @@ public class TNWRegionalsAuto extends LinearOpMode {
         }
         if (deliverWobble && (autoCaseCapture != 'B' || !scoreAlliancePartnerRings || !scoreStarterStack)) {
             drive.followTrajectory(deliverWobbleGoal1);
-            if (scoreStarterStack) drive.followTrajectory(backFromTargetZone1);
-        }
-        if (!scoreStarterStack) {
+            //if (scoreStarterStack) drive.followTrajectory(backFromTargetZone1);
             drive.followTrajectory(alignToPark);
         }
         if (navigateToLaunchLine && (autoCaseCapture != 'C' || !scoreAlliancePartnerRings || !scoreStarterStack)) {

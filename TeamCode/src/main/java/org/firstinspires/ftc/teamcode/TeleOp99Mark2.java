@@ -503,7 +503,7 @@ public class TeleOp99Mark2 extends OpMode {
         fingerServo.setPosition(RING_FINGER_OUT_POSITION);
 
         // Use the arm's current position to find the (relative) up and down positions to set the arm's encoder to later
-        armPosition = wobbleArm.getCurrentPosition();
+        armPosition = PoseStorage.autonomousRan ? PoseStorage.wobbleArmStartPosition : wobbleArm.getCurrentPosition();
         wobbleArm.setTargetPosition(armPosition);
         wobbleArm.setPower(1.0);
         wobbleArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -512,12 +512,13 @@ public class TeleOp99Mark2 extends OpMode {
         ARM_DOWN_POSITION = armPosition - ARM_DOWN_POSITION_DELTA;  // Get the down position of the arm with respect to the current position of the arm at init time, which is assumed. FIXME: We might add the delta insted
 
         // Set Ring Elevator motor...
-        ringElevator.setTargetPosition(ringElevator.getCurrentPosition());
+        RING_ELEVATOR_DOWN_POSITION = PoseStorage.autonomousRan ? PoseStorage.ringElevatorStartPosition : ringElevator.getCurrentPosition();
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000;
+        ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION);
         //ringElevator.setPower(RING_ELEVATOR_VELOCITY);
         ringElevator.setPower(0.8);
         ringElevator.setMode(DcMotor.RunMode.RUN_TO_POSITION); // run mode
-        RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
-        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000;
+
     }
 
     private void inputAdjustVariableSpeedCurves() {
