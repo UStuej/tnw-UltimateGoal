@@ -256,6 +256,7 @@ public class AutoConfig extends LinearOpMode {
         Telemetry.Item[] settings = {
                 telemetry.addData("Starting Line", () -> config.innerStartingLine ? "Inner" : "Outer"),
                 telemetry.addData("Starter Stack", () -> config.starterStack ? "YES" : "no"),
+                telemetry.addData("Partner Rings", () -> config.partnerRings ? "YES" : "no"),
                 telemetry.addData("Deliver Wobble", () -> config.deliverWobble ? "YES" : "no"),
                 telemetry.addData("Park", () -> config.park ? "YES" : "no"),
                 telemetry.addData("Parking Location", () -> config.parkingLocation + " tiles")
@@ -302,14 +303,18 @@ public class AutoConfig extends LinearOpMode {
                 break;
 
                 case 2:
-                    config.deliverWobble = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.deliverWobble;
+                    config.partnerRings = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.partnerRings;
                 break;
 
                 case 3:
-                    config.park = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.park;
+                    config.deliverWobble = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.deliverWobble;
                 break;
 
                 case 4:
+                    config.park = (input.isDpadLeftPressed() || input.isDpadRightPressed()) != config.park;
+                break;
+
+                case 5:
                     if (input.isDpadLeftPressed()) {
                         config.parkingLocation = (byte) (config.parkingLocation > 0
                                 ? config.parkingLocation - 1

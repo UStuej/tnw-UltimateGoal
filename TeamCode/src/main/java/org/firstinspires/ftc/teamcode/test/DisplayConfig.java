@@ -1,17 +1,20 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.test;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.AutoConfig;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.tnwutil.AutoSettings;
 import org.firstinspires.ftc.teamcode.tnwutil.GamepadInputHandler;
 
 import java.util.Map;
 
+@Disabled
 @Autonomous(preselectTeleOp = "TeleOp99Mark2")
-public class TNWStateCupAuto extends LinearOpMode {
+public class DisplayConfig extends LinearOpMode {
 
     SampleMecanumDrive drive;
 
