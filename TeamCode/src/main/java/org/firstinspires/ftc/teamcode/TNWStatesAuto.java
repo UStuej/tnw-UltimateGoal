@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.MarkerCallback;
@@ -31,6 +32,7 @@ import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.Map;
 
+@Config
 @Autonomous(preselectTeleOp = "TeleOp99Mark2")
 public class TNWStatesAuto extends LinearOpMode {
     OpenCvCamera webcam;
@@ -46,7 +48,7 @@ public class TNWStatesAuto extends LinearOpMode {
     double[] RING_SCAN_CROP_PERCENTS_1_BLUE = {0.06, 0.25, 0.27, 0.47};  // X1, X2, Y1, and Y2, respectively for the first starting position on blue
     double[] RING_SCAN_CROP_PERCENTS_2_BLUE = {0.72, 0.91, 0.28, 0.48};  // X1, X2, Y1, and Y2, respectively for the second starting position on blue
 
-    /*public static int LOWER_HSV_H = 0;
+    /*public static int LOWER_HSV_H = 0; // USED ONLY FOR TUNING IN ROADRUNNER
     public static int LOWER_HSV_S= 0;
     public static int LOWER_HSV_V = 0;
     public static int UPPER_HSV_H = 0;
@@ -56,13 +58,6 @@ public class TNWStatesAuto extends LinearOpMode {
     double ringImagePercent = 0.0;
     double oneRingPercentageMinimum = .04; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 1 ring scenario
     double fourRingPercentageMinimum = .15; // A number between 0 and 1.  Tune to identify what percentage of pixels need to be orange for 4 ring scenario
-
-    private static final int RING_COLOR_H_START = 13;  // 15
-    private static final int RING_COLOR_S_START = 45;  // 51
-    private static final int RING_COLOR_V_START = 0;  // 0
-    private static final int RING_COLOR_H_END = 35;  // 32
-    private static final int RING_COLOR_S_END = 92;  // 89
-    private static final int RING_COLOR_V_END = 100;  // 100
 
     char autoCase = 'X';
     char autoCaseCapture = 'X';
