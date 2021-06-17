@@ -116,11 +116,11 @@ public class TNWStatesAuto extends LinearOpMode {
     final Pose2d TARGET_ZONE_B_RED_1_OUTER = new Pose2d(34, -50, Math.toRadians(270));
     final Pose2d TARGET_ZONE_C_RED_1_OUTER = new Pose2d(48, -50, Math.toRadians(180));
     final Pose2d TARGET_ZONE_A_RED_1_INNER = new Pose2d(25, -42, Math.toRadians(90));
-    final Pose2d TARGET_ZONE_B_RED_1_INNER = new Pose2d(46, -18, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_B_RED_1_INNER = new Pose2d(46, -20, Math.toRadians(90));
     final Pose2d TARGET_ZONE_C_RED_1_INNER = new Pose2d(55, -42, Math.toRadians(125));
     // Blue Alliance
     final Pose2d TARGET_ZONE_A_BLUE_1_OUTER = new Pose2d(32, 57, Math.toRadians(0));
-    final Pose2d TARGET_ZONE_B_BLUE_1_OUTER = new Pose2d(50, 52, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_B_BLUE_1_OUTER = new Pose2d(48, 52, Math.toRadians(90));
     final Pose2d TARGET_ZONE_C_BLUE_1_OUTER = new Pose2d(48, 56, Math.toRadians(210));
     final Pose2d TARGET_ZONE_A_BLUE_1_INNER = new Pose2d(10, 44, Math.toRadians(270));
     final Pose2d TARGET_ZONE_B_BLUE_1_INNER = new Pose2d(35, 19, Math.toRadians(270));
@@ -132,11 +132,11 @@ public class TNWStatesAuto extends LinearOpMode {
     final Pose2d TARGET_ZONE_B_RED_2_OUTER = new Pose2d(34, -50, Math.toRadians(270));
     final Pose2d TARGET_ZONE_C_RED_2_OUTER = new Pose2d(48, -50, Math.toRadians(180));
     final Pose2d TARGET_ZONE_A_RED_2_INNER = new Pose2d(26, -42, Math.toRadians(90));
-    final Pose2d TARGET_ZONE_B_RED_2_INNER = new Pose2d(46, -18, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_B_RED_2_INNER = new Pose2d(46, -20, Math.toRadians(90));
     final Pose2d TARGET_ZONE_C_RED_2_INNER = new Pose2d(55, -42, Math.toRadians(125));
     // Blue Alliance
     final Pose2d TARGET_ZONE_A_BLUE_2_OUTER = new Pose2d(32, 57, Math.toRadians(0));
-    final Pose2d TARGET_ZONE_B_BLUE_2_OUTER = new Pose2d(50, 52, Math.toRadians(90));
+    final Pose2d TARGET_ZONE_B_BLUE_2_OUTER = new Pose2d(48, 52, Math.toRadians(90));
     final Pose2d TARGET_ZONE_C_BLUE_2_OUTER = new Pose2d(48, 56, Math.toRadians(210));
     final Pose2d TARGET_ZONE_A_BLUE_2_INNER = new Pose2d(10, 44, Math.toRadians(270));
     final Pose2d TARGET_ZONE_B_BLUE_2_INNER = new Pose2d(35, 19, Math.toRadians(270));
@@ -158,7 +158,7 @@ public class TNWStatesAuto extends LinearOpMode {
 
     // Starter stack related poses
     final Vector2d STARTER_STACK = new Vector2d(-24, -35);
-    final Pose2d LONG_SHOT_POSE = new Pose2d(-40, -38, Math.toRadians(0)); // y = -36, Heading = 356
+
     // Power shot related poses
     //final Pose2d POWER_SHOT_SHOOT_1 = new Pose2d(-3, -3.5, Math.toRadians(356));
     //final double DISTANCE_BETWEEN_POWER_SHOTS = 8; // inches
@@ -504,11 +504,14 @@ public class TNWStatesAuto extends LinearOpMode {
         // Obtain ring elevator position values
         RING_ELEVATOR_DOWN_POSITION = ringElevator.getCurrentPosition();
         PoseStorage.ringElevatorStartPosition = RING_ELEVATOR_DOWN_POSITION;
-        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000; // 2017
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2065; // 2000 // 2065
 
         // Set DcMotorEx PIDF coefficients
         ringShooter.setVelocityPIDFCoefficients(150, 7, 10, 0);
         ringElevator.setVelocityPIDFCoefficients(5, 3, 3, 0);
+
+
+        final Pose2d LONG_SHOT_POSE = new Pose2d(-40, !cfgIsBlueAlliance? -34 : -37, Math.toRadians(0)); // y = -36, Heading = 356
 
 
 // WAIT FOR AUTONOMOUS TO BEGIN:
@@ -524,7 +527,7 @@ public class TNWStatesAuto extends LinearOpMode {
         }
 
         // Delay before starting
-        sleep(cfgStartDelay);
+        //sleep(cfgStartDelay); REMOVED AT STATES
 
         // set autonomous start time for pause at end
         autoStartTime = System.currentTimeMillis();
@@ -546,11 +549,11 @@ public class TNWStatesAuto extends LinearOpMode {
                 .splineToConstantHeading(selInvertPose(config.starterStack ? config.innerStartingLine ? new Vector2d(STARTING_POSE_1.getX() + 0.1, STARTING_POSE_1.getY()) : new Vector2d(STARTING_POSE_2.getX() + 0.1, STARTING_POSE_2.getY())
                         : config.innerStartingLine ? new Vector2d(STARTING_POSE_1.getX() + 3, STARTING_POSE_1.getY() + 5) : new Vector2d(STARTING_POSE_2.getX() + 3, STARTING_POSE_2.getY() - 3)), Math.toRadians(0))
                 .splineToSplineHeading(config.starterStack ? selInvertPose(autoCaseCapture == 'A' ?
-                        (!config.innerStartingLine ? new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(cfgIsBlueAlliance ? 5 : 8)))
+                        (!config.innerStartingLine ? new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(cfgIsBlueAlliance ? 3 : 8)))
                                 : new Pose2d(SECONDARY_SHOOT_POSE_INNER.getX(), SECONDARY_SHOOT_POSE_INNER.getY(), SECONDARY_SHOOT_POSE_INNER.getHeading() - selInvertPose(Math.toRadians(cfgIsBlueAlliance ? 6 : 4))))
                         : new Pose2d(LONG_SHOT_POSE.getX(), LONG_SHOT_POSE.getY(), selInvertPose(LONG_SHOT_POSE.getHeading() - Math.toRadians(cfgIsBlueAlliance ? 7 : 5))))
                         : config.innerStartingLine ? selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_INNER.getX(), SECONDARY_SHOOT_POSE_INNER.getY(), SECONDARY_SHOOT_POSE_INNER.getHeading() - selInvertPose(Math.toRadians(cfgIsBlueAlliance ? 6 : 4))))
-                        : selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(cfgIsBlueAlliance ? 5 : 8)))), config.starterStack ? selInvertPose(Math.toRadians(autoCaseCapture == 'A' ? Math.toRadians(0) : config.innerStartingLine ? 270 : 90)) : Math.toRadians(0))
+                        : selInvertPose(new Pose2d(SECONDARY_SHOOT_POSE_OUTER.getX(), SECONDARY_SHOOT_POSE_OUTER.getY(), SECONDARY_SHOOT_POSE_OUTER.getHeading() - selInvertPose(Math.toRadians(cfgIsBlueAlliance ? 3 : 8)))), config.starterStack ? selInvertPose(Math.toRadians(autoCaseCapture == 'A' ? Math.toRadians(0) : config.innerStartingLine ? 270 : 90)) : Math.toRadians(0))
                 .addTemporalMarker(.5, new MarkerCallback() {
                     @Override
                     public void onMarkerReached() {
@@ -813,6 +816,7 @@ public class TNWStatesAuto extends LinearOpMode {
                 .build();
 
 
+        pause((autoStartTime + cfgStartDelay) - System.currentTimeMillis()); // ADDED AT STATES pause at the beginning for alliance partners
         drive.followTrajectory(scorePreloadedRings);
         if (config.starterStack) {
             if (autoCaseCapture != 'A') {
@@ -830,9 +834,9 @@ public class TNWStatesAuto extends LinearOpMode {
         if (config.deliverWobble && (autoCaseCapture != 'B' || !config.partnerRings || !config.starterStack)) {
             drive.followTrajectory(deliverWobbleGoal1);
             //if (config.starterStack) drive.followTrajectory(backFromTargetZone1);
-            drive.followTrajectory(alignToPark);
         }
         if (config.park && (autoCaseCapture != 'C' || !config.partnerRings || !config.starterStack)) {
+            drive.followTrajectory(alignToPark);
             drive.followTrajectory(park);
         }
         wobbleArm.setTargetPosition(ARM_STARTING_POSITION);

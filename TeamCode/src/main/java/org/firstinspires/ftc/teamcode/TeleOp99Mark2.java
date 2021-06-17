@@ -436,6 +436,8 @@ public class TeleOp99Mark2 extends OpMode {
         time = System.currentTimeMillis();  // Get the new current time
         deltaTime = time - lastTime;  // Calculate the delta time from the last frame
 
+        telemetry.addData("Bucket Offset Position", RING_ELEVATOR_UP_POSITION - RING_ELEVATOR_DOWN_POSITION);
+
         continuousRotationEstimate += getRotationDelta(drive.getPoseEstimate().getHeading(), lastDrivePoseEstimate);
         lastDrivePoseEstimate = drive.getPoseEstimate().getHeading();
 
@@ -513,7 +515,7 @@ public class TeleOp99Mark2 extends OpMode {
 
         // Set Ring Elevator motor...
         RING_ELEVATOR_DOWN_POSITION = PoseStorage.autonomousRan ? PoseStorage.ringElevatorStartPosition : ringElevator.getCurrentPosition();
-        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2000;
+        RING_ELEVATOR_UP_POSITION = RING_ELEVATOR_DOWN_POSITION + 2065; // 2065
         ringElevator.setTargetPosition(RING_ELEVATOR_DOWN_POSITION);
         //ringElevator.setPower(RING_ELEVATOR_VELOCITY);
         ringElevator.setPower(0.8);
